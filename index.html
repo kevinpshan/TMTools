@@ -25,61 +25,72 @@
             font-family: -apple-system, sans-serif;
             display: flex; 
             flex-direction: column; 
-            height: 100vh;
+            /* FIXED: Use hvh to account for browser chrome or dynamic bars */
+            height: 100dvh; 
             padding-bottom: env(safe-area-inset-bottom);
             box-sizing: border-box;
             overflow: hidden;
         }
 
-        .header { padding: 50px 20px 20px; text-align: left; }
+        .header { padding: 40px 20px 10px; text-align: left; flex-shrink: 0; }
         h1 { margin: 0; font-size: 34px; font-weight: 800; }
         .subtitle { opacity: 0.5; font-size: 17px; margin-top: 5px; }
 
-        .container { flex: 1; display: flex; flex-direction: column; padding: 0 20px; gap: 15px; overflow: hidden; }
-        .screen { display: none; flex-direction: column; height: 100%; }
+        /* FIXED: Ensure container stays within bounds */
+        .container { 
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; 
+            padding: 0 20px; 
+            gap: 10px; 
+            overflow: hidden; 
+            min-height: 0; /* Critical for flex child scrolling */
+        }
+
+        .screen { display: none; flex-direction: column; height: 100%; overflow: hidden; }
         .active { display: flex; }
 
-        /* Input Card */
-        .input-group { background: var(--card); border-radius: 12px; padding: 15px; }
-        input { background: none; border: none; color: white; width: 100%; font-size: 19px; outline: none; }
-
-        /* Grid Selection */
-        .selection-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 5px; }
-        .select-card {
-            background: var(--card);
-            border-radius: 12px;
-            padding: 18px;
-            text-align: center;
-            border: 2px solid transparent;
-            transition: 0.2s;
-        }
-        .select-card.selected { border-color: var(--accent); background: #2c2c2e; }
-        .select-card h4 { margin: 0; font-size: 16px; }
-        .select-card p { margin: 4px 0 0; font-size: 12px; opacity: 0.5; }
-
-        /* Timer UI */
-        #timerDisplay { justify-content: center; text-align: center; }
-        #timer { font-size: 120px; font-weight: 200; font-variant-numeric: tabular-nums; margin: 20px 0; }
-        #status { font-size: 20px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
-
-        /* Report Log Area */
+        /* Report Log Area - FIXED scrolling */
         #reportLog { 
             background: var(--card); 
             border-radius: 12px; 
             padding: 15px; 
             flex: 1; 
             overflow-y: auto; 
+            -webkit-overflow-scrolling: touch;
             white-space: pre-wrap; 
             font-family: monospace; 
             font-size: 16px; 
+            border: 1px solid #333;
         }
 
+        /* Selection Grid */
+        .selection-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 5px; }
+        .select-card {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            border: 2px solid transparent;
+        }
+        .select-card.selected { border-color: var(--accent); background: #2c2c2e; }
+        .select-card h4 { margin: 0; font-size: 16px; }
+
+        /* Timer UI */
+        #timerDisplay { justify-content: center; text-align: center; }
+        #timer { font-size: clamp(80px, 25vw, 120px); font-weight: 200; font-variant-numeric: tabular-nums; margin: 10px 0; }
+
         /* Menu Card UI */
-        .card { background: var(--card); border-radius: 14px; padding: 20px; display: flex; align-items: center; justify-content: space-between; border: none; color: white; text-align: left; }
+        .card { background: var(--card); border-radius: 14px; padding: 20px; display: flex; align-items: center; justify-content: space-between; border: none; color: white; text-align: left; width: 100%; }
         .icon-circle { width: 36px; height: 36px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
 
-        /* Footer Buttons */
-        .button-row { display: flex; gap: 10px; margin-bottom: 20px; margin-top: 10px; flex-shrink: 0; }
+        /* FIXED: Button Row at the absolute bottom */
+        .button-row { 
+            display: flex; 
+            gap: 10px; 
+            padding: 10px 0 20px 0; 
+            flex-shrink: 0; 
+        }
         .footer-btn { 
             flex: 1;
             padding: 18px; 
@@ -91,6 +102,7 @@
             color: white; 
         }
         .secondary-btn { background: #333; }
+        input { background: var(--card); border: none; color: white; padding: 15px; border-radius: 10px; font-size: 18px; }
     </style>
 </head>
 <body>
@@ -115,7 +127,7 @@
                 </div>
                 <div class="icon-circle">☰</div>
             </button>
-            <button class="card" onclick="clearLogs()" style="margin-top:20px; opacity:0.6;">
+            <button class="card" onclick="clearLogs()" style="margin-top:auto; opacity:0.6; margin-bottom: 20px;">
                 <div style="color:var(--red)">Clear Meeting Logs</div>
             </button>
         </div>
@@ -124,16 +136,18 @@
     <div id="setup" class="screen">
         <div class="header"><h1>Speech Info</h1></div>
         <div class="container">
-            <div class="input-group"><input type="text" id="name" placeholder="Speaker Name" autocomplete="off"></div>
+            <input type="text" id="name" placeholder="Speaker Name" autocomplete="off">
             <div class="selection-grid">
                 <div class="select-card" onclick="selectType(this, 60, 90, 120, 'Table Topics')"><h4>Table Topics</h4><p>1-2m</p></div>
                 <div class="select-card" onclick="selectType(this, 120, 150, 180, 'Evaluation')"><h4>Evaluation</h4><p>2-3m</p></div>
                 <div class="select-card" onclick="selectType(this, 300, 360, 420, 'Speech')"><h4>Speech</h4><p>5-7m</p></div>
                 <div class="select-card" onclick="selectType(this, 240, 300, 360, 'Ice Breaker')"><h4>Ice Breaker</h4><p>4-6m</p></div>
-                <div class="select-card" style="grid-column: span 2;" onclick="selectType(this, 0, 0, 0, 'Custom')"><h4>Custom Time</h4><p>Manual Entry</p></div>
+                <div class="select-card" style="grid-column: span 2;" onclick="selectType(this, 0, 0, 0, 'Custom')"><h4>Custom Time</h4></div>
             </div>
-            <button class="footer-btn" onclick="startTimer()">Begin Timing</button>
-            <button style="background:none; color:var(--accent); border:none;" onclick="showScreen('menu')">Cancel</button>
+            <div class="button-row">
+                <button class="footer-btn secondary-btn" onclick="showScreen('menu')">Cancel</button>
+                <button class="footer-btn" onclick="startTimer()">Begin</button>
+            </div>
         </div>
     </div>
 
@@ -181,13 +195,14 @@
         }
 
         function handleTap() {
+            const statusEl = document.getElementById('status');
             if(state === "ready") {
                 state = "run"; start = Date.now();
                 iv = setInterval(update, 1000);
             } else if (state === "run") {
                 state = "done"; clearInterval(iv);
                 saveLog();
-                document.getElementById('status').innerText = "Paused (Tap to Reset)";
+                statusEl.innerText = "Paused (Tap to Reset)";
             } else { location.reload(); }
         }
 
@@ -217,7 +232,7 @@
             const text = "SDTM Timer Report:\n\n" + logs.join('\n');
             if (navigator.share) {
                 await navigator.share({ title: 'SDTM Timer Report', text: text });
-            } else { alert("Sharing not supported on this browser."); }
+            } else { alert("Sharing not supported"); }
         }
 
         function clearLogs() { if(confirm("Clear logs?")) { localStorage.removeItem('sdtm_logs'); location.reload(); } }
