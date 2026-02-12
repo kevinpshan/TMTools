@@ -62,7 +62,7 @@
         input { 
             background: #2c2c2e; border: 1px solid #444; color: white; padding: 15px; 
             border-radius: 14px; font-size: 22px; outline: none; width: 100%; box-sizing: border-box;
-            text-transform: uppercase; /* Visual uppercase while typing */
+            text-transform: uppercase;
         }
 
         .speaker-area {
@@ -93,8 +93,19 @@
         .secondary-btn { background: #333; }
         .commit-btn { background: #32d74b; color: black; }
 
-        .credit-footer { text-align: center; margin-top: auto; padding: 15px 0; border-top: 1px solid #222; flex-shrink: 0; }
-        .credit-link { color: var(--accent); text-decoration: none; font-weight: 700; font-size: 18px; }
+        /* UPDATED CREDIT FOOTER */
+        .credit-footer { 
+            text-align: center; margin-top: auto; padding: 20px 0; border-top: 1px solid #222; flex-shrink: 0; 
+        }
+        .credit-link { 
+            color: var(--text); /* Set to White */
+            text-decoration: none; font-weight: 600; font-size: 18px; line-height: 1.5;
+        }
+        .credit-link span { 
+            color: var(--accent); /* "Visit Our Website" stays Blue */
+            text-decoration: underline; 
+            font-weight: 800;
+        }
 
         /* TIMER SCREEN */
         #timer { font-size: clamp(100px, 35vw, 450px); font-weight: 200; text-align: center; margin: auto 0; font-variant-numeric: tabular-nums;}
@@ -134,8 +145,8 @@
         </div>
         <div class="credit-footer">
             <a href="https://bit.ly/m/SDTM" class="credit-link">
-                <span>Visit Our Website</span> ↗<br>
-                <small style="opacity:0.5; font-weight:400; text-decoration:none; font-size: 0.7em;">Created by Southern Dutchess Toastmasters</small>
+                <span>Visit Our Website ↗</span><br>
+                Created by Southern Dutchess Toastmasters
             </a>
         </div>
     </div>
@@ -255,7 +266,6 @@
                 allSpeakers.push(name); allSpeakers.sort();
                 localStorage.setItem('sdtm_speakers', JSON.stringify(allSpeakers));
             }
-            // Keep the name in the box and refresh the list
             renderSpeakerList(allSpeakers);
             nameEl.focus(); 
         }
@@ -306,7 +316,7 @@
 
         function startTimer() {
             const currentName = document.getElementById('name').value.trim();
-            if(!lims.g || !currentName) return alert("Select type and speaker.");
+            if(!lims.g || !currentName) return;
             
             document.getElementById('spkName').innerText = currentName;
             showScreen('timerDisplay');
@@ -358,7 +368,6 @@
                 logs.push(`${document.getElementById('spkName').innerText} | ${selectedTypeLabel}: ${document.getElementById('timer').innerText}`);
                 localStorage.setItem('sdtm_logs', JSON.stringify(logs));
             }
-            // Reset state and return to setup instead of full reload for speed
             showScreen('menu');
         }
 
