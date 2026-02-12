@@ -6,29 +6,31 @@
     <title>Meeting Timer</title>
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <style>
         :root {
-            --bg: #000000;
-            --card: #1c1c1e;
-            --accent: #0a84ff;
-            --text: #ffffff;
-            --red: #ff453a;
-            --green: #32d74b;
-            --yellow: #ffd60a;
+            --bg: #F2F2F7; /* Apple Light Grey System Background */
+            --card: #FFFFFF;
+            --accent: #007AFF; /* Apple Blue */
+            --text: #000000;
+            --subtext: #3A3A3C;
+            --red: #FF3B30;
+            --green: #34C759;
+            --yellow: #FFCC00;
+            --border: #D1D1D6;
         }
 
         body { 
             margin: 0; background: var(--bg); color: var(--text); 
-            font-family: -apple-system, sans-serif; display: flex; 
+            font-family: -apple-system, system-ui, sans-serif; display: flex; 
             flex-direction: column; height: 100dvh; 
             padding-bottom: env(safe-area-inset-bottom);
             box-sizing: border-box; overflow: hidden;
         }
 
         .header { padding: 30px 20px 10px; text-align: left; flex-shrink: 0; }
-        h1 { margin: 0; font-size: clamp(34px, 5vw, 55px); font-weight: 800; }
-        .subtitle { opacity: 0.8; font-size: clamp(17px, 2.5vw, 26px); margin-top: 5px; color: var(--accent); font-weight: 600; }
+        h1 { margin: 0; font-size: clamp(34px, 5vw, 55px); font-weight: 800; color: #1C1C1E; }
+        .subtitle { opacity: 1; font-size: clamp(17px, 2.5vw, 26px); margin-top: 5px; color: var(--accent); font-weight: 700; }
 
         .container { 
             flex: 1; display: flex; flex-direction: column; padding: 0 20px; 
@@ -42,83 +44,79 @@
         /* MODAL */
         #customModal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); z-index: 9999; align-items: center; justify-content: center;
-            backdrop-filter: blur(5px);
+            background: rgba(0,0,0,0.4); z-index: 9999; align-items: center; justify-content: center;
+            backdrop-filter: blur(8px);
         }
         .modal-content {
-            background: #1c1c1e; width: 85%; max-width: 500px; padding: 25px;
-            border-radius: 24px; text-align: center; border: 1px solid #333;
+            background: var(--card); width: 85%; max-width: 500px; padding: 25px;
+            border-radius: 24px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border: 1px solid var(--border);
         }
 
         /* CARDS */
         .card { 
             background: var(--card); border-radius: 18px; padding: clamp(20px, 3.5vw, 35px); 
             display: flex; align-items: center; justify-content: space-between; 
-            border: none; color: white; text-align: left; width: 100%; flex-shrink: 0;
+            border: 1px solid var(--border); color: var(--text); text-align: left; 
+            width: 100%; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
         .card-content h3 { margin: 0; font-size: clamp(24px, 3.8vw, 36px); font-weight: 700; }
-        .card-content p { margin: 4px 0 0; font-size: clamp(16px, 2.2vw, 22px); opacity: 0.6; }
+        .card-content p { margin: 4px 0 0; font-size: clamp(16px, 2.2vw, 22px); color: var(--subtext); }
 
         input { 
-            background: #2c2c2e; border: 1px solid #444; color: white; padding: 15px; 
+            background: var(--card); border: 2px solid var(--border); color: var(--text); padding: 15px; 
             border-radius: 14px; font-size: 22px; outline: none; width: 100%; box-sizing: border-box;
             text-transform: uppercase;
         }
 
         .speaker-area {
-            background: #121214; border-radius: 16px; padding: 2px;
-            flex: 1; overflow-y: auto; border: 1px solid #333; min-height: 120px;
+            background: var(--card); border-radius: 16px; padding: 2px;
+            flex: 1; overflow-y: auto; border: 1px solid var(--border); min-height: 120px;
         }
         .speaker-item {
-            padding: 12px 16px; border-bottom: 1px solid #222;
+            padding: 12px 16px; border-bottom: 1px solid var(--bg);
             display: flex; justify-content: space-between; align-items: center;
         }
-        .sp-name { font-size: 22px; flex: 1; color: var(--accent); font-weight: 500; }
-        .sp-del { padding: 5px 10px; color: var(--red); font-weight: bold; font-size: 22px; opacity: 0.4; }
+        .sp-name { font-size: 22px; flex: 1; color: var(--accent); font-weight: 600; }
+        .sp-del { padding: 5px 10px; color: var(--red); font-weight: bold; font-size: 22px; }
 
         .selection-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; flex-shrink: 0; }
         .select-card { 
             background: var(--card); border-radius: 14px; padding: 12px; 
-            text-align: center; border: 3px solid transparent; 
+            text-align: center; border: 3px solid transparent; border: 1px solid var(--border);
         }
-        .select-card.selected { border-color: var(--accent); background: #2c2c2e; }
-        .select-card h4 { margin: 0; font-size: 20px; }
+        .select-card.selected { border: 3px solid var(--accent); background: #E8F2FF; }
+        .select-card h4 { margin: 0; font-size: 20px; color: #1C1C1E; }
 
         /* FOOTERS */
-        .button-row { display: flex; gap: 15px; padding: 10px 20px 20px; flex-shrink: 0; background: black; max-width: 950px; margin: 0 auto; width: 100%; box-sizing: border-box; }
+        .button-row { display: flex; gap: 15px; padding: 10px 20px 20px; flex-shrink: 0; background: var(--bg); max-width: 950px; margin: 0 auto; width: 100%; box-sizing: border-box; }
         .footer-btn { 
             flex: 1; padding: 18px; border-radius: 16px; font-size: 22px; 
             font-weight: 700; border: none; background: var(--accent); color: white; 
         }
-        .secondary-btn { background: #333; }
-        .commit-btn { background: #32d74b; color: black; }
+        .secondary-btn { background: #E5E5EA; color: #000000; border: 1px solid var(--border); }
+        .commit-btn { background: var(--green); color: white; }
 
-        /* UPDATED CREDIT FOOTER */
         .credit-footer { 
-            text-align: center; margin-top: auto; padding: 20px 0; border-top: 1px solid #222; flex-shrink: 0; 
+            text-align: center; margin-top: auto; padding: 20px 0; border-top: 1px solid var(--border); flex-shrink: 0; background: var(--card);
         }
         .credit-link { 
-            color: var(--text); /* Set to White */
-            text-decoration: none; font-weight: 600; font-size: 18px; line-height: 1.5;
+            color: var(--subtext); text-decoration: none; font-weight: 600; font-size: 18px; line-height: 1.5;
         }
-        .credit-link span { 
-            color: var(--accent); /* "Visit Our Website" stays Blue */
-            text-decoration: underline; 
-            font-weight: 800;
-        }
+        .credit-link span { color: var(--accent); text-decoration: underline; font-weight: 800; }
 
         /* TIMER SCREEN */
-        #timer { font-size: clamp(100px, 35vw, 450px); font-weight: 200; text-align: center; margin: auto 0; font-variant-numeric: tabular-nums;}
-        #reportLog { background: var(--card); border-radius: 18px; padding: 25px; flex: 1; overflow-y: auto; font-family: monospace; font-size: 22px; }
+        #timer { font-size: clamp(100px, 35vw, 450px); font-weight: 200; text-align: center; margin: auto 0; font-variant-numeric: tabular-nums; color: #000; }
+        #reportLog { background: var(--card); border-radius: 18px; padding: 25px; flex: 1; overflow-y: auto; font-family: monospace; font-size: 22px; border: 1px solid var(--border); color: #000; }
     </style>
 </head>
 <body onload="initApp()">
 
     <div id="customModal">
         <div class="modal-content">
-            <h2 id="modalTitle" style="margin-top:0; font-size:24px;"></h2>
-            <div id="modalBody" style="margin:20px 0;"></div>
-            <div class="button-row" style="padding:0;">
+            <h2 id="modalTitle" style="margin-top:0; font-size:24px; color:#000;"></h2>
+            <div id="modalBody" style="margin:20px 0; color:#333;"></div>
+            <div class="button-row" style="padding:0; background:none;">
                 <button id="modalCancel" class="footer-btn secondary-btn">Cancel</button>
                 <button id="modalConfirm" class="footer-btn">OK</button>
             </div>
@@ -139,7 +137,7 @@
                 <div class="card-content"><h3>Meeting Report</h3><p>View recorded times</p></div>
                 <div style="font-size:35px; color:var(--accent)">☰</div>
             </button>
-            <button class="card" onclick="askClearLogs()" style="background: rgba(255,69,58,0.1); border: 2px solid var(--red); padding: 15px;">
+            <button class="card" onclick="askClearLogs()" style="background: #FFF5F5; border: 2px solid var(--red); padding: 15px;">
                 <div style="color:var(--red); font-weight:800; width:100%; text-align:center; font-size: 22px;">CLEAR MEETING LOGS</div>
             </button>
         </div>
@@ -174,7 +172,7 @@
     </div>
 
     <div id="timerDisplay" class="screen">
-        <div id="spkName" style="font-size:clamp(30px, 5vw, 55px); opacity:0.5; margin-top:20px; text-align:center;">Speaker</div>
+        <div id="spkName" style="font-size:clamp(30px, 5vw, 55px); color:#666; margin-top:20px; text-align:center;">Speaker</div>
         <div id="timer">00:00</div>
         
         <div class="button-row">
@@ -303,7 +301,7 @@
         function showScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
-            document.body.style.background = "black";
+            document.body.style.background = "var(--bg)";
             if(id === 'report') loadReport();
         }
 
@@ -347,8 +345,8 @@
             elapsed = 0;
             state = "stopped";
             document.getElementById('timer').innerText = "00:00";
-            document.body.style.background = "black";
-            document.body.style.color = "white";
+            document.body.style.background = "var(--bg)";
+            document.body.style.color = "var(--text)";
             document.getElementById('pauseResumeBtn').innerText = "START";
         }
 
