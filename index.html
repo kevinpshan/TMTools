@@ -39,7 +39,18 @@
         .screen { display: none; flex-direction: column; height: 100%; overflow: hidden; }
         .active { display: flex; }
 
-        /* Main Menu Cards - Compressed height, larger text */
+        /* Custom Modal Styling */
+        #customModal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 9999; align-items: center; justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background: #1c1c1e; width: 85%; max-width: 500px; padding: 25px;
+            border-radius: 24px; text-align: center; border: 1px solid #333;
+        }
+
+        /* Cards & Roster */
         .card { 
             background: var(--card); border-radius: 18px; padding: clamp(20px, 3.5vw, 35px); 
             display: flex; align-items: center; justify-content: space-between; 
@@ -48,13 +59,10 @@
         .card-content h3 { margin: 0; font-size: clamp(24px, 3.8vw, 36px); font-weight: 700; }
         .card-content p { margin: 4px 0 0; font-size: clamp(16px, 2.2vw, 22px); opacity: 0.6; }
 
-        /* Search & Roster Area */
-        .input-row { display: flex; gap: 10px; align-items: stretch; flex-shrink: 0; }
         input { 
-            background: var(--card); border: none; color: white; padding: 15px; 
-            border-radius: 14px; font-size: 22px; flex: 1; outline: none;
+            background: #2c2c2e; border: 1px solid #444; color: white; padding: 15px; 
+            border-radius: 14px; font-size: 20px; outline: none; width: 100%; box-sizing: border-box;
         }
-        .add-btn { background: var(--accent); color: white; border: none; padding: 0 25px; border-radius: 14px; font-weight: 700; font-size: 18px; }
 
         .speaker-area {
             background: #121214; border-radius: 16px; padding: 2px;
@@ -67,17 +75,15 @@
         .sp-name { font-size: 22px; flex: 1; color: var(--accent); font-weight: 500; }
         .sp-del { padding: 5px 10px; color: var(--red); font-weight: bold; font-size: 22px; opacity: 0.4; }
 
-        /* Selection Grid - COMPRESSED HEIGHT */
+        /* Grid */
         .selection-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; flex-shrink: 0; }
         .select-card { 
             background: var(--card); border-radius: 14px; padding: 12px; 
             text-align: center; border: 3px solid transparent; 
         }
         .select-card.selected { border-color: var(--accent); background: #2c2c2e; }
-        .select-card h4 { margin: 0; font-size: 20px; }
-        .select-card p { margin: 2px 0 0; font-size: 14px; opacity: 0.5; }
 
-        /* Sticky Footers */
+        /* Buttons */
         .button-row { display: flex; gap: 15px; padding: 10px 20px 20px; flex-shrink: 0; background: black; max-width: 950px; margin: 0 auto; width: 100%; box-sizing: border-box; }
         .footer-btn { 
             flex: 1; padding: 18px; border-radius: 16px; font-size: 22px; 
@@ -94,8 +100,19 @@
 </head>
 <body onload="initApp()">
 
+    <div id="customModal">
+        <div class="modal-content">
+            <h2 id="modalTitle" style="margin-top:0; font-size:24px;"></h2>
+            <div id="modalBody" style="margin:20px 0;"></div>
+            <div class="button-row" style="padding:0;">
+                <button id="modalCancel" class="footer-btn secondary-btn">Cancel</button>
+                <button id="modalConfirm" class="footer-btn">OK</button>
+            </div>
+        </div>
+    </div>
+
     <div id="menu" class="screen active">
-        <div class="header" onclick="setClubName()">
+        <div class="header" onclick="askClubName()">
             <h1>Meeting Timer</h1>
             <div id="clubSubtitle" class="subtitle">Tap to set club name</div>
         </div>
@@ -108,7 +125,7 @@
                 <div class="card-content"><h3>Meeting Report</h3><p>View recorded times</p></div>
                 <div style="font-size:35px; color:var(--accent)">☰</div>
             </button>
-            <button class="card" onclick="clearLogs()" style="background: rgba(255,69,58,0.1); border: 2px solid var(--red); padding: 15px;">
+            <button class="card" onclick="askClearLogs()" style="background: rgba(255,69,58,0.1); border: 2px solid var(--red); padding: 15px;">
                 <div style="color:var(--red); font-weight:800; width:100%; text-align:center; font-size: 22px;">CLEAR MEETING LOGS</div>
             </button>
         </div>
@@ -123,20 +140,19 @@
     <div id="setup" class="screen">
         <div class="header"><h1>Speech Info</h1></div>
         <div class="container">
-            <div class="input-row">
+            <div style="display:flex; gap:10px; flex-shrink:0;">
                 <input type="text" id="name" placeholder="Search or Enter Name" oninput="filterSpeakers()">
-                <button class="add-btn" onclick="saveSpeaker()">Add</button>
+                <button class="footer-btn" style="flex:0; padding:0 25px; font-size:18px;" onclick="saveSpeaker()">Add</button>
             </div>
             
-            <div id="speakerArea" class="speaker-area">
-                </div>
+            <div id="speakerArea" class="speaker-area"></div>
 
             <div class="selection-grid">
                 <div class="select-card" onclick="selectType(this, 60, 90, 120, 'Table Topics')"><h4>Table Topics</h4><p>1-2m</p></div>
                 <div class="select-card" onclick="selectType(this, 120, 150, 180, 'Evaluation')"><h4>Evaluation</h4><p>2-3m</p></div>
                 <div class="select-card" onclick="selectType(this, 300, 360, 420, 'Speech')"><h4>Speech</h4><p>5-7m</p></div>
                 <div class="select-card" onclick="selectType(this, 240, 300, 360, 'Ice Breaker')"><h4>Ice Breaker</h4><p>4-6m</p></div>
-                <div class="select-card" style="grid-column: span 2;" onclick="selectType(this, 0, 0, 0, 'Custom')"><h4>Custom Time</h4></div>
+                <div class="select-card" style="grid-column: span 2;" onclick="askCustomTime()"><h4>Custom Time</h4><p>Manual Entry</p></div>
             </div>
         </div>
         <div class="button-row">
@@ -164,6 +180,52 @@
         let state="ready", elapsed=0, start, iv, lims={}, selectedTypeLabel="";
         let allSpeakers = JSON.parse(localStorage.getItem('sdtm_speakers') || "[]");
 
+        /* CUSTOM MODAL LOGIC */
+        function openModal(title, bodyHTML, onConfirm) {
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalBody').innerHTML = bodyHTML;
+            document.getElementById('customModal').style.display = 'flex';
+            document.getElementById('modalConfirm').onclick = () => {
+                onConfirm();
+                document.getElementById('customModal').style.display = 'none';
+            };
+            document.getElementById('modalCancel').onclick = () => {
+                document.getElementById('customModal').style.display = 'none';
+            };
+        }
+
+        function askClubName() {
+            const cur = localStorage.getItem('sdtm_club_name') || "";
+            openModal("Set Club Name", `<input type="text" id="cNameInput" value="${cur}" placeholder="e.g. Southern Dutchess">`, () => {
+                const val = document.getElementById('cNameInput').value;
+                if(val) { localStorage.setItem('sdtm_club_name', val); initApp(); }
+            });
+        }
+
+        function askCustomTime() {
+            openModal("Custom Thresholds", `
+                <div style="display:grid; gap:10px; text-align:left;">
+                    <label>Green (Min): <input type="number" id="cg" value="5"></label>
+                    <label>Yellow (Min): <input type="number" id="cy" value="6"></label>
+                    <label>Red (Min): <input type="number" id="cr" value="7"></label>
+                </div>`, () => {
+                lims = { 
+                    g: document.getElementById('cg').value * 60,
+                    y: document.getElementById('cy').value * 60,
+                    r: document.getElementById('cr').value * 60
+                };
+                selectedTypeLabel = "Custom";
+                document.querySelectorAll('.select-card').forEach(c => c.classList.remove('selected'));
+            });
+        }
+
+        function askClearLogs() {
+            openModal("Clear Logs?", "This will delete all recorded speaker times for this meeting.", () => {
+                localStorage.removeItem('sdtm_logs');
+                location.reload();
+            });
+        }
+
         function initApp() {
             const savedName = localStorage.getItem('sdtm_club_name');
             if (savedName) {
@@ -173,20 +235,13 @@
             renderSpeakerList(allSpeakers); 
         }
 
-        function setClubName() {
-            const name = prompt("Enter Club Name:", localStorage.getItem('sdtm_club_name') || "");
-            if (name !== null) { localStorage.setItem('sdtm_club_name', name); initApp(); }
-        }
-
         function saveSpeaker() {
             const nameEl = document.getElementById('name');
             const name = nameEl.value.trim();
-            if(!name) return;
-            if(!allSpeakers.includes(name)) {
-                allSpeakers.push(name);
-                allSpeakers.sort();
-                localStorage.setItem('sdtm_speakers', JSON.stringify(allSpeakers));
-            }
+            if(!name || allSpeakers.includes(name)) return;
+            allSpeakers.push(name);
+            allSpeakers.sort();
+            localStorage.setItem('sdtm_speakers', JSON.stringify(allSpeakers));
             nameEl.value = ""; 
             renderSpeakerList(allSpeakers);
         }
@@ -200,27 +255,25 @@
         function renderSpeakerList(listToDisplay) {
             const area = document.getElementById('speakerArea');
             if (listToDisplay.length === 0) {
-                area.innerHTML = `<div style="padding:15px; opacity:0.3; text-align:center; font-size:18px;">Roster empty. Type & Add above.</div>`;
+                area.innerHTML = `<div style="padding:15px; opacity:0.3; text-align:center; font-size:18px;">Roster empty.</div>`;
                 return;
             }
             area.innerHTML = listToDisplay.map(name => `
                 <div class="speaker-item">
                     <div class="sp-name" onclick="selectSpeaker('${name}')">${name}</div>
-                    <div class="sp-del" onclick="deleteSpeaker('${name}')">✕</div>
+                    <div class="sp-del" onclick="askDeleteSpeaker('${name}')">✕</div>
                 </div>
             `).join('');
         }
 
-        function selectSpeaker(name) {
-            document.getElementById('name').value = name;
-        }
+        function selectSpeaker(name) { document.getElementById('name').value = name; }
 
-        function deleteSpeaker(name) {
-            if(confirm("Delete " + name + "?")) {
+        function askDeleteSpeaker(name) {
+            openModal("Delete Speaker?", `Remove "${name}" from your saved roster?`, () => {
                 allSpeakers = allSpeakers.filter(s => s !== name);
                 localStorage.setItem('sdtm_speakers', JSON.stringify(allSpeakers));
                 renderSpeakerList(allSpeakers);
-            }
+            });
         }
 
         function showScreen(id) {
@@ -234,9 +287,7 @@
             document.querySelectorAll('.select-card').forEach(c => c.classList.remove('selected'));
             el.classList.add('selected');
             selectedTypeLabel = label;
-            if(label === 'Custom') {
-                lims = { g: prompt("Green min:",1)*60, y: prompt("Yellow min:",1.25)*60, r: prompt("Red min:",1.5)*60 };
-            } else { lims = { g, y, r }; }
+            lims = { g, y, r };
         }
 
         function startTimer() {
@@ -290,7 +341,6 @@
             }
         }
 
-        function clearLogs() { if(confirm("Clear meeting logs?")) { localStorage.removeItem('sdtm_logs'); location.reload(); } }
         if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
     </script>
 </body>
