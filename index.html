@@ -33,7 +33,7 @@
 
         .header { padding: 50px 20px 20px; text-align: left; flex-shrink: 0; }
         h1 { margin: 0; font-size: clamp(34px, 5vw, 55px); font-weight: 800; }
-        .subtitle { opacity: 0.5; font-size: clamp(17px, 2.5vw, 26px); margin-top: 5px; }
+        .subtitle { opacity: 0.5; font-size: clamp(17px, 2.5vw, 26px); margin-top: 5px; color: var(--accent); }
 
         .container { 
             flex: 1; 
@@ -137,12 +137,12 @@
         input { background: var(--card); border: none; color: white; padding: clamp(18px, 3vw, 25px); border-radius: 14px; font-size: clamp(18px, 2.5vw, 24px); width: 100%; box-sizing: border-box;}
     </style>
 </head>
-<body>
+<body onload="initApp()">
 
     <div id="menu" class="screen active">
-        <div class="header">
+        <div class="header" onclick="setClubName()">
             <h1>Meeting Timer</h1>
-            <div class="subtitle">Toastmasters International</div>
+            <div id="clubSubtitle" class="subtitle">Tap to set club name</div>
         </div>
         <div class="container">
             <button class="card" onclick="showScreen('setup')">
@@ -193,7 +193,7 @@
     </div>
 
     <div id="report" class="screen">
-        <div class="header"><h1>Meeting Report</h1></div>
+        <div class="header"><h1 id="reportTitle">Meeting Report</h1></div>
         <div class="container">
             <div id="reportLog"></div>
             <div class="button-row">
@@ -206,6 +206,24 @@
     <script>
         let state="ready", elapsed=0, start, iv, lims={}, selectedTypeLabel="";
         
+        function initApp() {
+            const savedName = localStorage.getItem('sdtm_club_name');
+            if (savedName) {
+                document.getElementById('clubSubtitle').innerText = savedName;
+                document.getElementById('clubSubtitle').style.color = "rgba(255,255,255,0.5)";
+                document.getElementById('reportTitle').innerText = savedName + " Report";
+            }
+        }
+
+        function setClubName() {
+            const current = localStorage.getItem('sdtm_club_name') || "";
+            const name = prompt("Enter your Club Name:", current);
+            if (name !== null) {
+                localStorage.setItem('sdtm_club_name', name);
+                initApp();
+            }
+        }
+
         function showScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
@@ -265,10 +283,11 @@
         async function shareReport() {
             const logs = JSON.parse(localStorage.getItem('sdtm_logs')||"[]");
             if (logs.length === 0) return alert("Nothing to share.");
-            const text = "Meeting Timer Report:\n\n" + logs.join('\n');
+            const club = localStorage.getItem('sdtm_club_name') || "Meeting";
+            const text = club + " Timer Report:\n\n" + logs.join('\n');
             try {
                 if (navigator.share) {
-                    await navigator.share({ title: 'Meeting Timer Report', text: text });
+                    await navigator.share({ title: club + ' Timer Report', text: text });
                 } else {
                     const textArea = document.createElement("textarea");
                     textArea.value = text;
