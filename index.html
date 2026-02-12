@@ -31,22 +31,9 @@
             overflow: hidden;
         }
 
-        /* HEADER: Responsive Font Size */
-        .header { 
-            padding: 50px 20px 20px; 
-            text-align: left; 
-            flex-shrink: 0; 
-        }
-        h1 { 
-            margin: 0; 
-            font-size: clamp(34px, 5vw, 50px); /* Scales between 34px and 50px */
-            font-weight: 800; 
-        }
-        .subtitle { 
-            opacity: 0.5; 
-            font-size: clamp(17px, 2.5vw, 24px); 
-            margin-top: 5px; 
-        }
+        .header { padding: 50px 20px 20px; text-align: left; flex-shrink: 0; }
+        h1 { margin: 0; font-size: clamp(34px, 5vw, 50px); font-weight: 800; }
+        .subtitle { opacity: 0.5; font-size: clamp(17px, 2.5vw, 24px); margin-top: 5px; }
 
         .container { 
             flex: 1; 
@@ -56,7 +43,7 @@
             gap: 20px; 
             overflow: hidden; 
             min-height: 0;
-            max-width: 800px; /* Centers the content on large iPad screens */
+            max-width: 800px; 
             margin: 0 auto;
             width: 100%;
             box-sizing: border-box;
@@ -65,7 +52,7 @@
         .screen { display: none; flex-direction: column; height: 100%; overflow: hidden; }
         .active { display: flex; }
 
-        /* CARDS: Larger touch targets for tablets */
+        /* BUTTONS & CARDS */
         .card { 
             background: var(--card); 
             border-radius: 18px; 
@@ -78,38 +65,24 @@
             text-align: left; 
             width: 100%; 
         }
-        .card-content h3 { 
-            margin: 0; 
-            font-size: clamp(20px, 3vw, 28px); 
-            font-weight: 700; 
-        }
-        .card-content p { 
-            margin: 8px 0 0; 
-            font-size: clamp(14px, 2vw, 18px); 
-            opacity: 0.6; 
+
+        /* FIXED: High-Contrast Clear Logs Button */
+        .clear-btn {
+            background: rgba(255, 69, 58, 0.15);
+            border: 2px solid var(--red);
+            border-radius: 18px;
+            padding: 20px;
+            color: var(--red);
+            font-size: clamp(18px, 2.5vw, 24px);
+            font-weight: 700;
+            margin-top: auto;
+            margin-bottom: 20px;
+            text-align: center;
         }
 
-        .icon-circle { 
-            width: clamp(36px, 5vw, 50px); 
-            height: clamp(36px, 5vw, 50px); 
-            background: var(--accent); 
-            border-radius: 50%; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            font-weight: bold;
-            font-size: 20px;
-        }
-
-        /* TIMER: Massive scaling for iPad visibility */
-        #timerDisplay { justify-content: center; text-align: center; }
-        #timer { 
-            font-size: clamp(100px, 30vw, 300px); 
-            font-weight: 200; 
-            font-variant-numeric: tabular-nums; 
-            margin: 10px 0; 
-        }
-
+        /* TIMER & DISPLAY */
+        #timer { font-size: clamp(100px, 30vw, 300px); font-weight: 200; font-variant-numeric: tabular-nums; margin: 10px 0; text-align: center;}
+        
         #reportLog { 
             background: var(--card); 
             border-radius: 16px; 
@@ -118,8 +91,9 @@
             overflow-y: auto; 
             white-space: pre-wrap; 
             font-family: monospace; 
-            font-size: clamp(16px, 2vw, 22px); 
+            font-size: clamp(16px, 2.5vw, 22px); 
             border: 1px solid #333;
+            color: #efeff4;
         }
 
         .button-row { display: flex; gap: 15px; padding: 20px 0; flex-shrink: 0; }
@@ -134,13 +108,11 @@
             color: white; 
         }
         .secondary-btn { background: #333; }
-        
-        /* Grid Adjustments for Tablet */
-        .selection-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px; }
+
         .select-card { background: var(--card); border-radius: 14px; padding: 20px; text-align: center; border: 2px solid transparent; }
         .select-card.selected { border-color: var(--accent); background: #2c2c2e; }
-        .select-card h4 { margin: 0; font-size: clamp(16px, 2.5vw, 22px); }
-        
+        .selection-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+
         input { background: var(--card); border: none; color: white; padding: 20px; border-radius: 12px; font-size: 20px; }
     </style>
 </head>
@@ -157,17 +129,18 @@
                     <h3>New Timer</h3>
                     <p>Start a new speech session</p>
                 </div>
-                <div class="icon-circle">＋</div>
+                <div class="icon-circle" style="background:var(--accent); width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold;">＋</div>
             </button>
             <button class="card" onclick="showScreen('report')">
                 <div class="card-content">
                     <h3>Meeting Report</h3>
                     <p>View recorded speaker times</p>
                 </div>
-                <div class="icon-circle">☰</div>
+                <div class="icon-circle" style="background:var(--accent); width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold;">☰</div>
             </button>
-            <button class="card" onclick="clearLogs()" style="margin-top:auto; opacity:0.6; margin-bottom: 20px;">
-                <div style="color:var(--red)">Clear Meeting Logs</div>
+            
+            <button class="clear-btn" onclick="clearLogs()">
+                CLEAR MEETING LOGS
             </button>
         </div>
     </div>
@@ -191,9 +164,9 @@
     </div>
 
     <div id="timerDisplay" class="screen" onclick="handleTap()">
-        <div id="spkName" style="font-size:clamp(24px, 4vw, 40px); opacity: 0.5;">Speaker</div>
+        <div id="spkName" style="font-size:clamp(24px, 4vw, 40px); opacity: 0.5; margin-top:20px;">Speaker</div>
         <div id="timer">00:00</div>
-        <div id="status" style="font-size:clamp(20px, 3vw, 30px);">Tap to Start</div>
+        <div id="status" style="font-size:clamp(20px, 3vw, 30px); font-weight:bold; letter-spacing:2px;">TAP TO START</div>
     </div>
 
     <div id="report" class="screen">
@@ -201,7 +174,7 @@
         <div class="container">
             <div id="reportLog"></div>
             <div class="button-row">
-                <button class="footer-btn secondary-btn" onclick="shareReport()">Share</button>
+                <button class="footer-btn secondary-btn" id="shareButton" onclick="shareReport()">Share Report</button>
                 <button class="footer-btn" onclick="showScreen('menu')">Done</button>
             </div>
         </div>
@@ -241,7 +214,7 @@
             } else if (state === "run") {
                 state = "done"; clearInterval(iv);
                 saveLog();
-                statusEl.innerText = "Paused (Tap to Reset)";
+                statusEl.innerText = "PAUSED (Tap to Reset)";
             } else { location.reload(); }
         }
 
@@ -249,7 +222,7 @@
             elapsed = Math.floor((Date.now() - start) / 1000);
             let m = Math.floor(elapsed/60).toString().padStart(2,'0'), s = (elapsed%60).toString().padStart(2,'0');
             document.getElementById('timer').innerText = `${m}:${s}`;
-            document.getElementById('status').innerText = "Timing...";
+            document.getElementById('status').innerText = "TIMING...";
             if(elapsed >= lims.r) { document.body.style.background = "var(--red)"; document.body.style.color="white"; }
             else if(elapsed >= lims.y) { document.body.style.background = "var(--yellow)"; document.body.style.color="black"; }
             else if(elapsed >= lims.g) { document.body.style.background = "var(--green)"; document.body.style.color="white"; }
@@ -263,18 +236,43 @@
 
         function loadReport() {
             let logs = JSON.parse(localStorage.getItem('sdtm_logs')||"[]");
-            document.getElementById('reportLog').innerText = logs.length ? logs.join('\n') : "No data.";
+            document.getElementById('reportLog').innerText = logs.length ? logs.join('\n') : "No data logged yet.";
         }
 
+        // FIXED: Robust sharing function
         async function shareReport() {
             const logs = JSON.parse(localStorage.getItem('sdtm_logs')||"[]");
+            if (logs.length === 0) return alert("Nothing to share.");
+            
             const text = "SDTM Timer Report:\n\n" + logs.join('\n');
-            if (navigator.share) {
-                await navigator.share({ title: 'SDTM Timer Report', text: text });
-            } else { alert("Sharing not supported"); }
+            
+            try {
+                if (navigator.share) {
+                    await navigator.share({
+                        title: 'Southern Dutchess Timer Report',
+                        text: text
+                    });
+                } else {
+                    // Fallback for browsers that don't support sharing
+                    const textArea = document.createElement("textarea");
+                    textArea.value = text;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    alert("Report copied to clipboard!");
+                }
+            } catch (err) {
+                console.log("Sharing failed", err);
+            }
         }
 
-        function clearLogs() { if(confirm("Clear logs?")) { localStorage.removeItem('sdtm_logs'); location.reload(); } }
+        function clearLogs() { 
+            if(confirm("Wipe all speaker logs for this meeting?")) { 
+                localStorage.removeItem('sdtm_logs'); 
+                location.reload(); 
+            } 
+        }
         if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
     </script>
 </body>
