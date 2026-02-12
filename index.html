@@ -6,48 +6,172 @@
     <title>SDTM Timer</title>
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <style>
-        body { margin: 0; background: black; color: white; font-family: -apple-system; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; text-align: center; }
-        .screen { display: none; flex-direction: column; gap: 20px; width: 85%; }
+        :root {
+            --bg: #000000;
+            --card: #1c1c1e;
+            --accent: #0a84ff;
+            --text: #ffffff;
+            --red: #ff453a;
+            --green: #32d74b;
+            --yellow: #ffd60a;
+        }
+
+        body { 
+            margin: 0; 
+            background: var(--bg); 
+            color: var(--text); 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex; 
+            flex-direction: column; 
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .header {
+            padding: 60px 20px 20px;
+            text-align: left;
+        }
+
+        h1 { margin: 0; font-size: 34px; font-weight: 800; }
+        .subtitle { opacity: 0.5; font-size: 17px; margin-top: 5px; }
+
+        .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 0 20px;
+            gap: 15px;
+        }
+
+        .screen { display: none; flex-direction: column; height: 100%; }
         .active { display: flex; }
-        #timer { font-size: 120px; font-weight: bold; font-variant-numeric: tabular-nums; }
-        button { padding: 20px; font-size: 20px; border-radius: 12px; border: none; background: #333; color: white; font-weight: bold; }
-        .primary { background: #007AFF; }
-        #reportLog { text-align: left; background: #1c1c1e; padding: 15px; border-radius: 10px; max-height: 300px; overflow-y: auto; white-space: pre-wrap; }
+
+        /* Card Styling */
+        .card {
+            background: var(--card);
+            border-radius: 14px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            text-decoration: none;
+            color: inherit;
+            border: none;
+            width: 100%;
+            text-align: left;
+            transition: background 0.2s;
+        }
+
+        .card:active { background: #2c2c2e; }
+
+        .card-content h3 { margin: 0; font-size: 19px; font-weight: 600; }
+        .card-content p { margin: 5px 0 0; font-size: 14px; opacity: 0.6; }
+
+        .icon-circle {
+            width: 36px;
+            height: 36px;
+            background: var(--accent);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        /* Input Styling */
+        input, select {
+            background: var(--card);
+            border: none;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 17px;
+            margin-bottom: 10px;
+        }
+
+        /* Timer UI */
+        #timerDisplay { justify-content: center; text-align: center; }
+        #timer { font-size: 120px; font-weight: 200; font-variant-numeric: tabular-nums; margin: 20px 0; }
+        #status { font-size: 20px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Report area */
+        #reportLog { background: var(--card); border-radius: 12px; padding: 15px; flex: 1; overflow-y: auto; font-family: monospace; }
+        
+        .footer-btn {
+            margin-top: auto;
+            margin-bottom: 40px;
+            padding: 18px;
+            border-radius: 14px;
+            font-size: 17px;
+            font-weight: 600;
+            border: none;
+            background: var(--accent);
+            color: white;
+        }
     </style>
 </head>
 <body>
 
     <div id="menu" class="screen active">
-        <h1>Southern Dutchess</h1>
-        <button class="primary" onclick="showScreen('setup')">New Timer</button>
-        <button onclick="showScreen('report')">Meeting Report</button>
-        <button style="color:#ff453a" onclick="clearLogs()">Clear Logs</button>
+        <div class="header">
+            <h1>SDTM Timer</h1>
+            <div class="subtitle">Southern Dutchess Toastmasters</div>
+        </div>
+        <div class="container">
+            <button class="card" onclick="showScreen('setup')">
+                <div class="card-content">
+                    <h3>New Timer</h3>
+                    <p>Start a new speech session</p>
+                </div>
+                <div class="icon-circle">＋</div>
+            </button>
+
+            <button class="card" onclick="showScreen('report')">
+                <div class="card-content">
+                    <h3>Meeting Report</h3>
+                    <p>View recorded speaker times</p>
+                </div>
+                <div class="icon-circle">☰</div>
+            </button>
+
+            <button class="card" onclick="clearLogs()" style="margin-top: 20px; opacity: 0.8;">
+                <div class="card-content">
+                    <h3 style="color: var(--red)">Reset All</h3>
+                    <p>Wipe current meeting logs</p>
+                </div>
+            </button>
+        </div>
     </div>
 
     <div id="setup" class="screen">
-        <input type="text" id="name" placeholder="Speaker Name" style="padding:15px; border-radius:8px;">
-        <select id="type" style="padding:15px; border-radius:8px;">
-            <option value="60,90,120">Table Topics (1-2m)</option>
-            <option value="120,150,180">Evaluation (2-3m)</option>
-            <option value="300,360,420">Speech (5-7m)</option>
-            <option value="240,300,360">Ice Breaker (4-6m)</option>
-        </select>
-        <button class="primary" onclick="startTimer()">Start</button>
-        <button onclick="showScreen('menu')">Cancel</button>
+        <div class="header"><h1>Speech Details</h1></div>
+        <div class="container">
+            <input type="text" id="name" placeholder="Speaker Name" autocomplete="off">
+            <select id="type">
+                <option value="60,90,120">Table Topics (1-2 min)</option>
+                <option value="120,150,180">Evaluation (2-3 min)</option>
+                <option value="300,360,420">Speech (5-7 min)</option>
+                <option value="240,300,360">Ice Breaker (4-6 min)</option>
+            </select>
+            <button class="footer-btn" onclick="startTimer()">Begin Timing</button>
+            <button style="background:none; color:var(--accent); border:none;" onclick="showScreen('menu')">Cancel</button>
+        </div>
     </div>
 
     <div id="timerDisplay" class="screen" onclick="handleTap()">
-        <div id="spkName" style="font-size:24px; color:#aaa">Name</div>
+        <div id="spkName" style="font-size:24px; opacity: 0.5;">Speaker</div>
         <div id="timer">00:00</div>
-        <div id="status">TAP TO START</div>
+        <div id="status">Tap to Start</div>
     </div>
 
     <div id="report" class="screen">
-        <h3>Timer's Report</h3>
-        <div id="reportLog"></div>
-        <button onclick="showScreen('menu')">Back</button>
+        <div class="header"><h1>Meeting Report</h1></div>
+        <div class="container">
+            <div id="reportLog"></div>
+            <button class="footer-btn" onclick="showScreen('menu')">Done</button>
+        </div>
     </div>
 
     <script>
@@ -56,6 +180,8 @@
         function showScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
+            document.body.style.background = "black";
+            document.body.style.color = "white";
             if(id === 'report') loadReport();
         }
 
@@ -73,6 +199,7 @@
             } else if (state === "run") {
                 state = "done"; clearInterval(iv);
                 saveLog();
+                document.getElementById('status').innerText = "Paused (Tap to Reset)";
             } else { location.reload(); }
         }
 
@@ -80,25 +207,26 @@
             elapsed = Math.floor((Date.now() - start) / 1000);
             let m = Math.floor(elapsed/60).toString().padStart(2,'0'), s = (elapsed%60).toString().padStart(2,'0');
             document.getElementById('timer').innerText = m+":"+s;
-            if(elapsed >= lims.r) document.body.style.background = "#d32f2f";
-            else if(elapsed >= lims.y) { document.body.style.background = "#fbc02d"; document.body.style.color="black"; }
-            else if(elapsed >= lims.g) document.body.style.background = "#388e3c";
+            document.getElementById('status').innerText = "Timing...";
+
+            if(elapsed >= lims.r) { document.body.style.background = "var(--red)"; document.body.style.color="white"; }
+            else if(elapsed >= lims.y) { document.body.style.background = "var(--yellow)"; document.body.style.color="black"; }
+            else if(elapsed >= lims.g) { document.body.style.background = "var(--green)"; document.body.style.color="white"; }
         }
 
         function saveLog() {
             let logs = JSON.parse(localStorage.getItem('sdtm_logs')||"[]");
-            logs.push(`${document.getElementById('spkName').innerText}: ${document.getElementById('timer').innerText}`);
+            logs.push(`${document.getElementById('spkName').innerText} | ${document.getElementById('timer').innerText}`);
             localStorage.setItem('sdtm_logs', JSON.stringify(logs));
         }
 
         function loadReport() {
             let logs = JSON.parse(localStorage.getItem('sdtm_logs')||"[]");
-            document.getElementById('reportLog').innerText = logs.length ? logs.join('\n') : "No logs.";
+            document.getElementById('reportLog').innerText = logs.length ? logs.join('\n') : "No data recorded yet.";
         }
 
-        function clearLogs() { if(confirm("Clear?")) localStorage.removeItem('sdtm_logs'); }
+        function clearLogs() { if(confirm("Clear all speaker logs?")) { localStorage.removeItem('sdtm_logs'); location.reload(); } }
 
-        // Register Service Worker
         if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
     </script>
 </body>
