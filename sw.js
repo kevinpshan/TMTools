@@ -1,4 +1,4 @@
-const CACHE_NAME = 'SDTM-TIMER-V1.1'; // Change this to update the version
+my const CACHE_NAME = 'SDTM-TIMER-V1.1'; // Change this to update the version
 const ASSETS = [
   'index.html',
   'manual.html',
@@ -35,8 +35,9 @@ self.addEventListener('activate', (event) => {
 // 3. Fetch Phase - Serve from cache, then network
 self.addEventListener('fetch', (event) => {
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
+    fetch(event.request).catch(() => {
+      return caches.match(event.request);
     })
   );
 });
+
