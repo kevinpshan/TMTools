@@ -33,7 +33,6 @@
         h1 { margin: 0; font-size: clamp(34px, 5vw, 55px); font-weight: 800; color: #1C1C1E; }
         .subtitle { font-size: clamp(17px, 2.5vw, 26px); margin-top: 5px; color: var(--accent); font-weight: 700; }
 
-        /* SETTINGS ICON */
         .settings-icon {
             position: absolute; top: 30px; right: 20px; font-size: 32px; 
             color: var(--accent); cursor: pointer; padding: 5px; z-index: 10;
@@ -48,7 +47,6 @@
         .screen { display: none; flex-direction: column; height: 100%; overflow: hidden; }
         .active { display: flex; }
 
-        /* MODAL */
         #customModal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.4); z-index: 9999; align-items: center; justify-content: center;
@@ -60,7 +58,6 @@
             border: 1px solid var(--border);
         }
 
-        /* CARDS */
         .card { 
             background: var(--card); border-radius: 18px; padding: clamp(20px, 3.5vw, 35px); 
             display: flex; align-items: center; justify-content: space-between; 
@@ -90,7 +87,7 @@
         .selection-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; flex-shrink: 0; }
         .select-card { 
             background: var(--card); border-radius: 14px; padding: 12px; 
-            text-align: center; border: 1px solid var(--border);
+            text-align: center; border: 1px solid var(--border); cursor: pointer;
         }
         .select-card.selected { border: 3px solid var(--accent); background: #E8F2FF; }
         .select-card h4 { margin: 0; font-size: 20px; color: #1C1C1E; }
@@ -201,7 +198,7 @@
                 <div class="select-card" onclick="selectType(this, 120, 150, 180, 'EVALUATION')"><h4>Evaluation</h4><p>2-3m</p></div>
                 <div class="select-card" onclick="selectType(this, 300, 360, 420, 'SPEECH')"><h4>Speech</h4><p>5-7m</p></div>
                 <div class="select-card" onclick="selectType(this, 240, 300, 360, 'ICE BREAKER')"><h4>Ice Breaker</h4><p>4-6m</p></div>
-                <div class="select-card" style="grid-column: span 2;" onclick="askCustomTime()"><h4>Custom Time</h4><p>Manual Entry</p></div>
+                <div id="custom-card" class="select-card" style="grid-column: span 2;" onclick="askCustomTime(this)"><h4>Custom Time</h4><p>Manual Entry</p></div>
             </div>
         </div>
         <div class="button-row">
@@ -270,7 +267,7 @@
             });
         }
 
-        function askCustomTime() {
+        function askCustomTime(el) {
             openModal("Custom Thresholds", `
                 <div style="display:grid; gap:10px; text-align:left;">
                     <label>Green (Min): <input type="number" id="cg" value="5"></label>
@@ -283,7 +280,9 @@
                     r: document.getElementById('cr').value * 60
                 };
                 selectedTypeLabel = "CUSTOM";
+                // ADDED: Highlighting logic for the custom card
                 document.querySelectorAll('.select-card').forEach(c => c.classList.remove('selected'));
+                el.classList.add('selected');
             });
         }
 
@@ -409,16 +408,12 @@
         }
 
         function commitAndExit() {
-            // FIX: Stop the timer interval so it doesn't continue in the background
             clearInterval(iv);
-            
             if (elapsed > 0) {
                 let logs = JSON.parse(localStorage.getItem('sdtm_logs')||"[]");
                 logs.push(`${document.getElementById('spkName').innerText} | ${selectedTypeLabel}: ${document.getElementById('timer').innerText}`);
                 localStorage.setItem('sdtm_logs', JSON.stringify(logs));
             }
-            
-            // FIX: Ensure background and text colors are reset before returning to menu
             document.body.style.background = "var(--bg)";
             document.body.style.color = "var(--text)";
             showScreen('menu');
