@@ -28,9 +28,15 @@
             box-sizing: border-box; overflow: hidden;
         }
 
-        .header { padding: 30px 20px 10px; text-align: left; flex-shrink: 0; }
+        .header { padding: 30px 20px 10px; text-align: left; flex-shrink: 0; position: relative; }
         h1 { margin: 0; font-size: clamp(34px, 5vw, 55px); font-weight: 800; color: #1C1C1E; }
         .subtitle { font-size: clamp(17px, 2.5vw, 26px); margin-top: 5px; color: var(--accent); font-weight: 700; }
+
+        /* SETTINGS ICON - Floating in top right to avoid design shift */
+        .settings-icon {
+            position: absolute; top: 35px; right: 20px; font-size: 28px; 
+            color: var(--accent); cursor: pointer; padding: 10px; z-index: 10;
+        }
 
         .container { 
             flex: 1; display: flex; flex-direction: column; padding: 0 20px; 
@@ -130,9 +136,12 @@
     </div>
 
     <div id="menu" class="screen active">
-        <div class="header" onclick="askClubName()">
-            <h1>Meeting Timer</h1>
-            <div id="clubSubtitle" class="subtitle">Tap to set club name</div>
+        <div class="header">
+            <div onclick="askClubName()">
+                <h1>Meeting Timer</h1>
+                <div id="clubSubtitle" class="subtitle">Tap to set club name</div>
+            </div>
+            <div class="settings-icon" onclick="showScreen('settings')">⚙</div>
         </div>
         <div class="container">
             <button class="card" onclick="showScreen('setup')">
@@ -155,6 +164,28 @@
             </div>
             <p class="credit-text">Created by Southern Dutchess Toastmasters</p>
             <span class="version-tag">Version 1.0 (TEST)</span>
+        </div>
+    </div>
+
+    <div id="settings" class="screen">
+        <div class="header"><h1>Settings</h1></div>
+        <div class="container">
+            <p style="font-size: 18px; color: var(--subtext); margin-bottom: 20px;">Manage your Roster and App data.</p>
+            
+            <button class="card" onclick="exportRoster()">
+                <div class="card-content"><h3>Export Roster</h3><p>Save list to a JSON file</p></div>
+                <div style="font-size:30px; color:var(--accent)">⤓</div>
+            </button>
+
+            <button class="card" onclick="document.getElementById('importFile').click()">
+                <div class="card-content"><h3>Import Roster</h3><p>Load list from a JSON file</p></div>
+                <div style="font-size:30px; color:var(--accent)">⤒</div>
+            </button>
+            
+            <input type="file" id="importFile" style="display:none" onchange="handleImportFile(this)">
+        </div>
+        <div class="button-row">
+            <button class="footer-btn" onclick="showScreen('menu')">Back to Menu</button>
         </div>
     </div>
 
@@ -197,11 +228,6 @@
         <div class="header"><h1 id="reportTitle">Meeting Report</h1></div>
         <div class="container">
             <div id="reportLog"></div>
-            <input type="file" id="importFile" style="display:none" onchange="handleImportFile(this)">
-            <div style="display:flex; gap:10px; margin-top:10px;">
-                <button class="footer-btn secondary-btn" style="font-size:16px; padding:12px;" onclick="exportRoster()">Export Roster</button>
-                <button class="footer-btn secondary-btn" style="font-size:16px; padding:12px;" onclick="document.getElementById('importFile').click()">Import Roster</button>
-            </div>
         </div>
         <div class="button-row">
             <button class="footer-btn secondary-btn" onclick="shareReport()">Share</button>
@@ -435,7 +461,6 @@
                     openModal("Import Roster?", "This will overwrite your current list and club name. Proceed?", () => {
                         if (data.speakers) {
                             localStorage.setItem('sdtm_speakers', JSON.stringify(data.speakers));
-                            // Update the live variable so changes appear immediately
                             allSpeakers = data.speakers;
                             renderSpeakerList(allSpeakers);
                         }
@@ -443,7 +468,6 @@
                             localStorage.setItem('sdtm_club_name', data.club);
                             document.getElementById('clubSubtitle').innerText = data.club;
                         }
-                        
                         openModal("Success", "Roster imported successfully.", () => {});
                         document.getElementById('modalCancel').style.display = 'none';
                     });
