@@ -1,43 +1,34 @@
-const CACHE_NAME = 'SDTM-TIMER-V1.1'; // Update this whenever you change index.html
-
+const CACHE_NAME = 'sdtm-test-v1.0';
 const ASSETS = [
-  'index.html',
-  'manual.html',
-  'manifest.json'
+    'index.html',
+    'manifest.json',
+    'manual.html'
 ];
 
-// 1. Install Phase: Download new files and force immediate take-over
 self.addEventListener('install', (event) => {
-  self.skipWaiting(); // Forces the new service worker to become active immediately
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      console.log('Caching assets');
-      return cache.addAll(ASSETS);
-    })
-  );
-});
-
-// 2. Activate Phase: Delete any old caches to free up space and prevent conflicts
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cache) => {
-          if (cache !== CACHE_NAME) {
-            console.log('Deleting old cache:', cache);
-            return caches.delete(cache);
-          }
+    event.waitUntil(
+        caches.open(CACHE_NAME).then((cache) => {
+            return cache.addAll(ASSETS);
         })
-      );
-    }).then(() => self.clients.claim()) // Forces open pages to use this new worker immediately
-  );
+    );
+    self.skipWaiting(); // Forces the new service worker to take over immediately
 });
 
-// 3. Fetch Phase: Network-first strategy (Try internet first, then use cache if offline)
+self.addEventListener('activate', (event) => {
+    event.waitUntil(
+        caches.keys().then((keys) => {
+            return Promise.all(
+                keys.filter((key) => key !== CACHE_NAME)
+                    .map((key) => caches.delete(key))
+            );
+        })
+    );
+});
+
 self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    fetch(event.request).catch(() => {
-      return caches.match(event.request);
-    })
-  );
+    event.respondWith(
+        caches.match(event.request).then((response) => {
+            return response || fetch(event.request);
+        })
+    );
 });
