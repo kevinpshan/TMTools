@@ -197,9 +197,9 @@
         <div class="header"><h1 id="reportTitle">Meeting Report</h1></div>
         <div class="container">
             <div id="reportLog"></div>
-            <input type="file" id="importFile" style="display:none" onchange="importData(this)">
+            <input type="file" id="importFile" style="display:none" onchange="handleImportFile(this)">
             <div style="display:flex; gap:10px; margin-top:10px;">
-                <button class="footer-btn secondary-btn" style="font-size:16px; padding:12px;" onclick="exportData()">Export Roster</button>
+                <button class="footer-btn secondary-btn" style="font-size:16px; padding:12px;" onclick="exportRoster()">Export Roster</button>
                 <button class="footer-btn secondary-btn" style="font-size:16px; padding:12px;" onclick="document.getElementById('importFile').click()">Import Roster</button>
             </div>
         </div>
@@ -405,44 +405,49 @@
             else { alert("Copied to clipboard!"); }
         }
 
-        // --- NEW FILE LOGIC ---
+        // --- UPDATED EXPORT/IMPORT LOGIC ---
 
-        function exportData() {
+        function exportRoster() {
             const data = {
                 speakers: localStorage.getItem('sdtm_speakers'),
-                club: localStorage.getItem('sdtm_club_name'),
-                logs: localStorage.getItem('sdtm_logs')
+                club: localStorage.getItem('sdtm_club_name')
             };
             const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `SDTM_Backup_${new Date().toISOString().slice(0,10)}.json`;
+            a.download = `SDTM_Roster_${new Date().toISOString().slice(0,10)}.json`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
         }
 
-        function importData(input) {
+        function handleImportFile(input) {
             const file = input.files[0];
             if (!file) return;
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
                     const data = JSON.parse(e.target.result);
-                    if (confirm("Importing will overwrite your current roster and settings. Proceed?")) {
+                    // Use custom modal for confirmation
+                    openModal("Import Roster?", "This will overwrite your current list and club name. Proceed?", () => {
                         if (data.speakers) localStorage.setItem('sdtm_speakers', data.speakers);
                         if (data.club) localStorage.setItem('sdtm_club_name', data.club);
-                        if (data.logs) localStorage.setItem('sdtm_logs', data.logs);
-                        alert("Import successful! Reloading...");
-                        location.reload();
-                    }
+                        
+                        // Use custom modal for success notice
+                        openModal("Success", "Roster imported successfully. The app will now reload.", () => {
+                            location.reload();
+                        });
+                        // Hide cancel button for success notice
+                        document.getElementById('modalCancel').style.display = 'none';
+                    });
                 } catch (err) {
-                    alert("Error: Invalid backup file.");
+                    openModal("Error", "Invalid roster file format.", () => {});
                 }
             };
             reader.readAsText(file);
+            input.value = ""; // Reset input
         }
 
         if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
