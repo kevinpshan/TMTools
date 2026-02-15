@@ -228,7 +228,9 @@
                 onConfirm();
                 document.getElementById('customModal').style.display = 'none';
             };
-            document.getElementById('modalCancel').onclick = () => {
+            const cancelBtn = document.getElementById('modalCancel');
+            cancelBtn.style.display = 'block'; // Reset display
+            cancelBtn.onclick = () => {
                 document.getElementById('customModal').style.display = 'none';
             };
         }
@@ -405,14 +407,20 @@
             else { alert("Copied to clipboard!"); }
         }
 
-        // --- UPDATED EXPORT/IMPORT LOGIC ---
+        // --- FIXED EXPORT/IMPORT LOGIC ---
 
         function exportRoster() {
-            const data = {
-                speakers: localStorage.getItem('sdtm_speakers'),
-                club: localStorage.getItem('sdtm_club_name')
+            // Get raw data from localStorage
+            const rawSpeakers = localStorage.getItem('sdtm_speakers');
+            const clubName = localStorage.getItem('sdtm_club_name');
+            
+            // Construct the backup object
+            const backupData = {
+                speakers: rawSpeakers ? JSON.parse(rawSpeakers) : [],
+                club: clubName || ""
             };
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            
+            const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -430,16 +438,20 @@
             reader.onload = function(e) {
                 try {
                     const data = JSON.parse(e.target.result);
-                    // Use custom modal for confirmation
+                    
                     openModal("Import Roster?", "This will overwrite your current list and club name. Proceed?", () => {
-                        if (data.speakers) localStorage.setItem('sdtm_speakers', data.speakers);
-                        if (data.club) localStorage.setItem('sdtm_club_name', data.club);
+                        // Ensure data is stringified back into localStorage format
+                        if (data.speakers) {
+                            localStorage.setItem('sdtm_speakers', JSON.stringify(data.speakers));
+                        }
+                        if (data.club) {
+                            localStorage.setItem('sdtm_club_name', data.club);
+                        }
                         
-                        // Use custom modal for success notice
+                        // Show final success notice
                         openModal("Success", "Roster imported successfully. The app will now reload.", () => {
                             location.reload();
                         });
-                        // Hide cancel button for success notice
                         document.getElementById('modalCancel').style.display = 'none';
                     });
                 } catch (err) {
@@ -447,7 +459,7 @@
                 }
             };
             reader.readAsText(file);
-            input.value = ""; // Reset input
+            input.value = ""; // Clear file input
         }
 
         if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
