@@ -198,7 +198,10 @@
                 <div class="select-card" onclick="selectType(this, 120, 150, 180, 'EVALUATION')"><h4>Evaluation</h4><p>2-3m</p></div>
                 <div class="select-card" onclick="selectType(this, 300, 360, 420, 'SPEECH')"><h4>Speech</h4><p>5-7m</p></div>
                 <div class="select-card" onclick="selectType(this, 240, 300, 360, 'ICE BREAKER')"><h4>Ice Breaker</h4><p>4-6m</p></div>
-                <div id="custom-card" class="select-card" style="grid-column: span 2;" onclick="askCustomTime(this)"><h4>Custom Time</h4><p>Manual Entry</p></div>
+                <div id="custom-card" class="select-card" style="grid-column: span 2;" onclick="askCustomTime(this)">
+                    <h4>Custom Time</h4>
+                    <p id="customLabel">Manual Entry</p>
+                </div>
             </div>
         </div>
         <div class="button-row">
@@ -268,19 +271,32 @@
         }
 
         function askCustomTime(el) {
+            // Retrieve last used values or default to 5,6,7
+            const savedCustom = JSON.parse(localStorage.getItem('sdtm_custom_limits') || '{"g":5,"y":6,"r":7}');
+            
             openModal("Custom Thresholds", `
                 <div style="display:grid; gap:10px; text-align:left;">
-                    <label>Green (Min): <input type="number" id="cg" value="5"></label>
-                    <label>Yellow (Min): <input type="number" id="cy" value="6"></label>
-                    <label>Red (Min): <input type="number" id="cr" value="7"></label>
+                    <label>Green (Min): <input type="number" id="cg" value="${savedCustom.g}"></label>
+                    <label>Yellow (Min): <input type="number" id="cy" value="${savedCustom.y}"></label>
+                    <label>Red (Min): <input type="number" id="cr" value="${savedCustom.r}"></label>
                 </div>`, () => {
+                const gVal = document.getElementById('cg').value;
+                const yVal = document.getElementById('cy').value;
+                const rVal = document.getElementById('cr').value;
+                
                 lims = { 
-                    g: document.getElementById('cg').value * 60,
-                    y: document.getElementById('cy').value * 60,
-                    r: document.getElementById('cr').value * 60
+                    g: gVal * 60,
+                    y: yVal * 60,
+                    r: rVal * 60
                 };
+                
+                // Save custom values
+                localStorage.setItem('sdtm_custom_limits', JSON.stringify({g: gVal, y: yVal, r: rVal}));
+                
+                // Update UI Label
+                document.getElementById('customLabel').innerText = `${gVal}-${rVal}m`;
+                
                 selectedTypeLabel = "CUSTOM";
-                // ADDED: Highlighting logic for the custom card
                 document.querySelectorAll('.select-card').forEach(c => c.classList.remove('selected'));
                 el.classList.add('selected');
             });
@@ -299,6 +315,13 @@
                 document.getElementById('clubSubtitle').innerText = savedName;
                 document.getElementById('reportTitle').innerText = savedName + " Report";
             }
+            
+            // Restore Custom Label if it exists
+            const savedCustom = JSON.parse(localStorage.getItem('sdtm_custom_limits'));
+            if (savedCustom) {
+                document.getElementById('customLabel').innerText = `${savedCustom.g}-${savedCustom.r}m`;
+            }
+            
             renderSpeakerList(allSpeakers); 
         }
 
