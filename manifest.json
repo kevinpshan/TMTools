@@ -1,6 +1,6 @@
 {
-  "name": "Meeting Timer",
-  "short_name": "Timer",
+  "name": "Meeting Timer TEST",
+  "short_name": "Timer TEST",
   "version": "1.0.0",
   "start_url": "index.html",
   "display": "standalone",
