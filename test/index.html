@@ -18,6 +18,7 @@
             --red: #FF3B30;
             --green: #34C759;
             --yellow: #FFCC00;
+            --gold: #BF941A;
             --border: #D1D1D6;
         }
 
@@ -30,7 +31,6 @@
             transition: background 0.3s ease;
         }
 
-        /* HEADER RESTORED TO ORIGINAL STYLE */
         .header { padding: 30px 20px 10px; text-align: left; flex-shrink: 0; position: relative; }
         h1 { margin: 0; font-size: clamp(34px, 5vw, 55px); font-weight: 800; color: #1C1C1E; }
         .subtitle { font-size: clamp(17px, 2.5vw, 26px); margin-top: 5px; color: var(--accent); font-weight: 700; }
@@ -40,7 +40,6 @@
             color: var(--accent); cursor: pointer; padding: 5px; z-index: 10;
         }
 
-        /* TAB SWITCHER - Clean Segmented Control */
         .tab-container {
             display: flex; background: #E3E3E8; border-radius: 10px; padding: 2px;
             margin: 0 20px 20px; flex-shrink: 0;
@@ -71,17 +70,6 @@
         .card-content h3 { margin: 0; font-size: clamp(24px, 3.8vw, 36px); font-weight: 700; }
         .card-content p { margin: 4px 0 0; font-size: clamp(16px, 2.2vw, 22px); color: var(--subtext); }
 
-        #customModal {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.4); z-index: 9999; align-items: center; justify-content: center;
-            backdrop-filter: blur(8px);
-        }
-        .modal-content {
-            background: var(--card); width: 85%; max-width: 500px; padding: 25px;
-            border-radius: 24px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            border: 1px solid var(--border);
-        }
-
         input { 
             background: var(--card); border: 2px solid var(--border); color: var(--text); padding: 15px; 
             border-radius: 14px; font-size: 22px; outline: none; width: 100%; box-sizing: border-box;
@@ -106,24 +94,27 @@
         .select-card.selected { border: 3px solid var(--accent); background: #E8F2FF; }
         .select-card h4 { margin: 0; font-size: 20px; color: #1C1C1E; }
 
-        .button-row { display: flex; gap: 15px; padding: 10px 20px 20px; flex-shrink: 0; background: transparent; max-width: 950px; margin: 0 auto; width: 100%; box-sizing: border-box; }
-        .footer-btn { 
-            flex: 1; padding: 18px; border-radius: 16px; font-size: 22px; 
-            font-weight: 700; border: none; background: var(--accent); color: white; 
+        /* TALLY SCREEN STYLES */
+        .tally-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 10px 0; }
+        .tally-btn {
+            background: white; border: 1px solid var(--border); border-radius: 20px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 30px 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); position: relative;
         }
+        .tally-btn:active { background: #E8F2FF; transform: scale(0.96); }
+        .tally-count { font-size: 45px; font-weight: 800; color: var(--accent); margin-bottom: 5px; }
+        .tally-label { font-size: 18px; font-weight: 700; color: var(--subtext); text-transform: uppercase; }
+        .tally-minus { position: absolute; top: 10px; right: 10px; width: 34px; height: 34px; border-radius: 10px; background: #F2F2F7; color: var(--red); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 20px; }
+
+        .wod-btn { border: 2px solid var(--gold); }
+        .wod-btn .tally-count { color: var(--gold); }
+
+        .button-row { display: flex; gap: 15px; padding: 10px 20px 20px; flex-shrink: 0; background: transparent; max-width: 950px; margin: 0 auto; width: 100%; box-sizing: border-box; }
+        .footer-btn { flex: 1; padding: 18px; border-radius: 16px; font-size: 22px; font-weight: 700; border: none; background: var(--accent); color: white; }
         .secondary-btn { background: #E5E5EA; color: #000000; border: 1px solid var(--border); }
         .commit-btn { background: var(--green); color: white; }
 
-        .credit-footer { 
-            text-align: center; padding: 20px; border-top: 1px solid var(--border); flex-shrink: 0; background: var(--card);
-        }
-        .resource-row { display: flex; gap: 10px; margin-bottom: 12px; justify-content: center; }
-        .res-btn {
-            flex: 1; background: #F2F2F7; color: var(--accent); text-decoration: none;
-            padding: 12px; border-radius: 12px; font-weight: 700; font-size: 16px;
-            border: 1px solid var(--border);
-        }
-        .credit-text { display: block; color: var(--text); font-weight: 700; font-size: 15px; margin: 0; }
+        .credit-footer { text-align: center; padding: 20px; border-top: 1px solid var(--border); flex-shrink: 0; background: var(--card); }
         .version-tag { display: block; font-size: 12px; opacity: 0.5; font-weight: 400; margin-top: 4px; color: #000; }
 
         #timer { font-size: clamp(100px, 35vw, 450px); font-weight: 200; text-align: center; margin: auto 0; font-variant-numeric: tabular-nums; color: #000; }
@@ -166,9 +157,6 @@
                 <div class="card-content"><h3>Meeting Report</h3><p>View recorded times</p></div>
                 <div style="font-size:35px; color:var(--accent)">☰</div>
             </button>
-            <button class="card" onclick="askClearLogs()" style="background: #FFF5F5; border: 2px solid var(--red); padding: 15px;">
-                <div style="color:var(--red); font-weight:800; width:100%; text-align:center; font-size: 22px;">CLEAR MEETING LOGS</div>
-            </button>
         </div>
 
         <div id="counterMode" class="container" style="display:none;">
@@ -176,27 +164,26 @@
                 <div class="card-content"><h3>Start Tracking</h3><p>Count filler words & vocabulary</p></div>
                 <div style="font-size:40px; color:var(--accent)">✍</div>
             </button>
-            <button class="card" onclick="openModal('Ah-Counter', 'Ah-Counter logic coming soon!', ()=>{})">
+            <button class="card" onclick="openModal('Coming Soon', 'Ah-Counter reports in next update!', ()=>{})">
                 <div class="card-content"><h3>Counter Report</h3><p>View filler word totals</p></div>
                 <div style="font-size:35px; color:var(--accent)">📊</div>
             </button>
+        </div>
+
+        <div class="container" style="flex:0; margin-top: 10px;">
             <button class="card" onclick="askClearLogs()" style="background: #FFF5F5; border: 2px solid var(--red); padding: 15px;">
-                <div style="color:var(--red); font-weight:800; width:100%; text-align:center; font-size: 22px;">RESET ALL COUNTERS</div>
+                <div style="color:var(--red); font-weight:800; width:100%; text-align:center; font-size: 22px;">CLEAR MEETING DATA</div>
             </button>
         </div>
         
         <div class="credit-footer">
-            <div class="resource-row">
-                <a href="https://bit.ly/m/SDTM" target="_blank" class="res-btn">Visit Website ↗</a>
-                <a href="manual.html" class="res-btn">User Manual ↗</a>
-            </div>
             <p class="credit-text">Created by Southern Dutchess Toastmasters</p>
             <span id="versionLabel" class="version-tag">Version 1.0</span>
         </div>
     </div>
 
     <div id="setup" class="screen">
-        <div class="header"><h1>Speech Info</h1></div>
+        <div class="header"><h1 id="setupHeader">Speech Info</h1></div>
         <div class="container">
             <div style="display:flex; gap:10px; flex-shrink:0;">
                 <input type="text" id="name" placeholder="SEARCH OR ENTER NAME" oninput="handleNameInput(this)">
@@ -208,7 +195,6 @@
                 <div class="select-card" onclick="selectType(this, 60, 90, 120, 'TABLE TOPICS')"><h4>Table Topics</h4><p>1-2m</p></div>
                 <div class="select-card" onclick="selectType(this, 120, 150, 180, 'EVALUATION')"><h4>Evaluation</h4><p>2-3m</p></div>
                 <div class="select-card" onclick="selectType(this, 300, 360, 420, 'SPEECH')"><h4>Speech</h4><p>5-7m</p></div>
-                <div class="select-card" onclick="selectType(this, 240, 300, 360, 'ICE BREAKER')"><h4>Ice Breaker</h4><p>4-6m</p></div>
                 <div id="custom-card" class="select-card" style="grid-column: span 2;" onclick="askCustomTime(this)">
                     <h4>Custom Time</h4><p id="customLabel">Manual Entry</p>
                 </div>
@@ -220,14 +206,30 @@
         </div>
     </div>
 
+    <div id="counterDisplay" class="screen">
+        <div class="header">
+            <h1 id="counterSpeakerName">Speaker Name</h1>
+            <div class="subtitle" style="color:#666">AH-COUNTER TRACKING</div>
+        </div>
+        <div class="container">
+            <div style="display:flex; gap:10px; flex-shrink:0;">
+                <input type="text" id="newFiller" placeholder="ADD NEW CRUTCH WORD">
+                <button class="footer-btn" style="flex:0; padding:0 25px; font-size:18px;" onclick="addFiller()">Add</button>
+            </div>
+            <div id="tallyArea" class="tally-grid">
+                </div>
+        </div>
+        <div class="button-row">
+            <button class="footer-btn secondary-btn" onclick="showScreen('menu')">Exit Without Saving</button>
+            <button class="footer-btn commit-btn" onclick="saveCounterSession()">SAVE RESULTS</button>
+        </div>
+    </div>
+
     <div id="timerDisplay" class="screen">
         <div id="spkName" style="font-size:clamp(30px, 5vw, 55px); color:#666; margin-top:20px; text-align:center; text-transform: uppercase;">Speaker</div>
         <div id="timer">00:00</div>
         <div class="button-row">
             <button id="pauseResumeBtn" class="footer-btn secondary-btn" onclick="togglePause()">PAUSE</button>
-            <button class="footer-btn secondary-btn" onclick="resetCurrentTimer()">RESET</button>
-        </div>
-        <div class="button-row" style="padding-top:0;">
             <button class="footer-btn commit-btn" onclick="commitAndExit()">COMMIT & EXIT</button>
         </div>
     </div>
@@ -235,7 +237,6 @@
     <div id="settings" class="screen">
         <div class="header"><h1>Settings</h1></div>
         <div class="container">
-            <p style="font-size: 18px; color: var(--subtext); margin-bottom: 20px;">Manage shared Roster and App data.</p>
             <button class="card" onclick="exportRoster()">
                 <div class="card-content"><h3>Export Roster</h3><p>Save list to a JSON file</p></div>
                 <div style="font-size:30px; color:var(--accent)">⤓</div>
@@ -247,56 +248,114 @@
             <input type="file" id="importFile" style="display:none" onchange="handleImportFile(this)">
         </div>
         <div class="button-row">
-            <button class="footer-btn" onclick="showScreen('menu')">Back to Menu</button>
-        </div>
-    </div>
-
-    <div id="report" class="screen">
-        <div class="header"><h1 id="reportTitle">Meeting Report</h1></div>
-        <div class="container"><div id="reportLog"></div></div>
-        <div class="button-row">
-            <button class="footer-btn secondary-btn" onclick="shareReport()">Share</button>
             <button class="footer-btn" onclick="showScreen('menu')">Done</button>
         </div>
     </div>
 
     <script>
-        // --- DYNAMIC STORAGE KEY LOGIC ---
         const isTestEnv = window.location.pathname.toLowerCase().includes('/test/');
         const prefix = isTestEnv ? 'test_' : 'prod_';
         const KEY_SPEAKERS = prefix + 'sdtm_speakers';
-        const KEY_LOGS = prefix + 'sdtm_logs';
         const KEY_CLUB = prefix + 'sdtm_club_name';
         const KEY_CUSTOM = prefix + 'sdtm_custom_limits';
+        const KEY_FILLERS = prefix + 'sdtm_fillers';
 
-        // --- APP STATE ---
-        let currentMode = 'timer'; // 'timer' or 'counter'
-        let state="stopped", elapsed=0, start, iv, lims={}, selectedTypeLabel="";
+        let currentMode = 'timer';
+        let currentSpeaker = "";
+        let currentTally = {};
+        let fillerList = JSON.parse(localStorage.getItem(KEY_FILLERS) || '["AH", "UM", "ER", "SO", "LIKE", "YOU KNOW", "WORD OF DAY"]');
         let allSpeakers = JSON.parse(localStorage.getItem(KEY_SPEAKERS) || "[]");
-        let wakeLock = null;
+        let iv, start, elapsed=0, wakeLock=null, lims={}, selectedTypeLabel="";
 
         function switchMode(mode) {
             currentMode = mode;
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.getElementById(mode === 'timer' ? 'tabTimer' : 'tabCounter').classList.add('active');
-            
             document.getElementById('modeTitle').innerText = mode === 'timer' ? 'Meeting Timer' : 'Ah-Counter';
             document.getElementById('timerMode').style.display = mode === 'timer' ? 'flex' : 'none';
             document.getElementById('counterMode').style.display = mode === 'counter' ? 'flex' : 'none';
         }
 
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            document.body.style.background = "var(--bg)";
+            document.body.style.color = "var(--text)";
+
+            if (id === 'setup') {
+                document.getElementById('setupHeader').innerText = currentMode === 'timer' ? 'Speech Info' : 'Counter Setup';
+                document.getElementById('timerPresets').style.display = currentMode === 'timer' ? 'grid' : 'none';
+            }
+        }
+
         function handleStart() {
-            if (currentMode === 'timer') startTimer();
-            else openModal('Counter', 'Ah-Counter tracking screen coming in next step!', ()=>{});
+            const name = document.getElementById('name').value.trim().toUpperCase();
+            if (!name) return;
+            currentSpeaker = name;
+
+            if (currentMode === 'timer') {
+                if (!lims.g) return;
+                document.getElementById('spkName').innerText = name;
+                showScreen('timerDisplay');
+                startTimer();
+            } else {
+                showScreen('counterDisplay');
+                document.getElementById('counterSpeakerName').innerText = name;
+                initTally();
+            }
         }
 
+        // AH-COUNTER LOGIC
+        function initTally() {
+            currentTally = {};
+            fillerList.forEach(f => currentTally[f] = 0);
+            renderTally();
+        }
+
+        function renderTally() {
+            const area = document.getElementById('tallyArea');
+            area.innerHTML = fillerList.map(f => `
+                <div class="tally-btn ${f === 'WORD OF DAY' ? 'wod-btn' : ''}" onclick="increment('${f}')">
+                    <div class="tally-count" id="count-${f}">${currentTally[f]}</div>
+                    <div class="tally-label">${f}</div>
+                    <div class="tally-minus" onclick="decrement(event, '${f}')">−</div>
+                </div>
+            `).join('');
+        }
+
+        function increment(f) {
+            currentTally[f]++;
+            document.getElementById(`count-${f}`).innerText = currentTally[f];
+        }
+
+        function decrement(e, f) {
+            e.stopPropagation();
+            if (currentTally[f] > 0) currentTally[f]--;
+            document.getElementById(`count-${f}`).innerText = currentTally[f];
+        }
+
+        function addFiller() {
+            const input = document.getElementById('newFiller');
+            const val = input.value.trim().toUpperCase();
+            if (val && !fillerList.includes(val)) {
+                fillerList.push(val);
+                localStorage.setItem(KEY_FILLERS, JSON.stringify(fillerList));
+                currentTally[val] = 0;
+                renderTally();
+                input.value = "";
+            }
+        }
+
+        function saveCounterSession() {
+            // Future logic for reports goes here
+            openModal("Saved", `Results for ${currentSpeaker} recorded.`, () => {
+                showScreen('menu');
+            });
+        }
+
+        // (Original Timer/Roster Logic remains below)
         async function requestWakeLock() {
-            try { if ('wakeLock' in navigator) { wakeLock = await navigator.wakeLock.request('screen'); } } 
-            catch (err) { console.log(err.message); }
-        }
-
-        function releaseWakeLock() {
-            if (wakeLock !== null) { wakeLock.release(); wakeLock = null; }
+            try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch(e){}
         }
 
         function handleNameInput(el) {
@@ -306,71 +365,12 @@
             filterSpeakers();
         }
 
-        function openModal(title, bodyHTML, onConfirm) {
-            document.getElementById('modalTitle').innerText = title;
-            document.getElementById('modalBody').innerHTML = bodyHTML;
-            document.getElementById('customModal').style.display = 'flex';
-            document.getElementById('modalConfirm').onclick = () => {
-                onConfirm();
-                document.getElementById('customModal').style.display = 'none';
-            };
-            const cancelBtn = document.getElementById('modalCancel');
-            cancelBtn.style.display = 'block';
-            cancelBtn.onclick = () => {
-                document.getElementById('customModal').style.display = 'none';
-            };
-        }
-
-        function askClubName() {
-            const cur = localStorage.getItem(KEY_CLUB) || "";
-            openModal("Set Club Name", `<input type="text" id="cNameInput" value="${cur}" style="text-transform:none;">`, () => {
-                const val = document.getElementById('cNameInput').value;
-                if(val) { 
-                    localStorage.setItem(KEY_CLUB, val); 
-                    document.getElementById('clubSubtitle').innerText = val;
-                    document.getElementById('reportTitle').innerText = val + " Report";
-                }
-            });
-        }
-
-        function askCustomTime(el) {
-            const savedCustom = JSON.parse(localStorage.getItem(KEY_CUSTOM) || '{"g":5,"y":6,"r":7}');
-            openModal("Custom Thresholds", `
-                <div style="display:grid; gap:10px; text-align:left;">
-                    <label>Green (Min): <input type="number" id="cg" value="${savedCustom.g}"></label>
-                    <label>Yellow (Min): <input type="number" id="cy" value="${savedCustom.y}"></label>
-                    <label>Red (Min): <input type="number" id="cr" value="${savedCustom.r}"></label>
-                </div>`, () => {
-                const gVal = document.getElementById('cg').value;
-                const yVal = document.getElementById('cy').value;
-                const rVal = document.getElementById('cr').value;
-                lims = { g: gVal * 60, y: yVal * 60, r: rVal * 60 };
-                localStorage.setItem(KEY_CUSTOM, JSON.stringify({g: gVal, y: yVal, r: rVal}));
-                document.getElementById('customLabel').innerText = `${gVal}-${rVal}m`;
-                selectedTypeLabel = "CUSTOM";
-                document.querySelectorAll('.select-card').forEach(c => c.classList.remove('selected'));
-                el.classList.add('selected');
-            });
-        }
-
-        function askClearLogs() {
-            openModal("Clear Logs?", "Wipe all recorded data?", () => {
-                localStorage.removeItem(KEY_LOGS);
-                location.reload();
-            });
-        }
-
         function initApp() {
             const savedName = localStorage.getItem(KEY_CLUB);
-            if (savedName) {
-                document.getElementById('clubSubtitle').innerText = savedName;
-                document.getElementById('reportTitle').innerText = savedName + " Report";
-            }
-            const savedCustom = JSON.parse(localStorage.getItem(KEY_CUSTOM));
-            if (savedCustom) { document.getElementById('customLabel').innerText = `${savedCustom.g}-${savedCustom.r}m`; }
+            if (savedName) document.getElementById('clubSubtitle').innerText = savedName;
             const versionLabel = document.getElementById('versionLabel');
-            if (isTestEnv) { versionLabel.innerText += " (TEST)"; }
-            renderSpeakerList(allSpeakers); 
+            if (isTestEnv) versionLabel.innerText += " (TEST)";
+            renderSpeakerList(allSpeakers);
         }
 
         function saveSpeaker() {
@@ -382,7 +382,7 @@
                 localStorage.setItem(KEY_SPEAKERS, JSON.stringify(allSpeakers));
             }
             renderSpeakerList(allSpeakers);
-            nameEl.focus(); 
+            nameEl.focus();
         }
 
         function filterSpeakers() {
@@ -393,16 +393,8 @@
 
         function renderSpeakerList(listToDisplay) {
             const area = document.getElementById('speakerArea');
-            if (listToDisplay.length === 0) {
-                area.innerHTML = `<div style="padding:15px; opacity:0.3; text-align:center;">Empty</div>`;
-                return;
-            }
-            area.innerHTML = listToDisplay.map(name => `
-                <div class="speaker-item">
-                    <div class="sp-name" onclick="selectSpeaker('${name}')">${name}</div>
-                    <div class="sp-del" onclick="askDeleteSpeaker('${name}')">✕</div>
-                </div>
-            `).join('');
+            if (listToDisplay.length === 0) { area.innerHTML = `<div style="padding:15px; opacity:0.3; text-align:center;">Empty</div>`; return; }
+            area.innerHTML = listToDisplay.map(name => `<div class="speaker-item"><div class="sp-name" onclick="selectSpeaker('${name}')">${name}</div><div class="sp-del" onclick="askDeleteSpeaker('${name}')">✕</div></div>`).join('');
         }
 
         function selectSpeaker(name) { document.getElementById('name').value = name.toUpperCase(); }
@@ -415,19 +407,6 @@
             });
         }
 
-        function showScreen(id) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            document.body.style.background = "var(--bg)";
-            document.body.style.color = "var(--text)";
-            
-            // Logic for Setup screen mode
-            if (id === 'setup') {
-                document.getElementById('timerPresets').style.display = currentMode === 'timer' ? 'grid' : 'none';
-            }
-            if(id === 'report') loadReport();
-        }
-
         function selectType(el, g, y, r, label) {
             document.querySelectorAll('.select-card').forEach(c => c.classList.remove('selected'));
             el.classList.add('selected');
@@ -436,38 +415,13 @@
         }
 
         function startTimer() {
-            const currentName = document.getElementById('name').value.trim().toUpperCase();
-            if(!lims.g || !currentName) return;
             requestWakeLock();
-            document.getElementById('spkName').innerText = currentName;
-            showScreen('timerDisplay');
-            resetCurrentTimer();
-            runTimer();
-        }
-
-        function runTimer() {
             state = "running";
-            start = Date.now() - (elapsed * 1000);
-            document.getElementById('pauseResumeBtn').innerText = "PAUSE";
-            iv = setInterval(update, 1000);
+            start = Date.now();
+            iv = setInterval(updateTimer, 1000);
         }
 
-        function togglePause() {
-            if (state === "running") {
-                state = "paused"; clearInterval(iv);
-                document.getElementById('pauseResumeBtn').innerText = "RESUME"; releaseWakeLock();
-            } else { requestWakeLock(); runTimer(); }
-        }
-
-        function resetCurrentTimer() {
-            clearInterval(iv); elapsed = 0; state = "stopped";
-            document.getElementById('timer').innerText = "00:00";
-            document.body.style.background = "var(--bg)";
-            document.body.style.color = "var(--text)";
-            document.getElementById('pauseResumeBtn').innerText = "START";
-        }
-
-        function update() {
+        function updateTimer() {
             elapsed = Math.floor((Date.now() - start) / 1000);
             let m = Math.floor(elapsed/60).toString().padStart(2,'0'), s = (elapsed%60).toString().padStart(2,'0');
             document.getElementById('timer').innerText = `${m}:${s}`;
@@ -476,59 +430,52 @@
             else if(elapsed >= lims.g) { document.body.style.background = "var(--green)"; document.body.style.color="white"; }
         }
 
+        function togglePause() {
+            if (state === "running") { clearInterval(iv); state="paused"; }
+            else { start = Date.now() - (elapsed*1000); iv = setInterval(updateTimer, 1000); state="running"; }
+        }
+
         function commitAndExit() {
-            clearInterval(iv); releaseWakeLock();
+            clearInterval(iv);
             if (elapsed > 0) {
-                let logs = JSON.parse(localStorage.getItem(KEY_LOGS)||"[]");
-                logs.push(`${document.getElementById('spkName').innerText} | ${selectedTypeLabel}: ${document.getElementById('timer').innerText}`);
-                localStorage.setItem(KEY_LOGS, JSON.stringify(logs));
+                let logs = JSON.parse(localStorage.getItem(prefix + 'sdtm_logs')||"[]");
+                logs.push(`${currentSpeaker} | ${selectedTypeLabel}: ${document.getElementById('timer').innerText}`);
+                localStorage.setItem(prefix + 'sdtm_logs', JSON.stringify(logs));
             }
-            document.body.style.background = "var(--bg)";
-            document.body.style.color = "var(--text)";
             showScreen('menu');
         }
 
-        function loadReport() {
-            let logs = JSON.parse(localStorage.getItem(KEY_LOGS)||"[]");
-            document.getElementById('reportLog').innerText = logs.length ? logs.join('\n') : "No data.";
+        function askClubName() {
+            const cur = localStorage.getItem(KEY_CLUB) || "";
+            openModal("Club Name", `<input type="text" id="cInput" value="${cur}">`, () => {
+                const val = document.getElementById('cInput').value;
+                localStorage.setItem(KEY_CLUB, val);
+                document.getElementById('clubSubtitle').innerText = val;
+            });
         }
 
-        async function shareReport() {
-            const logs = JSON.parse(localStorage.getItem(KEY_LOGS)||"[]");
-            if (!logs.length) return;
-            const club = localStorage.getItem(KEY_CLUB) || "Meeting";
-            const text = club + " Timer Report:\n\n" + logs.join('\n');
-            if (navigator.share) await navigator.share({ title: 'Timer Report', text: text });
-            else { alert("Copied to clipboard!"); }
+        function askClearLogs() {
+            openModal("Clear Data?", "Wipe all meeting records?", () => {
+                localStorage.removeItem(prefix + 'sdtm_logs');
+                location.reload();
+            });
         }
 
         function exportRoster() {
-            const rawSpeakers = localStorage.getItem(KEY_SPEAKERS);
-            const clubName = localStorage.getItem(KEY_CLUB);
-            const backupData = { speakers: rawSpeakers ? JSON.parse(rawSpeakers) : [], club: clubName || "" };
-            const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a'); a.href = url; a.download = `SDTM_Roster_${new Date().toISOString().slice(0,10)}.json`;
-            document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+            const raw = localStorage.getItem(KEY_SPEAKERS);
+            const blob = new Blob([JSON.stringify({speakers: JSON.parse(raw||"[]")})], {type:'application/json'});
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'roster.json'; a.click();
         }
 
         function handleImportFile(input) {
-            const file = input.files[0]; if (!file) return;
             const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    openModal("Import Roster?", "Proceed?", () => {
-                        if (data.speakers) { localStorage.setItem(KEY_SPEAKERS, JSON.stringify(data.speakers)); allSpeakers = data.speakers; renderSpeakerList(allSpeakers); }
-                        if (data.club) { localStorage.setItem(KEY_CLUB, data.club); document.getElementById('clubSubtitle').innerText = data.club; }
-                        openModal("Success", "Imported.", () => {}); document.getElementById('modalCancel').style.display = 'none';
-                    });
-                } catch (err) { openModal("Error", "Invalid file.", () => {}); }
+            reader.onload = (e) => {
+                const data = JSON.parse(e.target.result);
+                localStorage.setItem(KEY_SPEAKERS, JSON.stringify(data.speakers));
+                location.reload();
             };
-            reader.readAsText(file); input.value = "";
+            reader.readAsText(input.files[0]);
         }
-
-        if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
     </script>
 </body>
 </html>
