@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Meeting Timer</title>
+    <title>Meeting Tools</title>
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -39,6 +39,17 @@
             color: var(--accent); cursor: pointer; padding: 5px; z-index: 10;
         }
 
+        /* TAB SWITCHER */
+        .tab-container {
+            display: flex; background: #E3E3E8; border-radius: 10px; padding: 2px;
+            margin: 10px 20px 20px; flex-shrink: 0;
+        }
+        .tab {
+            flex: 1; padding: 8px; text-align: center; font-weight: 600; font-size: 15px;
+            border-radius: 8px; cursor: pointer; transition: all 0.2s; color: var(--subtext);
+        }
+        .tab.active { background: white; color: var(--text); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+
         .container { 
             flex: 1; display: flex; flex-direction: column; padding: 0 20px; 
             gap: 12px; overflow-y: auto; min-height: 0;
@@ -46,7 +57,19 @@
         }
 
         .screen { display: none; flex-direction: column; height: 100%; overflow: hidden; }
-        .active { display: flex; }
+        .screen.active { display: flex; }
+
+        /* CARDS */
+        .card { 
+            background: var(--card); border-radius: 18px; padding: clamp(20px, 3.5vw, 35px); 
+            display: flex; align-items: center; justify-content: space-between; 
+            border: 1px solid var(--border); color: var(--text); text-align: left; 
+            width: 100%; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-decoration: none;
+            cursor: pointer;
+        }
+        .card:active { transform: scale(0.98); background: #f9f9f9; }
+        .card-content h3 { margin: 0; font-size: clamp(24px, 3.8vw, 36px); font-weight: 700; }
+        .card-content p { margin: 4px 0 0; font-size: clamp(16px, 2.2vw, 22px); color: var(--subtext); }
 
         #customModal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -58,16 +81,6 @@
             border-radius: 24px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             border: 1px solid var(--border);
         }
-
-        .card { 
-            background: var(--card); border-radius: 18px; padding: clamp(20px, 3.5vw, 35px); 
-            display: flex; align-items: center; justify-content: space-between; 
-            border: 1px solid var(--border); color: var(--text); text-align: left; 
-            width: 100%; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-decoration: none;
-        }
-        .card:active { transform: scale(0.98); background: #f9f9f9; }
-        .card-content h3 { margin: 0; font-size: clamp(24px, 3.8vw, 36px); font-weight: 700; }
-        .card-content p { margin: 4px 0 0; font-size: clamp(16px, 2.2vw, 22px); color: var(--subtext); }
 
         input { 
             background: var(--card); border: 2px solid var(--border); color: var(--text); padding: 15px; 
@@ -135,12 +148,18 @@
     <div id="menu" class="screen active">
         <div class="header">
             <div onclick="askClubName()">
-                <h1>Meeting Timer</h1>
+                <h1>Meeting Tools</h1>
                 <div id="clubSubtitle" class="subtitle">Tap to set club name</div>
             </div>
             <div class="settings-icon" onclick="showScreen('settings')">⚙</div>
         </div>
-        <div class="container">
+
+        <div class="tab-container">
+            <div id="tabTimer" class="tab active" onclick="switchMode('timer')">Meeting Timer</div>
+            <div id="tabCounter" class="tab" onclick="switchMode('counter')">Ah-Counter</div>
+        </div>
+
+        <div id="timerMode" class="container">
             <button class="card" onclick="showScreen('setup')">
                 <div class="card-content"><h3>New Timer</h3><p>Select a speaker and start</p></div>
                 <div style="font-size:40px; color:var(--accent)">⊕</div>
@@ -151,6 +170,20 @@
             </button>
             <button class="card" onclick="askClearLogs()" style="background: #FFF5F5; border: 2px solid var(--red); padding: 15px;">
                 <div style="color:var(--red); font-weight:800; width:100%; text-align:center; font-size: 22px;">CLEAR MEETING LOGS</div>
+            </button>
+        </div>
+
+        <div id="counterMode" class="container" style="display:none;">
+            <button class="card" onclick="openModal('Coming Soon', 'Tracker interface is currently being built!', ()=>{})">
+                <div class="card-content"><h3>Start Tracking</h3><p>Count filler words & vocabulary</p></div>
+                <div style="font-size:40px; color:var(--accent)">✍</div>
+            </button>
+            <button class="card" onclick="openModal('Coming Soon', 'Report interface is currently being built!', ()=>{})">
+                <div class="card-content"><h3>Counter Report</h3><p>View filler word totals</p></div>
+                <div style="font-size:35px; color:var(--accent)">📊</div>
+            </button>
+            <button class="card" style="background: #FFF5F5; border: 2px solid var(--red); padding: 15px;">
+                <div style="color:var(--red); font-weight:800; width:100%; text-align:center; font-size: 22px;">RESET COUNTERS</div>
             </button>
         </div>
         
@@ -168,17 +201,14 @@
         <div class="header"><h1>Settings</h1></div>
         <div class="container">
             <p style="font-size: 18px; color: var(--subtext); margin-bottom: 20px;">Manage your Roster and App data.</p>
-            
             <button class="card" onclick="exportRoster()">
                 <div class="card-content"><h3>Export Roster</h3><p>Save list to a JSON file</p></div>
                 <div style="font-size:30px; color:var(--accent)">⤓</div>
             </button>
-
             <button class="card" onclick="document.getElementById('importFile').click()">
                 <div class="card-content"><h3>Import Roster</h3><p>Load list from a JSON file</p></div>
                 <div style="font-size:30px; color:var(--accent)">⤒</div>
             </button>
-            
             <input type="file" id="importFile" style="display:none" onchange="handleImportFile(this)">
         </div>
         <div class="button-row">
@@ -214,7 +244,6 @@
     <div id="timerDisplay" class="screen">
         <div id="spkName" style="font-size:clamp(30px, 5vw, 55px); color:#666; margin-top:20px; text-align:center; text-transform: uppercase;">Speaker</div>
         <div id="timer">00:00</div>
-        
         <div class="button-row">
             <button id="pauseResumeBtn" class="footer-btn secondary-btn" onclick="togglePause()">PAUSE</button>
             <button class="footer-btn secondary-btn" onclick="resetCurrentTimer()">RESET</button>
@@ -234,35 +263,42 @@
     </div>
 
     <script>
-        // --- DYNAMIC STORAGE KEY LOGIC ---
         const isTestEnv = window.location.pathname.toLowerCase().includes('/test/');
         const prefix = isTestEnv ? 'test_' : 'prod_';
-
         const KEY_SPEAKERS = prefix + 'sdtm_speakers';
         const KEY_LOGS = prefix + 'sdtm_logs';
         const KEY_CLUB = prefix + 'sdtm_club_name';
         const KEY_CUSTOM = prefix + 'sdtm_custom_limits';
 
-        // --- APP STATE ---
         let state="stopped", elapsed=0, start, iv, lims={}, selectedTypeLabel="";
         let allSpeakers = JSON.parse(localStorage.getItem(KEY_SPEAKERS) || "[]");
-        let wakeLock = null; // WakeLock Holder
+        let wakeLock = null;
 
-        // --- SCREEN WAKE LOCK LOGIC ---
         async function requestWakeLock() {
-            try {
-                if ('wakeLock' in navigator) {
-                    wakeLock = await navigator.wakeLock.request('screen');
-                }
-            } catch (err) {
-                console.log(`${err.name}, ${err.message}`);
-            }
+            try { if ('wakeLock' in navigator) { wakeLock = await navigator.wakeLock.request('screen'); } } 
+            catch (err) { console.log(err.message); }
         }
 
         function releaseWakeLock() {
-            if (wakeLock !== null) {
-                wakeLock.release();
-                wakeLock = null;
+            if (wakeLock !== null) { wakeLock.release(); wakeLock = null; }
+        }
+
+        function switchMode(mode) {
+            const timerTab = document.getElementById('tabTimer');
+            const counterTab = document.getElementById('tabCounter');
+            const timerMode = document.getElementById('timerMode');
+            const counterMode = document.getElementById('counterMode');
+
+            if (mode === 'timer') {
+                timerTab.classList.add('active');
+                counterTab.classList.remove('active');
+                timerMode.style.display = 'flex';
+                counterMode.style.display = 'none';
+            } else {
+                timerTab.classList.remove('active');
+                counterTab.classList.add('active');
+                timerMode.style.display = 'none';
+                counterMode.style.display = 'flex';
             }
         }
 
@@ -281,9 +317,7 @@
                 onConfirm();
                 document.getElementById('customModal').style.display = 'none';
             };
-            const cancelBtn = document.getElementById('modalCancel');
-            cancelBtn.style.display = 'block';
-            cancelBtn.onclick = () => {
+            document.getElementById('modalCancel').onclick = () => {
                 document.getElementById('customModal').style.display = 'none';
             };
         }
@@ -334,13 +368,9 @@
                 document.getElementById('reportTitle').innerText = savedName + " Report";
             }
             const savedCustom = JSON.parse(localStorage.getItem(KEY_CUSTOM));
-            if (savedCustom) {
-                document.getElementById('customLabel').innerText = `${savedCustom.g}-${savedCustom.r}m`;
-            }
+            if (savedCustom) { document.getElementById('customLabel').innerText = `${savedCustom.g}-${savedCustom.r}m`; }
             const versionLabel = document.getElementById('versionLabel');
-            if (isTestEnv) {
-                versionLabel.innerText += " (TEST)";
-            }
+            if (isTestEnv) { versionLabel.innerText += " (TEST)"; }
             renderSpeakerList(allSpeakers); 
         }
 
@@ -404,9 +434,7 @@
         function startTimer() {
             const currentName = document.getElementById('name').value.trim().toUpperCase();
             if(!lims.g || !currentName) return;
-            
-            requestWakeLock(); // LOCK SCREEN ON
-            
+            requestWakeLock();
             document.getElementById('spkName').innerText = currentName;
             showScreen('timerDisplay');
             resetCurrentTimer();
@@ -422,20 +450,13 @@
 
         function togglePause() {
             if (state === "running") {
-                state = "paused";
-                clearInterval(iv);
-                document.getElementById('pauseResumeBtn').innerText = "RESUME";
-                releaseWakeLock(); // Allow dim while paused
-            } else {
-                requestWakeLock(); // Prevent dim while resuming
-                runTimer();
-            }
+                state = "paused"; clearInterval(iv);
+                document.getElementById('pauseResumeBtn').innerText = "RESUME"; releaseWakeLock();
+            } else { requestWakeLock(); runTimer(); }
         }
 
         function resetCurrentTimer() {
-            clearInterval(iv);
-            elapsed = 0;
-            state = "stopped";
+            clearInterval(iv); elapsed = 0; state = "stopped";
             document.getElementById('timer').innerText = "00:00";
             document.body.style.background = "var(--bg)";
             document.body.style.color = "var(--text)";
@@ -452,8 +473,7 @@
         }
 
         function commitAndExit() {
-            clearInterval(iv);
-            releaseWakeLock(); // RELEASE LOCK
+            clearInterval(iv); releaseWakeLock();
             if (elapsed > 0) {
                 let logs = JSON.parse(localStorage.getItem(KEY_LOGS)||"[]");
                 logs.push(`${document.getElementById('spkName').innerText} | ${selectedTypeLabel}: ${document.getElementById('timer').innerText}`);
@@ -484,41 +504,24 @@
             const backupData = { speakers: rawSpeakers ? JSON.parse(rawSpeakers) : [], club: clubName || "" };
             const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `SDTM_Roster_${new Date().toISOString().slice(0,10)}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            const a = document.createElement('a'); a.href = url; a.download = `SDTM_Roster_${new Date().toISOString().slice(0,10)}.json`;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
         }
 
         function handleImportFile(input) {
-            const file = input.files[0];
-            if (!file) return;
+            const file = input.files[0]; if (!file) return;
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
                     const data = JSON.parse(e.target.result);
-                    openModal("Import Roster?", "This will overwrite your current list and club name. Proceed?", () => {
-                        if (data.speakers) {
-                            localStorage.setItem(KEY_SPEAKERS, JSON.stringify(data.speakers));
-                            allSpeakers = data.speakers;
-                            renderSpeakerList(allSpeakers);
-                        }
-                        if (data.club) {
-                            localStorage.setItem(KEY_CLUB, data.club);
-                            document.getElementById('clubSubtitle').innerText = data.club;
-                        }
-                        openModal("Success", "Roster imported successfully.", () => {});
-                        document.getElementById('modalCancel').style.display = 'none';
+                    openModal("Import Roster?", "Proceed?", () => {
+                        if (data.speakers) { localStorage.setItem(KEY_SPEAKERS, JSON.stringify(data.speakers)); allSpeakers = data.speakers; renderSpeakerList(allSpeakers); }
+                        if (data.club) { localStorage.setItem(KEY_CLUB, data.club); document.getElementById('clubSubtitle').innerText = data.club; }
+                        openModal("Success", "Imported.", () => {}); document.getElementById('modalCancel').style.display = 'none';
                     });
-                } catch (err) {
-                    openModal("Error", "Invalid roster file format.", () => {});
-                }
+                } catch (err) { openModal("Error", "Invalid file.", () => {}); }
             };
-            reader.readAsText(file);
-            input.value = "";
+            reader.readAsText(file); input.value = "";
         }
 
         if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
