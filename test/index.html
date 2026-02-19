@@ -246,6 +246,25 @@
         // --- APP STATE ---
         let state="stopped", elapsed=0, start, iv, lims={}, selectedTypeLabel="";
         let allSpeakers = JSON.parse(localStorage.getItem(KEY_SPEAKERS) || "[]");
+        let wakeLock = null; // WakeLock Holder
+
+        // --- SCREEN WAKE LOCK LOGIC ---
+        async function requestWakeLock() {
+            try {
+                if ('wakeLock' in navigator) {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                }
+            } catch (err) {
+                console.log(`${err.name}, ${err.message}`);
+            }
+        }
+
+        function releaseWakeLock() {
+            if (wakeLock !== null) {
+                wakeLock.release();
+                wakeLock = null;
+            }
+        }
 
         function handleNameInput(el) {
             const startPos = el.selectionStart;
@@ -385,6 +404,9 @@
         function startTimer() {
             const currentName = document.getElementById('name').value.trim().toUpperCase();
             if(!lims.g || !currentName) return;
+            
+            requestWakeLock(); // LOCK SCREEN ON
+            
             document.getElementById('spkName').innerText = currentName;
             showScreen('timerDisplay');
             resetCurrentTimer();
@@ -403,7 +425,9 @@
                 state = "paused";
                 clearInterval(iv);
                 document.getElementById('pauseResumeBtn').innerText = "RESUME";
+                releaseWakeLock(); // Allow dim while paused
             } else {
+                requestWakeLock(); // Prevent dim while resuming
                 runTimer();
             }
         }
@@ -429,6 +453,7 @@
 
         function commitAndExit() {
             clearInterval(iv);
+            releaseWakeLock(); // RELEASE LOCK
             if (elapsed > 0) {
                 let logs = JSON.parse(localStorage.getItem(KEY_LOGS)||"[]");
                 logs.push(`${document.getElementById('spkName').innerText} | ${selectedTypeLabel}: ${document.getElementById('timer').innerText}`);
