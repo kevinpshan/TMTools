@@ -31,6 +31,7 @@
             transition: background 0.3s ease;
         }
 
+        /* HEADER & TABS REALIGNMENT */
         .header { padding: 30px 20px 10px; text-align: left; flex-shrink: 0; position: relative; }
         h1 { margin: 0; font-size: clamp(34px, 5vw, 55px); font-weight: 800; color: #1C1C1E; }
         .subtitle { font-size: clamp(17px, 2.5vw, 26px); margin-top: 5px; color: var(--accent); font-weight: 700; }
@@ -59,6 +60,7 @@
         .screen { display: none; flex-direction: column; height: 100%; overflow: hidden; }
         .screen.active { display: flex; }
 
+        /* CARDS */
         .card { 
             background: var(--card); border-radius: 18px; padding: clamp(20px, 3.5vw, 35px); 
             display: flex; align-items: center; justify-content: space-between; 
@@ -70,11 +72,13 @@
         .card-content h3 { margin: 0; font-size: clamp(24px, 3.8vw, 36px); font-weight: 700; }
         .card-content p { margin: 4px 0 0; font-size: clamp(16px, 2.2vw, 22px); color: var(--subtext); }
 
+        /* INPUTS */
         input { 
             background: var(--card); border: 2px solid var(--border); color: var(--text); padding: 15px; 
             border-radius: 14px; font-size: 22px; outline: none; width: 100%; box-sizing: border-box;
         }
 
+        /* SPEAKER AREA */
         .speaker-area {
             background: var(--card); border-radius: 16px; padding: 2px;
             flex: 1; overflow-y: auto; border: 1px solid var(--border); min-height: 120px;
@@ -86,15 +90,7 @@
         .sp-name { font-size: 22px; flex: 1; color: var(--accent); font-weight: 600; text-transform: uppercase; }
         .sp-del { padding: 5px 10px; color: var(--red); font-weight: bold; font-size: 22px; }
 
-        .selection-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; flex-shrink: 0; }
-        .select-card { 
-            background: var(--card); border-radius: 14px; padding: 12px; 
-            text-align: center; border: 1px solid var(--border); cursor: pointer;
-        }
-        .select-card.selected { border: 3px solid var(--accent); background: #E8F2FF; }
-        .select-card h4 { margin: 0; font-size: 20px; color: #1C1C1E; }
-
-        /* TALLY SCREEN STYLES */
+        /* TALLY GRID */
         .tally-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 10px 0; }
         .tally-btn {
             background: white; border: 1px solid var(--border); border-radius: 20px;
@@ -105,20 +101,29 @@
         .tally-count { font-size: 45px; font-weight: 800; color: var(--accent); margin-bottom: 5px; }
         .tally-label { font-size: 18px; font-weight: 700; color: var(--subtext); text-transform: uppercase; }
         .tally-minus { position: absolute; top: 10px; right: 10px; width: 34px; height: 34px; border-radius: 10px; background: #F2F2F7; color: var(--red); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 20px; }
-
         .wod-btn { border: 2px solid var(--gold); }
         .wod-btn .tally-count { color: var(--gold); }
 
+        /* FOOTERS */
         .button-row { display: flex; gap: 15px; padding: 10px 20px 20px; flex-shrink: 0; background: transparent; max-width: 950px; margin: 0 auto; width: 100%; box-sizing: border-box; }
         .footer-btn { flex: 1; padding: 18px; border-radius: 16px; font-size: 22px; font-weight: 700; border: none; background: var(--accent); color: white; }
         .secondary-btn { background: #E5E5EA; color: #000000; border: 1px solid var(--border); }
         .commit-btn { background: var(--green); color: white; }
 
         .credit-footer { text-align: center; padding: 20px; border-top: 1px solid var(--border); flex-shrink: 0; background: var(--card); }
-        .version-tag { display: block; font-size: 12px; opacity: 0.5; font-weight: 400; margin-top: 4px; color: #000; }
+        .resource-row { display: flex; gap: 10px; margin-bottom: 12px; justify-content: center; }
+        .res-btn {
+            flex: 1; background: #F2F2F7; color: var(--accent); text-decoration: none;
+            padding: 12px; border-radius: 12px; font-weight: 700; font-size: 16px;
+            border: 1px solid var(--border);
+        }
 
         #timer { font-size: clamp(100px, 35vw, 450px); font-weight: 200; text-align: center; margin: auto 0; font-variant-numeric: tabular-nums; color: #000; }
         #reportLog { background: var(--card); border-radius: 18px; padding: 25px; flex: 1; overflow-y: auto; font-family: monospace; font-size: 22px; border: 1px solid var(--border); color: #000; }
+        
+        .selection-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; flex-shrink: 0; }
+        .select-card { background: var(--card); border-radius: 14px; padding: 12px; text-align: center; border: 1px solid var(--border); cursor: pointer; }
+        .select-card.selected { border: 3px solid var(--accent); background: #E8F2FF; }
     </style>
 </head>
 <body onload="initApp()">
@@ -164,7 +169,7 @@
                 <div class="card-content"><h3>Start Tracking</h3><p>Count filler words & vocabulary</p></div>
                 <div style="font-size:40px; color:var(--accent)">✍</div>
             </button>
-            <button class="card" onclick="openModal('Coming Soon', 'Ah-Counter reports in next update!', ()=>{})">
+            <button class="card" onclick="openModal('Ah-Counter', 'Ah-Counter report logic coming soon!', ()=>{})">
                 <div class="card-content"><h3>Counter Report</h3><p>View filler word totals</p></div>
                 <div style="font-size:35px; color:var(--accent)">📊</div>
             </button>
@@ -177,7 +182,11 @@
         </div>
         
         <div class="credit-footer">
-            <p class="credit-text">Created by Southern Dutchess Toastmasters</p>
+            <div class="resource-row">
+                <a href="https://bit.ly/m/SDTM" target="_blank" class="res-btn">Visit Website ↗</a>
+                <a href="manual.html" class="res-btn">User Manual ↗</a>
+            </div>
+            <p style="margin:0; font-weight:700; font-size:15px;">Created by Southern Dutchess Toastmasters</p>
             <span id="versionLabel" class="version-tag">Version 1.0</span>
         </div>
     </div>
@@ -195,6 +204,7 @@
                 <div class="select-card" onclick="selectType(this, 60, 90, 120, 'TABLE TOPICS')"><h4>Table Topics</h4><p>1-2m</p></div>
                 <div class="select-card" onclick="selectType(this, 120, 150, 180, 'EVALUATION')"><h4>Evaluation</h4><p>2-3m</p></div>
                 <div class="select-card" onclick="selectType(this, 300, 360, 420, 'SPEECH')"><h4>Speech</h4><p>5-7m</p></div>
+                <div class="select-card" onclick="selectType(this, 240, 300, 360, 'ICE BREAKER')"><h4>Ice Breaker</h4><p>4-6m</p></div>
                 <div id="custom-card" class="select-card" style="grid-column: span 2;" onclick="askCustomTime(this)">
                     <h4>Custom Time</h4><p id="customLabel">Manual Entry</p>
                 </div>
@@ -216,17 +226,16 @@
                 <input type="text" id="newFiller" placeholder="ADD NEW CRUTCH WORD">
                 <button class="footer-btn" style="flex:0; padding:0 25px; font-size:18px;" onclick="addFiller()">Add</button>
             </div>
-            <div id="tallyArea" class="tally-grid">
-                </div>
+            <div id="tallyArea" class="tally-grid"></div>
         </div>
         <div class="button-row">
-            <button class="footer-btn secondary-btn" onclick="showScreen('menu')">Exit Without Saving</button>
+            <button class="footer-btn secondary-btn" onclick="showScreen('menu')">Back</button>
             <button class="footer-btn commit-btn" onclick="saveCounterSession()">SAVE RESULTS</button>
         </div>
     </div>
 
     <div id="timerDisplay" class="screen">
-        <div id="spkName" style="font-size:clamp(30px, 5vw, 55px); color:#666; margin-top:20px; text-align:center; text-transform: uppercase;">Speaker</div>
+        <div id="spkName" style="font-size:30px; color:#666; margin-top:20px; text-align:center; text-transform: uppercase; font-weight:700;">Speaker</div>
         <div id="timer">00:00</div>
         <div class="button-row">
             <button id="pauseResumeBtn" class="footer-btn secondary-btn" onclick="togglePause()">PAUSE</button>
@@ -238,11 +247,11 @@
         <div class="header"><h1>Settings</h1></div>
         <div class="container">
             <button class="card" onclick="exportRoster()">
-                <div class="card-content"><h3>Export Roster</h3><p>Save list to a JSON file</p></div>
+                <div class="card-content"><h3>Backup Roster</h3><p>Export JSON</p></div>
                 <div style="font-size:30px; color:var(--accent)">⤓</div>
             </button>
             <button class="card" onclick="document.getElementById('importFile').click()">
-                <div class="card-content"><h3>Import Roster</h3><p>Load list from a JSON file</p></div>
+                <div class="card-content"><h3>Restore Roster</h3><p>Import JSON</p></div>
                 <div style="font-size:30px; color:var(--accent)">⤒</div>
             </button>
             <input type="file" id="importFile" style="display:none" onchange="handleImportFile(this)">
@@ -256,6 +265,7 @@
         const isTestEnv = window.location.pathname.toLowerCase().includes('/test/');
         const prefix = isTestEnv ? 'test_' : 'prod_';
         const KEY_SPEAKERS = prefix + 'sdtm_speakers';
+        const KEY_LOGS = prefix + 'sdtm_logs';
         const KEY_CLUB = prefix + 'sdtm_club_name';
         const KEY_CUSTOM = prefix + 'sdtm_custom_limits';
         const KEY_FILLERS = prefix + 'sdtm_fillers';
@@ -281,7 +291,6 @@
             document.getElementById(id).classList.add('active');
             document.body.style.background = "var(--bg)";
             document.body.style.color = "var(--text)";
-
             if (id === 'setup') {
                 document.getElementById('setupHeader').innerText = currentMode === 'timer' ? 'Speech Info' : 'Counter Setup';
                 document.getElementById('timerPresets').style.display = currentMode === 'timer' ? 'grid' : 'none';
@@ -292,7 +301,6 @@
             const name = document.getElementById('name').value.trim().toUpperCase();
             if (!name) return;
             currentSpeaker = name;
-
             if (currentMode === 'timer') {
                 if (!lims.g) return;
                 document.getElementById('spkName').innerText = name;
@@ -305,7 +313,6 @@
             }
         }
 
-        // AH-COUNTER LOGIC
         function initTally() {
             currentTally = {};
             fillerList.forEach(f => currentTally[f] = 0);
@@ -323,16 +330,8 @@
             `).join('');
         }
 
-        function increment(f) {
-            currentTally[f]++;
-            document.getElementById(`count-${f}`).innerText = currentTally[f];
-        }
-
-        function decrement(e, f) {
-            e.stopPropagation();
-            if (currentTally[f] > 0) currentTally[f]--;
-            document.getElementById(`count-${f}`).innerText = currentTally[f];
-        }
+        function increment(f) { currentTally[f]++; document.getElementById(`count-${f}`).innerText = currentTally[f]; }
+        function decrement(e, f) { e.stopPropagation(); if (currentTally[f] > 0) currentTally[f]--; document.getElementById(`count-${f}`).innerText = currentTally[f]; }
 
         function addFiller() {
             const input = document.getElementById('newFiller');
@@ -347,22 +346,7 @@
         }
 
         function saveCounterSession() {
-            // Future logic for reports goes here
-            openModal("Saved", `Results for ${currentSpeaker} recorded.`, () => {
-                showScreen('menu');
-            });
-        }
-
-        // (Original Timer/Roster Logic remains below)
-        async function requestWakeLock() {
-            try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch(e){}
-        }
-
-        function handleNameInput(el) {
-            const startPos = el.selectionStart;
-            el.value = el.value.toUpperCase();
-            el.setSelectionRange(startPos, startPos);
-            filterSpeakers();
+            openModal("Saved", `Results for ${currentSpeaker} recorded.`, () => { showScreen('menu'); });
         }
 
         function initApp() {
@@ -415,32 +399,23 @@
         }
 
         function startTimer() {
-            requestWakeLock();
-            state = "running";
-            start = Date.now();
-            iv = setInterval(updateTimer, 1000);
-        }
-
-        function updateTimer() {
-            elapsed = Math.floor((Date.now() - start) / 1000);
-            let m = Math.floor(elapsed/60).toString().padStart(2,'0'), s = (elapsed%60).toString().padStart(2,'0');
-            document.getElementById('timer').innerText = `${m}:${s}`;
-            if(elapsed >= lims.r) { document.body.style.background = "var(--red)"; document.body.style.color="white"; }
-            else if(elapsed >= lims.y) { document.body.style.background = "var(--yellow)"; document.body.style.color="black"; }
-            else if(elapsed >= lims.g) { document.body.style.background = "var(--green)"; document.body.style.color="white"; }
-        }
-
-        function togglePause() {
-            if (state === "running") { clearInterval(iv); state="paused"; }
-            else { start = Date.now() - (elapsed*1000); iv = setInterval(updateTimer, 1000); state="running"; }
+            state = "running"; start = Date.now();
+            iv = setInterval(() => {
+                elapsed = Math.floor((Date.now() - start) / 1000);
+                let m = Math.floor(elapsed/60).toString().padStart(2,'0'), s = (elapsed%60).toString().padStart(2,'0');
+                document.getElementById('timer').innerText = `${m}:${s}`;
+                if(elapsed >= lims.r) { document.body.style.background = "var(--red)"; document.body.style.color="white"; }
+                else if(elapsed >= lims.y) { document.body.style.background = "var(--yellow)"; document.body.style.color="black"; }
+                else if(elapsed >= lims.g) { document.body.style.background = "var(--green)"; document.body.style.color="white"; }
+            }, 1000);
         }
 
         function commitAndExit() {
             clearInterval(iv);
             if (elapsed > 0) {
-                let logs = JSON.parse(localStorage.getItem(prefix + 'sdtm_logs')||"[]");
+                let logs = JSON.parse(localStorage.getItem(KEY_LOGS)||"[]");
                 logs.push(`${currentSpeaker} | ${selectedTypeLabel}: ${document.getElementById('timer').innerText}`);
-                localStorage.setItem(prefix + 'sdtm_logs', JSON.stringify(logs));
+                localStorage.setItem(KEY_LOGS, JSON.stringify(logs));
             }
             showScreen('menu');
         }
@@ -456,7 +431,7 @@
 
         function askClearLogs() {
             openModal("Clear Data?", "Wipe all meeting records?", () => {
-                localStorage.removeItem(prefix + 'sdtm_logs');
+                localStorage.removeItem(KEY_LOGS);
                 location.reload();
             });
         }
@@ -475,6 +450,14 @@
                 location.reload();
             };
             reader.readAsText(input.files[0]);
+        }
+
+        function openModal(title, bodyHTML, onConfirm) {
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalBody').innerHTML = bodyHTML;
+            document.getElementById('customModal').style.display = 'flex';
+            document.getElementById('modalConfirm').onclick = () => { onConfirm(); document.getElementById('customModal').style.display = 'none'; };
+            document.getElementById('modalCancel').onclick = () => { document.getElementById('customModal').style.display = 'none'; };
         }
     </script>
 </body>
