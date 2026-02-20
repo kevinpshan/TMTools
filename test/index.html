@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Meeting Tools v2.8.1</title>
+    <title>Meeting Tools v2.8.5</title>
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -36,7 +36,7 @@
         .screen { display: none; flex-direction: column; height: 100%; overflow: hidden; }
         .screen.active { display: flex; }
 
-        /* --- MENU CARDS --- */
+        /* --- CARDS & GRIDS --- */
         .main-menu-card { 
             background: var(--card); border-radius: 20px; display: flex; justify-content: space-between; align-items: center; 
             padding: 30px 25px; border: 1px solid var(--border); color: var(--text); box-shadow: 0 4px 12px rgba(0,0,0,0.05); cursor: pointer; margin-bottom: 12px; width: 100%; box-sizing: border-box;
@@ -61,19 +61,16 @@
         .wod-def { font-size: 20px; line-height: 1.4; color: var(--text); margin-bottom: 20px; }
         .wod-example { font-size: 19px; line-height: 1.4; color: var(--subtext); font-style: italic; background: #F2F2F7; padding: 15px; border-radius: 12px; border-left: 4px solid var(--gold); text-align: left; }
         .ai-indicator { position: absolute; top: 15px; right: 15px; font-size: 10px; color: var(--accent); font-weight: 800; }
+        
+        .wod-search-row { display: flex; gap: 8px; margin-bottom: 20px; }
+        .wod-search-input { flex: 1; padding: 12px 15px; border-radius: 12px; border: 2px solid var(--border); font-size: 18px; outline: none; text-transform: uppercase; }
+        .wod-search-btn { background: var(--accent); border: none; color: white; padding: 0 18px; border-radius: 12px; font-size: 20px; cursor: pointer; }
 
         /* --- INPUTS --- */
         input[type="text"], input[type="number"], input[type="password"] { background: var(--card); border: 2px solid var(--border); color: var(--text); padding: 15px; border-radius: 14px; font-size: 22px; outline: none; width: 100%; box-sizing: border-box; }
         .button-row { display: flex; gap: 12px; padding: 10px 20px 20px; flex-shrink: 0; max-width: 950px; margin: 0 auto; width: 100%; box-sizing: border-box; }
         .footer-btn { flex: 1; padding: 20px; border-radius: 15px; font-size: 22px; font-weight: 700; border: none; background: var(--accent); color: white; cursor: pointer; }
         .secondary-btn { background: #E5E5EA; color: #000; border: 1px solid var(--border); }
-
-        .credit-footer { text-align: center; padding: 25px 20px; border-top: 1px solid var(--border); flex-shrink: 0; background: var(--card); display: flex; flex-direction: column; align-items: center; }
-        .resource-row { display: flex; gap: 12px; margin-bottom: 15px; width: 100%; max-width: 500px; justify-content: center; }
-        .res-btn { flex: 1; background: #F2F2F7; color: var(--accent); text-decoration: none; padding: 12px; border-radius: 10px; font-weight: 700; font-size: 16px; border: 1px solid var(--border); }
-        
-        #customModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
-        .modal-content { background: var(--card); width: 85%; max-width: 500px; padding: 25px; border-radius: 24px; text-align: center; border: 1px solid var(--border); }
         #timer { font-size: clamp(100px, 30vw, 400px); font-weight: 200; text-align: center; margin: auto 0; font-variant-numeric: tabular-nums; color: #000; }
         #reportLog { background: var(--card); border-radius: 18px; padding: 20px; flex: 1; overflow-y: auto; font-family: monospace; font-size: 17px; border: 1px solid var(--border); color: #000; white-space: pre; }
     </style>
@@ -110,7 +107,7 @@
         </div>
 
         <div id="counterMode" class="container" style="display:none;">
-            <div class="main-menu-card" onclick="showScreen('wod')"><div class="card-content"><h3 style="color:var(--gold);">Word of the Day</h3><p>AI word selection</p></div><div class="icon" style="color:var(--gold);">★</div></div>
+            <div class="main-menu-card" onclick="showScreen('wod')"><div class="card-content"><h3 style="color:var(--gold);">Word of the Day</h3><p>AI Definition & Search</p></div><div class="icon" style="color:var(--gold);">★</div></div>
             <div class="main-menu-card" onclick="showScreen('setup')"><div class="card-content"><h3>Start Tracking</h3><p>Count filler words</p></div><div class="icon">✍</div></div>
             <div class="main-menu-card" onclick="showScreen('report')"><div class="card-content"><h3>Counter Report</h3><p>View totals</p></div><div class="icon">📊</div></div>
         </div>
@@ -122,8 +119,12 @@
     </div>
 
     <div id="wod" class="screen">
-        <div class="header"><h1>W.O.D.</h1><div class="subtitle">Word Generator</div></div>
+        <div class="header"><h1>W.O.D.</h1><div class="subtitle">Search or Generate</div></div>
         <div class="container">
+            <div class="wod-search-row">
+                <input type="text" id="wodManualInput" class="wod-search-input" placeholder="ENTER CUSTOM WORD..." onkeydown="if(event.key==='Enter') searchWod()">
+                <button class="wod-search-btn" onclick="searchWod()">🔍</button>
+            </div>
             <div id="wodDisplay" class="wod-card-big">
                 <div id="aiIndicator" class="ai-indicator">● CHATGPT READY</div>
                 <div id="wodContent"><span class="wod-word">...</span></div>
@@ -131,7 +132,7 @@
         </div>
         <div class="button-row">
             <button class="footer-btn secondary-btn" onclick="showScreen('menu')">Back</button>
-            <button class="footer-btn secondary-btn" onclick="nextWod()">Next</button>
+            <button class="footer-btn secondary-btn" onclick="nextWod()">Random</button>
             <button class="footer-btn" style="background:var(--green);" onclick="selectWod()">Select</button>
         </div>
     </div>
@@ -159,8 +160,8 @@
     <div id="settings" class="screen">
         <div class="header"><h1>Settings</h1></div>
         <div class="container">
-            <div class="main-menu-card" style="cursor: default;"><div class="card-content"><h3>Markdown Export</h3><p>Enable Slack/Email tables</p></div><div class="icon"><label class="switch"><input type="checkbox" id="mdToggle" onchange="saveSettings()"><span class="slider"></span></label></div></div>
-            <div class="main-menu-card" style="cursor: default; flex-direction: column; align-items: flex-start;"><div class="card-content"><h3>ChatGPT API Key</h3><p>Enter your OpenAI sk-... key</p></div><input type="password" id="openaiKey" placeholder="Paste Key Here" onchange="saveSettings()" style="margin-top:15px; font-size: 16px;"></div>
+            <div class="main-menu-card" style="cursor: default;"><div class="card-content"><h3>Markdown Export</h3><p>Enable Slack/Email tables</p></div><div class="icon"><label class="switch"><input type="checkbox" id="mdToggle" onchange="saveSettings()"><span class="slider" style="position: relative; display: inline-block; width: 51px; height: 31px; background-color: #ccc; border-radius: 31px; cursor: pointer; transition: .4s;"></span></label></div></div>
+            <div class="main-menu-card" style="cursor: default; flex-direction: column; align-items: flex-start;"><div class="card-content"><h3>ChatGPT API Key</h3><p>Requires an OpenAI sk-... key</p></div><input type="password" id="openaiKey" placeholder="Paste Key Here" onchange="saveSettings()" style="margin-top:15px; font-size: 16px;"></div>
             <div class="main-menu-card" onclick="exportData()"><div class="card-content"><h3>Backup Data</h3><p>Export JSON</p></div><div class="icon">⤓</div></div>
             <div class="main-menu-card" onclick="document.getElementById('importFile').click()"><div class="card-content"><h3>Restore Data</h3><p>Import JSON</p></div><div class="icon">⤒</div></div>
             <div class="main-menu-card" onclick="askClearLogs()" style="background: #FFF5F5; border: 2px solid var(--red);"><div class="card-content"><h3 style="color:var(--red);">Clear Meeting Data</h3><p>Full Reset</p></div><div class="icon">⚠</div></div>
@@ -184,7 +185,7 @@
             document.getElementById('mdToggle').checked = localStorage.getItem(KEY_MD) === 'true';
             document.getElementById('openaiKey').value = localStorage.getItem(KEY_AI_KEY) || "";
             const vLabel = document.getElementById('versionLabel');
-            vLabel.innerText = "Version 2.8.1" + (window.location.pathname.toLowerCase().includes('/test/') ? " (TEST)" : "");
+            vLabel.innerText = "Version 2.8.5" + (window.location.pathname.toLowerCase().includes('/test/') ? " (TEST)" : "");
             refreshRoster();
             nextWod();
         }
@@ -192,6 +193,16 @@
         /* --- THE ALL-IN-ONE CHATGPT HANDLER --- */
         let activeWodData = null;
         async function nextWod() {
+            const word = WOD_LIBRARY[Math.floor(Math.random() * WOD_LIBRARY.length)];
+            fetchWordDetails(word);
+        }
+
+        async function searchWod() {
+            const word = document.getElementById('wodManualInput').value.trim();
+            if (word) fetchWordDetails(word);
+        }
+
+        async function fetchWordDetails(word) {
             const display = document.getElementById('wodContent');
             const aiInd = document.getElementById('aiIndicator');
             const aiKey = (localStorage.getItem(KEY_AI_KEY) || "").trim();
@@ -199,10 +210,8 @@
             display.innerHTML = `<span class="wod-word">...</span>`;
             if (aiInd) aiInd.style.display = aiKey ? 'block' : 'none';
 
-            const word = WOD_LIBRARY[Math.floor(Math.random() * WOD_LIBRARY.length)];
-            
             if (!aiKey) {
-                display.innerHTML = `<span class="wod-word">${word}</span><div class="wod-def" style="margin-top:20px;">Add your OpenAI Key in Settings to generate definitions and usage.</div>`;
+                display.innerHTML = `<span class="wod-word">${word}</span><div class="wod-def" style="margin-top:20px;">Add OpenAI Key in Settings to enable AI lookups.</div>`;
                 return;
             }
 
@@ -220,7 +229,7 @@
                         model: "gpt-4o-mini",
                         messages: [{ 
                             role: "system", 
-                            content: "You are a professional dictionary and speech coach. Provide output in a valid JSON format with the keys 'definition' and 'example'. Keep descriptions sophisticated, family-friendly, and oriented toward public speaking." 
+                            content: "You are a professional dictionary and speech coach. Provide output in valid JSON format with keys 'definition' and 'example'. Keep descriptions sophisticated, family-friendly, and oriented toward public speaking." 
                         }, { 
                             role: "user", 
                             content: `Word: ${word}` 
@@ -242,7 +251,6 @@
                         <div class="wod-example">"${activeWodData.example}"</div>
                     `;
                 } else {
-                    const err = await response.json();
                     display.innerHTML = `<span class="wod-word">${word}</span><div class="wod-def">AI Error: ${response.status}. Check key in Settings.</div>`;
                 }
             } catch (e) {
@@ -250,16 +258,16 @@
             }
         }
 
-        /* --- STABLE CORE --- */
+        /* --- SYSTEM HELPERS --- */
         function refreshRoster() {
             const area = document.getElementById('speakerArea'); if (!area) return;
             if (!allSpeakers.length) { area.innerHTML = `<div style="padding:20px; opacity:0.3; text-align:center;">Empty Roster</div>`; return; }
-            area.innerHTML = allSpeakers.map(n => `<div class="speaker-item"><div class="sp-name" onclick="selectSpeaker('${n}')">${n}</div><div class="sp-del" onclick="askDeleteSpeaker('${n}')">✕</div></div>`).join('');
+            area.innerHTML = allSpeakers.map(n => `<div class="speaker-item" style="padding: 14px 18px; border-bottom: 1px solid var(--bg); display: flex; justify-content: space-between; align-items: center;"><div class="sp-name" style="font-size: 22px; flex: 1; color: var(--accent); font-weight: 600; text-transform: uppercase; cursor: pointer;" onclick="selectSpeaker('${n}')">${n}</div><div class="sp-del" style="padding: 5px 12px; color: var(--red); font-weight: 800; font-size: 22px; cursor: pointer;" onclick="askDeleteSpeaker('${n}')">✕</div></div>`).join('');
         }
         function saveSpeaker() { const n = document.getElementById('name').value.trim().toUpperCase(); if(n && !allSpeakers.includes(n)) { allSpeakers.push(n); allSpeakers.sort(); localStorage.setItem(KEY_SPEAKERS, JSON.stringify(allSpeakers)); } refreshRoster(); }
         function selectSpeaker(n) { document.getElementById('name').value = n; }
         function handleNameInput(el) { el.value = el.value.toUpperCase(); const filtered = allSpeakers.filter(s => s.includes(el.value)); renderSpeakerListFiltered(filtered); }
-        function renderSpeakerListFiltered(f) { const area = document.getElementById('speakerArea'); area.innerHTML = f.map(n => `<div class="speaker-item"><div class="sp-name" onclick="selectSpeaker('${n}')">${n}</div><div class="sp-del" onclick="askDeleteSpeaker('${n}')">✕</div></div>`).join(''); }
+        function renderSpeakerListFiltered(f) { const area = document.getElementById('speakerArea'); area.innerHTML = f.map(n => `<div class="speaker-item" style="padding: 14px 18px; border-bottom: 1px solid var(--bg); display: flex; justify-content: space-between; align-items: center;"><div class="sp-name" style="font-size: 22px; flex: 1; color: var(--accent); font-weight: 600; text-transform: uppercase; cursor: pointer;" onclick="selectSpeaker('${n}')">${n}</div><div class="sp-del" style="padding: 5px 12px; color: var(--red); font-weight: 800; font-size: 22px; cursor: pointer;" onclick="askDeleteSpeaker('${n}')">✕</div></div>`).join(''); }
         function askDeleteSpeaker(n) { openModal("Delete?", `Remove ${n}?`, () => { allSpeakers = allSpeakers.filter(s => s !== n); localStorage.setItem(KEY_SPEAKERS, JSON.stringify(allSpeakers)); refreshRoster(); }); }
         function showScreen(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); if (id === 'setup') { selectedTypeLabel = ""; renderSetupGrid(); refreshRoster(); } if (id === 'report') loadReport(); }
         function renderSetupGrid() {
@@ -279,7 +287,7 @@
         function selectRole(el, g, y, r, label) { document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected')); el.classList.add('selected'); selectedTypeLabel = label; lims = { g, y, r }; }
         function selectWod() { if(!activeWodData) return; const wordUpper = activeWodData.word.toUpperCase(); localStorage.setItem(KEY_WOD_FULL, JSON.stringify(activeWodData)); fillerList = fillerList.filter(f => f !== "WORD OF DAY"); if (!fillerList.includes(wordUpper)) { fillerList.push(wordUpper); localStorage.setItem(KEY_FILLERS, JSON.stringify(fillerList)); } openModal("WOD Selected", `${wordUpper} is active.`, () => { showScreen('menu'); }); }
         function initTally() { currentTally = {}; fillerList.forEach(f => currentTally[f] = 0); renderTally(); }
-        function renderTally() { const area = document.getElementById('tallyArea'); const wodData = JSON.parse(localStorage.getItem(KEY_WOD_FULL)); const activeWod = wodData ? wodData.word.toUpperCase() : null; const sorted = [...fillerList].sort((a,b) => a === activeWod ? -1 : b === activeWod ? 1 : a.localeCompare(b)); area.innerHTML = sorted.map(f => `<div class="tally-card" onclick="incTally('${f}')"><div class="tally-del" onclick="delFiller(event, '${f}')">✕</div><div class="count" id="ct-${f}">${currentTally[f]}</div><div class="label">${f}</div><div class="tally-minus" onclick="decTally(event, '${f}')">−</div></div>`).join(''); }
+        function renderTally() { const area = document.getElementById('tallyArea'); const wodData = JSON.parse(localStorage.getItem(KEY_WOD_FULL)); const activeWod = wodData ? wodData.word.toUpperCase() : null; const sorted = [...fillerList].sort((a,b) => a === activeWod ? -1 : b === activeWod ? 1 : a.localeCompare(b)); area.innerHTML = sorted.map(f => `<div class="tally-card" onclick="incTally('${f}')"><div class="tally-del" style="position: absolute; bottom: 5px; left: 5px; width: 30px; height: 30px; background: var(--red); color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 900; z-index: 10;" onclick="delFiller(event, '${f}')">✕</div><div class="count" id="ct-${f}" style="font-size: 44px; font-weight: 800; color: var(--accent); pointer-events: none; line-height: 1; margin-bottom: 5px;">${currentTally[f]}</div><div class="label" style="font-size: 16px; font-weight: 700; text-transform: uppercase; margin: 0; pointer-events: none;">${f}</div><div class="tally-minus" style="position: absolute; bottom: 5px; right: 5px; width: 30px; height: 30px; background: #8E8E93; color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; z-index: 10;" onclick="decTally(event, '${f}')">−</div></div>`).join(''); }
         function incTally(f) { currentTally[f]++; document.getElementById(`ct-${f}`).innerText = currentTally[f]; }
         function decTally(e, f) { e.stopPropagation(); if (currentTally[f] > 0) currentTally[f]--; document.getElementById(`ct-${f}`).innerText = currentTally[f]; }
         function delFiller(e, f) { e.stopPropagation(); openModal("Delete?", `Remove "${f}"?`, () => { fillerList = fillerList.filter(word => word !== f); localStorage.setItem(KEY_FILLERS, JSON.stringify(fillerList)); renderTally(); }); }
@@ -296,7 +304,7 @@
         function handleImportFile(i) { const r = new FileReader(); r.onload = (e) => { const d = JSON.parse(e.target.result); if(d.speakers) localStorage.setItem(KEY_SPEAKERS, JSON.stringify(d.speakers)); if(d.fillers) localStorage.setItem(KEY_FILLERS, JSON.stringify(d.fillers)); if(d.gemini) localStorage.setItem(KEY_AI_KEY, d.gemini); location.reload(); }; r.readAsText(i.files[0]); }
         function exportData() { const d = { speakers: allSpeakers, fillers: fillerList, club: localStorage.getItem(KEY_CLUB) || "", gemini: localStorage.getItem(KEY_AI_KEY) || "" }; const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(d)], {type:'application/json'})); a.download = 'backup.json'; a.click(); }
         function switchMode(m) { currentMode = m; document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); document.getElementById(m === 'timer' ? 'tabTimer' : 'tabCounter').classList.add('active'); document.getElementById('modeTitle').innerText = m === 'timer' ? 'Meeting Timer' : 'Ah-Counter'; document.getElementById('timerMode').style.display = m === 'timer' ? 'flex' : 'none'; document.getElementById('counterMode').style.display = m === 'counter' ? 'flex' : 'none'; }
-        function handleStart() { const n = document.getElementById('name').value.trim().toUpperCase(); if (!n || !selectedTypeLabel) { openModal("Error", "Enter Name & Role.", ()=>{}); return; } currentSpeaker = n; if (currentMode === 'timer') { showScreen('timerDisplay'); document.getElementById('spkName').innerText = n; startTimer(); } else { showScreen('counterDisplay'); document.getElementById('counterSpeakerName').innerText = n; document.getElementById('counterSpeakerRole').innerText = selectedTypeLabel; initTally(); } }
+        function handleStart() { const n = document.getElementById('name').value.trim().toUpperCase(); if (!n || !selectedTypeLabel) { openModal("Error", "Missing Name or Role.", ()=>{}); return; } currentSpeaker = n; if (currentMode === 'timer') { showScreen('timerDisplay'); document.getElementById('spkName').innerText = n; startTimer(); } else { showScreen('counterDisplay'); document.getElementById('counterSpeakerName').innerText = n; document.getElementById('counterSpeakerRole').innerText = selectedTypeLabel; initTally(); } }
         function askCustomTime(el) { const saved = JSON.parse(localStorage.getItem(KEY_CUSTOM) || '{"g":5,"cy":6,"r":7}'); const title = currentMode === 'timer' ? "Thresholds" : "Enter Custom Role"; const body = currentMode === 'timer' ? `<label>Green (Min):</label><input type="number" id="cg" value="${saved.g}"><label>Yellow (Target):</label><input type="number" id="cy" value="${saved.cy}"><label>Red (Max):</label><input type="number" id="cr" value="${saved.r}">` : `<label>Role Name:</label><input type="text" id="customRole" placeholder="e.g. JOKE MASTER" style="text-transform:uppercase">`; openModal(title, body, () => { if (currentMode === 'timer') { const g = document.getElementById('cg').value, y = document.getElementById('cy').value, r = document.getElementById('cr').value; lims = { g: g*60, y: y*60, r: r*60 }; localStorage.setItem(KEY_CUSTOM, JSON.stringify({g, cy: y, r})); document.getElementById('customLabel').innerText = `${g}-${r}m`; selectedTypeLabel = "CUSTOM"; } else { selectedTypeLabel = document.getElementById('customRole').value.toUpperCase(); document.getElementById('customLabel').innerText = selectedTypeLabel; } document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected')); el.classList.add('selected'); }); }
         function copyReport() { const text = generateReportText(); if (text) navigator.clipboard.writeText(text).then(() => { openModal("Success", "Copied!", () => {}); }); }
         function shareReport() { const text = generateReportText(); if (text && navigator.share) navigator.share({ title: `Report`, text: text }); }
