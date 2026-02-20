@@ -40,14 +40,13 @@
         .tab { flex: 1; padding: 12px; text-align: center; font-weight: 600; font-size: 16px; border-radius: 8px; cursor: pointer; transition: all 0.2s; color: var(--subtext); }
         .tab.active { background: white; color: var(--accent); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
 
-        .container { flex: 1; display: flex; flex-direction: column; padding: 0 20px; gap: 15px; overflow-y: auto; min-height: 0; max-width: 950px; margin: 0 auto; width: 100%; box-sizing: border-box; }
+        .container { flex: 1; display: flex; flex-direction: column; padding: 0 20px; gap: 12px; overflow-y: auto; min-height: 0; max-width: 950px; margin: 0 auto; width: 100%; box-sizing: border-box; }
         .screen { display: none; flex-direction: column; height: 100%; overflow: hidden; }
         .screen.active { display: flex; }
 
         #customModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
         .modal-content { background: var(--card); width: 85%; max-width: 500px; padding: 25px; border-radius: 24px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.2); border: 1px solid var(--border); }
 
-        /* MAIN MENU CARD STYLES - REPAIRED ICON ALIGNMENT */
         .menu-card { 
             background: var(--card); border-radius: 20px; padding: clamp(20px, 3.5vw, 35px); 
             display: flex; align-items: center; justify-content: space-between; 
@@ -63,32 +62,26 @@
 
         input { background: var(--card); border: 2px solid var(--border); color: var(--text); padding: 15px; border-radius: 14px; font-size: 22px; outline: none; width: 100%; box-sizing: border-box; }
 
-        .speaker-area { background: var(--card); border-radius: 16px; padding: 2px; flex: 1; overflow-y: auto; border: 1px solid var(--border); min-height: 150px; margin-bottom: 10px; }
-        .speaker-item { padding: 14px 18px; border-bottom: 1px solid var(--bg); display: flex; justify-content: space-between; align-items: center; }
-        .sp-name { font-size: 24px; flex: 1; color: var(--accent); font-weight: 600; text-transform: uppercase; }
-        .sp-del { padding: 5px 10px; color: var(--red); font-weight: bold; font-size: 24px; cursor: pointer; }
+        .speaker-area { background: var(--card); border-radius: 16px; padding: 2px; flex: 1; overflow-y: auto; border: 1px solid var(--border); min-height: 120px; margin-bottom: 5px; }
+        .speaker-item { padding: 12px 18px; border-bottom: 1px solid var(--bg); display: flex; justify-content: space-between; align-items: center; }
+        .sp-name { font-size: 22px; flex: 1; color: var(--accent); font-weight: 600; text-transform: uppercase; }
+        .sp-del { padding: 5px 10px; color: var(--red); font-weight: bold; font-size: 22px; cursor: pointer; }
 
-        .selection-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; flex-shrink: 0; padding-bottom: 10px; }
+        /* COMPRESSED SELECTION GRID */
+        .selection-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; flex-shrink: 0; padding-bottom: 10px; }
         @media (min-width: 650px) { .selection-grid { grid-template-columns: repeat(3, 1fr); } }
-        .select-card { background: var(--card); border-radius: 16px; padding: 15px 10px; text-align: center; border: 1px solid var(--border); cursor: pointer; display: flex; flex-direction: column; justify-content: center; min-height: 80px; }
-        .select-card h4 { margin: 0; font-size: 19px; color: #1C1C1E; font-weight: 700; }
-        .select-card p { margin: 4px 0 0; font-size: 14px; color: var(--subtext); }
-        .select-card.selected { border: 3px solid var(--accent); background: #E8F2FF; }
+        .select-card { background: var(--card); border-radius: 12px; padding: 10px 8px; text-align: center; border: 1px solid var(--border); cursor: pointer; display: flex; flex-direction: column; justify-content: center; min-height: 50px; }
+        .select-card h4 { margin: 0; font-size: 16px; color: #1C1C1E; font-weight: 700; line-height: 1.1; }
+        .select-card p { margin: 2px 0 0; font-size: 12px; color: var(--subtext); }
+        .select-card.selected { border: 3px solid var(--accent); background: #E8F2FF; padding: 8px 6px; }
 
-        /* TALLY GRID REFINEMENT - SEPARATED ICONS */
+        /* TALLY GRID */
         .tally-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; padding: 15px 0; }
         @media (min-width: 650px) { .tally-grid { grid-template-columns: repeat(3, 1fr); } }
-        .tally-btn { 
-            background: white; border: 1px solid var(--border); border-radius: 24px; 
-            display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            padding: 35px 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); position: relative; 
-            min-height: 140px;
-        }
+        .tally-btn { background: white; border: 1px solid var(--border); border-radius: 24px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 35px 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); position: relative; min-height: 140px; }
         .tally-btn:active { background: #E8F2FF; transform: scale(0.96); }
         .tally-count { font-size: 52px; font-weight: 800; color: var(--accent); pointer-events: none; }
         .tally-label { font-size: 18px; font-weight: 700; color: var(--subtext); text-transform: uppercase; pointer-events: none; }
-        
-        /* ICONS RELOCATED TO BOTTOM CORNERS TO PREVENT ACCIDENTAL DELETION */
         .tally-del { position: absolute; bottom: 8px; left: 8px; width: 38px; height: 38px; background: var(--red); color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 900; z-index: 10; box-shadow: 0 2px 6px rgba(0,0,0,0.15); cursor: pointer; }
         .tally-minus { position: absolute; bottom: 8px; right: 8px; width: 38px; height: 38px; background: #8E8E93; color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 700; z-index: 10; box-shadow: 0 2px 6px rgba(0,0,0,0.15); cursor: pointer; }
 
@@ -245,7 +238,7 @@
             } else {
                 document.getElementById('setupHeader').innerText = 'Counter Setup';
                 COUNTER_ROLES.forEach(role => { grid.innerHTML += `<div class="select-card" onclick="selectType(this, 0, 0, 0, '${role}')"><h4>${role}</h4></div>`; });
-                grid.innerHTML += `<div id="custom-card" class="select-card" onclick="askCustomTime(this)"><h4>OTHER ROLE</h4><p id="customLabel">Type entry</p></div>`;
+                grid.innerHTML += `<div id="custom-card" class="select-card" onclick="askCustomTime(this)"><h4>OTHER</h4><p id="customLabel">Type entry</p></div>`;
             }
         }
 
@@ -274,7 +267,6 @@
         }
 
         function initTally() { currentTally = {}; fillerList.forEach(f => currentTally[f] = 0); renderTally(); }
-        
         function renderTally() {
             const area = document.getElementById('tallyArea');
             const sorted = [...fillerList].sort((a,b) => {
@@ -282,24 +274,14 @@
                 if(b === "WORD OF DAY") return 1;
                 return a.localeCompare(b);
             });
-            area.innerHTML = sorted.map(f => `
-                <div class="tally-btn ${f === 'WORD OF DAY' ? 'wod-btn' : ''}" onclick="increment('${f}')">
-                    <div class="tally-del" onclick="askDeleteFiller(event, '${f}')">✕</div>
-                    <div class="tally-count" id="count-${f}">${currentTally[f]}</div>
-                    <div class="tally-label">${f}</div>
-                    <div class="tally-minus" onclick="decrement(event, '${f}')">−</div>
-                </div>
-            `).join('');
+            area.innerHTML = sorted.map(f => `<div class="tally-btn ${f === 'WORD OF DAY' ? 'wod-btn' : ''}" onclick="increment('${f}')"><div class="tally-del" onclick="askDeleteFiller(event, '${f}')">✕</div><div class="tally-count" id="count-${f}">${currentTally[f]}</div><div class="tally-label">${f}</div><div class="tally-minus" onclick="decrement(event, '${f}')">−</div></div>`).join('');
         }
 
         function increment(f) { currentTally[f]++; document.getElementById(`count-${f}`).innerText = currentTally[f]; }
         function decrement(e, f) { e.stopPropagation(); if (currentTally[f] > 0) currentTally[f]--; document.getElementById(`count-${f}`).innerText = currentTally[f]; }
         function addFiller() {
             const val = document.getElementById('newFiller').value.trim().toUpperCase();
-            if (val && !fillerList.includes(val)) {
-                fillerList.push(val); localStorage.setItem(KEY_FILLERS, JSON.stringify(fillerList));
-                currentTally[val] = 0; renderTally(); document.getElementById('newFiller').value = "";
-            }
+            if (val && !fillerList.includes(val)) { fillerList.push(val); localStorage.setItem(KEY_FILLERS, JSON.stringify(fillerList)); currentTally[val] = 0; renderTally(); document.getElementById('newFiller').value = ""; }
         }
         function askDeleteFiller(e, f) { e.stopPropagation(); openModal("Delete Word?", `Remove "${f}"?`, () => { fillerList = fillerList.filter(word => word !== f); localStorage.setItem(KEY_FILLERS, JSON.stringify(fillerList)); renderTally(); }); }
         
@@ -374,11 +356,11 @@
         function askDeleteSpeaker(n) { openModal("Delete?", `Remove ${n}?`, () => { allSpeakers = allSpeakers.filter(s => s !== n); localStorage.setItem(KEY_SPEAKERS, JSON.stringify(allSpeakers)); renderSpeakerList(allSpeakers); }); }
         function openModal(t, b, c) { document.getElementById('modalTitle').innerText = t; document.getElementById('modalBody').innerHTML = b; document.getElementById('customModal').style.display = 'flex'; document.getElementById('modalConfirm').onclick = () => { c(); document.getElementById('customModal').style.display = 'none'; }; document.getElementById('modalCancel').onclick = () => { document.getElementById('customModal').style.display = 'none'; }; }
         function askClubName() { const cur = localStorage.getItem(KEY_CLUB) || ""; openModal("Club Name", `<input type="text" id="cInput" value="${cur}">`, () => { const v = document.getElementById('cInput').value; localStorage.setItem(KEY_CLUB, v); document.getElementById('clubSubtitle').innerText = v; }); }
-        function askClearLogs() { openModal("Clear Data?", "Wipe records?", () => { localStorage.removeItem(KEY_LOGS); location.reload(); }); }
+        function askClearLogs() { openModal("Clear Data?", "Wipe records?", () => { localStorage.removeItem(prefix + 'sdtm_logs'); location.reload(); }); }
         function handleNameInput(el) { el.value = el.value.toUpperCase(); filterSpeakers(); }
         function filterSpeakers() { const q = document.getElementById('name').value.toUpperCase(); renderSpeakerList(allSpeakers.filter(s => s.includes(q))); }
-        function loadReport() { let logs = JSON.parse(localStorage.getItem(KEY_LOGS)||"[]"); document.getElementById('reportLog').innerText = logs.length ? logs.join('\n') : "No data."; }
-        function shareReport() { const logs = JSON.parse(localStorage.getItem(KEY_LOGS)||"[]"); if (!logs.length) return; const club = localStorage.getItem(KEY_CLUB) || "Meeting"; const text = (localStorage.getItem(KEY_CLUB) || "Meeting") + " Report:\n\n" + logs.join('\n'); if (navigator.share) navigator.share({ title: 'Report', text: text }); else alert("Logs saved!"); }
+        function loadReport() { let logs = JSON.parse(localStorage.getItem(prefix + 'sdtm_logs')||"[]"); document.getElementById('reportLog').innerText = logs.length ? logs.join('\n') : "No data."; }
+        function shareReport() { const logs = JSON.parse(localStorage.getItem(prefix + 'sdtm_logs')||"[]"); if (!logs.length) return; const club = localStorage.getItem(KEY_CLUB) || "Meeting"; const text = (localStorage.getItem(KEY_CLUB) || "Meeting") + " Report:\n\n" + logs.join('\n'); if (navigator.share) navigator.share({ title: 'Report', text: text }); else alert("Logs saved!"); }
     </script>
 </body>
 </html>
