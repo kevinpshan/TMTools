@@ -49,8 +49,7 @@
         .modal-content { background: var(--card); width: 85%; max-width: 500px; padding: 25px; border-radius: 24px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.2); border: 1px solid var(--border); }
 
         .card { background: var(--card); border-radius: 18px; padding: 25px; display: flex; align-items: center; justify-content: space-between; border: 1px solid var(--border); color: var(--text); text-align: left; width: 100%; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.05); cursor: pointer; }
-        .card-content h3 { margin: 0; font-size: 24px; font-weight: 700; }
-        .card-content p { margin: 4px 0 0; font-size: 16px; color: var(--subtext); }
+        .card:active { transform: scale(0.98); background: #f9f9f9; }
 
         input { background: var(--card); border: 2px solid var(--border); color: var(--text); padding: 15px; border-radius: 14px; font-size: 22px; outline: none; width: 100%; box-sizing: border-box; }
 
@@ -66,33 +65,36 @@
         .select-card p { margin: 2px 0 0; font-size: 12px; color: var(--subtext); }
         .select-card.selected { border: 3px solid var(--accent); background: #E8F2FF; }
 
-        /* TALLY GRID REFINEMENT */
-        .tally-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 10px 0; }
+        /* TALLY GRID REFINEMENT - INCREASED GAP */
+        .tally-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; padding: 15px 0; }
         @media (min-width: 600px) { .tally-grid { grid-template-columns: repeat(3, 1fr); } }
         
         .tally-btn { 
-            background: white; border: 1px solid var(--border); border-radius: 20px; 
+            background: white; border: 1px solid var(--border); border-radius: 22px; 
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            padding: 20px 5px; box-shadow: 0 4px 10px rgba(0,0,0,0.06); position: relative; 
+            padding: 25px 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.06); position: relative; 
+            min-height: 110px;
         }
         .tally-btn:active { background: #E8F2FF; transform: scale(0.96); }
-        .tally-count { font-size: 38px; font-weight: 800; color: var(--accent); pointer-events: none; }
+        .tally-count { font-size: 42px; font-weight: 800; color: var(--accent); pointer-events: none; }
         .tally-label { font-size: 16px; font-weight: 700; color: var(--subtext); text-transform: uppercase; pointer-events: none; }
         
-        /* DELETE FILLER WORD ICON (Red Circle X) */
+        /* DELETE ICON - RED CIRCLE (Moved out further) */
         .tally-del { 
-            position: absolute; top: -8px; left: -8px; width: 32px; height: 32px; 
+            position: absolute; top: -10px; left: -10px; width: 34px; height: 34px; 
             background: var(--red); color: white; border-radius: 50%; 
             display: flex; align-items: center; justify-content: center; 
             font-size: 16px; font-weight: 900; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            cursor: pointer;
         }
 
-        /* MINUS BUTTON (Gray Circle -) */
+        /* MINUS BUTTON - GRAY CIRCLE (Moved out further) */
         .tally-minus { 
-            position: absolute; top: -8px; right: -8px; width: 32px; height: 32px; 
+            position: absolute; top: -10px; right: -10px; width: 34px; height: 34px; 
             background: #8E8E93; color: white; border-radius: 50%; 
             display: flex; align-items: center; justify-content: center; 
-            font-size: 24px; font-weight: 700; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            font-size: 26px; font-weight: 700; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            cursor: pointer;
         }
 
         .wod-btn { border: 3px solid var(--gold); }
@@ -146,7 +148,7 @@
             <button class="card" onclick="showScreen('report')"><div class="card-content"><h3>Counter Report</h3><p>View filler word totals</p></div><div style="font-size:35px; color:var(--accent)">📊</div></button>
         </div>
         <div class="container" style="flex:0; margin-top: 10px;"><button class="card" onclick="askClearLogs()" style="background: #FFF5F5; border: 2px solid var(--red); padding: 15px;"><div style="color:var(--red); font-weight:800; width:100%; text-align:center; font-size: 18px;">CLEAR MEETING DATA</div></button></div>
-        <div class="credit-footer"><div class="resource-row"><a href="https://bit.ly/m/SDTM" target="_blank" class="res-btn">Website ↗</a><a href="manual.html" class="res-btn">Manual ↗</a></div><p style="margin:0; font-weight:700; font-size:15px;">Southern Dutchess Toastmasters</p><span id="versionLabel" class="version-tag">Version 2.6</span></div>
+        <div class="credit-footer"><div class="resource-row"><a href="https://bit.ly/m/SDTM" target="_blank" class="res-btn">Website ↗</a><a href="manual.html" class="res-btn">Manual ↗</a></div><p style="margin:0; font-weight:700; font-size:15px;">Southern Dutchess Toastmasters</p><span id="versionLabel" class="version-tag">Version 2.7</span></div>
     </div>
 
     <div id="setup" class="screen">
@@ -165,7 +167,7 @@
             <div id="counterSpeakerRole" class="subtitle">ROLE</div>
         </div>
         <div class="container">
-            <div style="display:flex; gap:10px; flex-shrink:0; margin-bottom:10px;">
+            <div style="display:flex; gap:10px; flex-shrink:0; margin-bottom:15px;">
                 <input type="text" id="newFiller" placeholder="NEW CRUTCH WORD">
                 <button class="footer-btn" style="flex:0; padding:0 25px; font-size:18px;" onclick="addFiller()">Add</button>
             </div>
@@ -325,7 +327,7 @@
             else if(elapsed >= lims.g) { document.body.style.background = "var(--green)"; document.body.style.color="white"; }
         }, 1000); }
 
-        function togglePause() { if (iv) { clearInterval(iv); iv = null; document.getElementById('pauseResumeBtn').innerText = "RESUME"; } else { start = Date.now() - (elapsed*1000); iv = setInterval(() => { /* logic */ }, 1000); document.getElementById('pauseResumeBtn').innerText = "PAUSE"; } }
+        function togglePause() { if (iv) { clearInterval(iv); iv = null; document.getElementById('pauseResumeBtn').innerText = "RESUME"; } else { start = Date.now() - (elapsed*1000); iv = setInterval(() => { /* repeat */ }, 1000); document.getElementById('pauseResumeBtn').innerText = "PAUSE"; } }
 
         function commitAndExit() { clearInterval(iv); if (elapsed > 0) {
             let logs = JSON.parse(localStorage.getItem(KEY_LOGS)||"[]");
@@ -372,7 +374,6 @@
         function initApp() {
             const sn = localStorage.getItem(KEY_CLUB); if (sn) document.getElementById('clubSubtitle').innerText = sn;
             const sc = JSON.parse(localStorage.getItem(KEY_CUSTOM)); if (sc) { if(document.getElementById('customLabel')) document.getElementById('customLabel').innerText = `${sc.g}-${sc.r}m`; }
-            if (isTestEnv) document.getElementById('versionLabel').innerText += " (TEST)";
             renderSpeakerList(allSpeakers);
         }
         function saveSpeaker() { const n = document.getElementById('name').value.trim().toUpperCase(); if(n && !allSpeakers.includes(n)) { allSpeakers.push(n); allSpeakers.sort(); localStorage.setItem(KEY_SPEAKERS, JSON.stringify(allSpeakers)); } renderSpeakerList(allSpeakers); }
@@ -381,11 +382,11 @@
         function askDeleteSpeaker(n) { openModal("Delete?", `Remove ${n}?`, () => { allSpeakers = allSpeakers.filter(s => s !== n); localStorage.setItem(KEY_SPEAKERS, JSON.stringify(allSpeakers)); renderSpeakerList(allSpeakers); }); }
         function openModal(t, b, c) { document.getElementById('modalTitle').innerText = t; document.getElementById('modalBody').innerHTML = b; document.getElementById('customModal').style.display = 'flex'; document.getElementById('modalConfirm').onclick = () => { c(); document.getElementById('customModal').style.display = 'none'; }; document.getElementById('modalCancel').onclick = () => { document.getElementById('customModal').style.display = 'none'; }; }
         function askClubName() { const cur = localStorage.getItem(KEY_CLUB) || ""; openModal("Club Name", `<input type="text" id="cInput" value="${cur}">`, () => { const v = document.getElementById('cInput').value; localStorage.setItem(KEY_CLUB, v); document.getElementById('clubSubtitle').innerText = v; }); }
-        function askClearLogs() { openModal("Clear Data?", "Wipe meeting records?", () => { localStorage.removeItem(KEY_LOGS); location.reload(); }); }
+        function askClearLogs() { openModal("Clear Data?", "Wipe records?", () => { localStorage.removeItem(KEY_LOGS); location.reload(); }); }
         function handleNameInput(el) { el.value = el.value.toUpperCase(); filterSpeakers(); }
         function filterSpeakers() { const q = document.getElementById('name').value.toUpperCase(); renderSpeakerList(allSpeakers.filter(s => s.includes(q))); }
         function loadReport() { let logs = JSON.parse(localStorage.getItem(KEY_LOGS)||"[]"); document.getElementById('reportLog').innerText = logs.length ? logs.join('\n') : "No data."; }
-        function shareReport() { const logs = JSON.parse(localStorage.getItem(KEY_LOGS)||"[]"); if (!logs.length) return; const club = localStorage.getItem(KEY_CLUB) || "Meeting"; const text = (localStorage.getItem(KEY_CLUB) || "Meeting") + " Report:\n\n" + logs.join('\n'); if (navigator.share) navigator.share({ title: 'Report', text: text }); else alert("Logs saved!"); }
+        function shareReport() { const logs = JSON.parse(localStorage.getItem(KEY_LOGS)||"[]"); if (!logs.length) return; const text = (localStorage.getItem(KEY_CLUB) || "Meeting") + " Report:\n\n" + logs.join('\n'); if (navigator.share) navigator.share({ title: 'Report', text: text }); else alert("Logs saved!"); }
     </script>
 </body>
 </html>
