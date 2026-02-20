@@ -36,7 +36,7 @@
         .screen { display: none; flex-direction: column; height: 100%; overflow: hidden; }
         .screen.active { display: flex; }
 
-        /* --- 2. MAIN MENU BUTTONS --- */
+        /* --- 2. CARDS & GRID --- */
         .main-menu-card { 
             background: var(--card); border-radius: 20px; 
             display: grid; grid-template-columns: 1fr 60px;
@@ -49,18 +49,26 @@
         .main-menu-card p { margin: 6px 0 0; font-size: 19px; color: var(--subtext); }
         .main-menu-card .icon { font-size: 45px; color: var(--accent); text-align: right; }
 
-        /* --- 3. SETUP & ROSTER --- */
+        /* SETTINGS TOGGLE STYLE */
+        .toggle-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; }
+        .switch { position: relative; display: inline-block; width: 51px; height: 31px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 31px; }
+        .slider:before { position: absolute; content: ""; height: 27px; width: 27px; left: 2px; bottom: 2px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--green); }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        /* --- 3. ROSTER AREA --- */
         .speaker-area { background: var(--card); border-radius: 16px; padding: 2px; flex: 1; overflow-y: auto; border: 1px solid var(--border); min-height: 100px; margin-bottom: 10px; }
         .speaker-item { padding: 12px 18px; border-bottom: 1px solid var(--bg); display: flex; justify-content: space-between; align-items: center; }
         .sp-name { font-size: 22px; flex: 1; color: var(--accent); font-weight: 600; text-transform: uppercase; }
         .sp-del { padding: 5px 10px; color: var(--red); font-weight: bold; font-size: 22px; cursor: pointer; }
-        input { background: var(--card); border: 2px solid var(--border); color: var(--text); padding: 15px; border-radius: 14px; font-size: 22px; outline: none; width: 100%; box-sizing: border-box; }
+        input[type="text"], input[type="number"] { background: var(--card); border: 2px solid var(--border); color: var(--text); padding: 15px; border-radius: 14px; font-size: 22px; outline: none; width: 100%; box-sizing: border-box; }
 
         .role-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; flex-shrink: 0; padding-bottom: 10px; }
         @media (min-width: 650px) { .role-grid { grid-template-columns: repeat(3, 1fr); } }
         .role-card { background: var(--card); border-radius: 12px; padding: 10px; text-align: center; border: 1px solid var(--border); cursor: pointer; min-height: 55px; display: flex; flex-direction: column; justify-content: center; }
         .role-card h4 { margin: 0; font-size: 16px; color: #1C1C1E; font-weight: 700; line-height: 1.1; }
-        .role-card p { margin: 2px 0 0; font-size: 12px; color: var(--subtext); }
         .role-card.selected { border: 3px solid var(--accent); background: #E8F2FF; }
 
         /* --- 4. TALLY SCREEN --- */
@@ -75,8 +83,6 @@
         .tally-card .label { font-size: 16px; font-weight: 700; color: var(--subtext); text-transform: uppercase; margin-top: 5px; }
         .tally-del { position: absolute; bottom: 8px; left: 8px; width: 38px; height: 38px; background: var(--red); color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 900; z-index: 10; box-shadow: 0 2px 6px rgba(0,0,0,0.15); cursor: pointer; }
         .tally-minus { position: absolute; bottom: 8px; right: 8px; width: 38px; height: 38px; background: #8E8E93; color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 700; z-index: 10; box-shadow: 0 2px 6px rgba(0,0,0,0.15); cursor: pointer; }
-        .wod-card { border: 4px solid var(--gold); }
-        .wod-card .count { color: var(--gold); }
 
         /* --- 5. FOOTER & MODALS --- */
         .button-row { display: flex; gap: 15px; padding: 10px 20px 20px; flex-shrink: 0; background: transparent; max-width: 950px; margin: 0 auto; width: 100%; box-sizing: border-box; }
@@ -86,10 +92,6 @@
         .resource-row { display: flex; gap: 12px; margin-bottom: 15px; justify-content: center; }
         .res-btn { flex: 1; background: #F2F2F7; color: var(--accent); text-decoration: none; padding: 14px; border-radius: 12px; font-weight: 700; font-size: 17px; border: 1px solid var(--border); }
         .version-tag { display: block; font-size: 12px; opacity: 0.5; margin-top: 6px; color: #000; font-weight: 400; }
-
-        #customModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
-        .modal-content { background: var(--card); width: 85%; max-width: 500px; padding: 25px; border-radius: 24px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.2); border: 1px solid var(--border); }
-        #timer { font-size: clamp(100px, 35vw, 450px); font-weight: 200; text-align: center; margin: auto 0; font-variant-numeric: tabular-nums; color: #000; }
         #reportLog { background: var(--card); border-radius: 18px; padding: 25px; flex: 1; overflow-y: auto; font-family: monospace; font-size: 18px; border: 1px solid var(--border); color: #000; white-space: pre; }
     </style>
 </head>
@@ -126,12 +128,6 @@
             <div class="main-menu-card" onclick="showScreen('setup')"><div class="card-content"><h3>Start Tracking</h3><p>Count filler words per role</p></div><div class="icon">✍</div></div>
             <div class="main-menu-card" onclick="showScreen('report')"><div class="card-content"><h3>Counter Report</h3><p>View filler word totals</p></div><div class="icon">📊</div></div>
         </div>
-        <div class="container" style="flex:0; margin-top: 10px;">
-            <div class="main-menu-card" onclick="askClearLogs()" style="background: #FFF5F5; border: 2px solid var(--red); padding: 20px;">
-                <div class="card-content" style="text-align:center;"><h3 style="color:var(--red); margin:0;">CLEAR MEETING DATA</h3></div>
-                <div></div>
-            </div>
-        </div>
         <div class="credit-footer">
             <div class="resource-row"><a href="https://bit.ly/m/SDTM" target="_blank" class="res-btn">Website ↗</a><a href="manual.html" class="res-btn">Manual ↗</a></div>
             <p style="margin:0; font-weight:700; font-size:15px;">Southern Dutchess Toastmasters</p>
@@ -139,10 +135,32 @@
         </div>
     </div>
 
+    <div id="settings" class="screen">
+        <div class="header"><h1>Settings</h1></div>
+        <div class="container">
+            <div class="main-menu-card" style="cursor: default;">
+                <div class="card-content">
+                    <h3>Markdown Export</h3>
+                    <p>Format shared reports as table code</p>
+                </div>
+                <div class="icon">
+                    <label class="switch">
+                        <input type="checkbox" id="mdToggle" onchange="saveSettings()">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+            <div class="main-menu-card" onclick="exportData()"><div class="card-content"><h3>Backup Data</h3><p>Export Roster & Fillers</p></div><div class="icon">⤓</div></div>
+            <div class="main-menu-card" onclick="document.getElementById('importFile').click()"><div class="card-content"><h3>Restore Data</h3><p>Import Roster & Fillers</p></div><div class="icon">⤒</div></div>
+            <div class="main-menu-card" onclick="askClearLogs()" style="background: #FFF5F5; border: 2px solid var(--red);"><div class="card-content"><h3 style="color:var(--red);">Clear Meeting Data</h3><p>Delete all current logs</p></div><div class="icon">⚠</div></div>
+        </div>
+        <div class="button-row"><button class="footer-btn" onclick="showScreen('menu')">Done</button></div>
+    </div>
+
     <div id="setup" class="screen">
         <div class="header"><h1 id="setupHeader">Setup</h1></div>
         <div class="container">
-            <div style="display:flex; gap:10px; flex-shrink:0;"><input type="text" id="name" placeholder="SEARCH OR ENTER NAME" oninput="handleNameInput(this)"><button class="footer-btn" style="flex:0; padding:0 25px; font-size:18px;" onclick="saveSpeaker()">Add</button></div>
+            <div style="display:flex; gap:10px; flex-shrink:0;"><input type="text" id="name" placeholder="NAME" oninput="handleNameInput(this)"><button class="footer-btn" style="flex:0; padding:0 25px; font-size:18px;" onclick="saveSpeaker()">Add</button></div>
             <div id="speakerArea" class="speaker-area"></div>
             <div id="roleGridArea" class="role-grid"></div>
         </div>
@@ -152,29 +170,19 @@
     <div id="counterDisplay" class="screen">
         <div class="header"><h1 id="counterSpeakerName">Name</h1><div id="counterSpeakerRole" class="subtitle">ROLE</div></div>
         <div class="container">
-            <div style="display:flex; gap:10px; flex-shrink:0; margin-bottom:10px;"><input type="text" id="newFiller" placeholder="NEW CRUTCH WORD"><button class="footer-btn" style="flex:0; padding:0 25px; font-size:18px;" onclick="addFiller()">Add</button></div>
+            <div style="display:flex; gap:10px; flex-shrink:0; margin-bottom:10px;"><input type="text" id="newFiller" placeholder="CRUTCH WORD"><button class="footer-btn" style="flex:0; padding:0 25px; font-size:18px;" onclick="addFiller()">Add</button></div>
             <div id="tallyArea" class="tally-grid"></div>
         </div>
         <div class="button-row"><button class="footer-btn secondary-btn" onclick="showScreen('menu')">Back</button><button class="footer-btn commit-btn" onclick="saveCounterSession()">SAVE RESULTS</button></div>
     </div>
 
-    <div id="timerDisplay" class="screen"><div id="spkName" style="font-size:30px; color:#666; margin-top:20px; text-align:center; text-transform: uppercase; font-weight:700;">Speaker</div><div id="timer">00:00</div><div class="button-row"><button id="pauseResumeBtn" class="footer-btn secondary-btn" onclick="togglePause()">PAUSE</button><button class="footer-btn commit-btn" onclick="commitAndExit()">COMMIT & EXIT</button></div></div>
+    <div id="timerDisplay" class="screen"><div id="spkName" style="font-size:30px; color:#666; margin-top:20px; text-align:center; text-transform: uppercase; font-weight:700;">Speaker</div><div id="timer" style="font-size:clamp(100px, 35vw, 450px); font-weight:200; text-align:center; margin: auto 0; font-variant-numeric: tabular-nums; color: #000;">00:00</div><div class="button-row"><button id="pauseResumeBtn" class="footer-btn secondary-btn" onclick="togglePause()">PAUSE</button><button class="footer-btn commit-btn" onclick="commitAndExit()">COMMIT & EXIT</button></div></div>
 
-    <div id="settings" class="screen">
-        <div class="header"><h1>Settings</h1></div>
-        <div class="container">
-            <div class="main-menu-card" onclick="exportData()"><div class="card-content"><h3>Backup Data</h3><p>Export Roster & Fillers</p></div><div class="icon">⤓</div></div>
-            <div class="main-menu-card" onclick="document.getElementById('importFile').click()"><div class="card-content"><h3>Restore Data</h3><p>Import Roster & Fillers</p></div><div class="icon">⤒</div></div>
-            <div class="main-menu-card" onclick="askClearLogs()" style="background: #FFF5F5; border: 2px solid var(--red);"><div class="card-content"><h3 style="color:var(--red);">Clear All Meeting Data</h3><p>Delete logs and resets tool</p></div><div class="icon">⚠</div></div>
-        </div>
-        <div class="button-row"><button class="footer-btn" onclick="showScreen('menu')">Done</button></div>
-    </div>
-
-    <div id="report" class="screen"><div class="header"><h1 id="reportPageTitle">Report</h1></div><div class="container"><div id="reportLog"></div></div><div class="button-row"><button class="footer-btn secondary-btn" onclick="shareReport()">Share (Markdown)</button><button class="footer-btn" onclick="showScreen('menu')">Done</button></div></div>
+    <div id="report" class="screen"><div class="header"><h1 id="reportPageTitle">Report</h1></div><div class="container"><div id="reportLog"></div></div><div class="button-row"><button class="footer-btn secondary-btn" onclick="shareReport()">Share Results</button><button class="footer-btn" onclick="showScreen('menu')">Done</button></div></div>
 
     <script>
         const prefix = window.location.pathname.toLowerCase().includes('/test/') ? 'test_' : 'prod_';
-        const KEY_SPEAKERS = prefix + 'sdtm_speakers', KEY_LOGS = prefix + 'sdtm_logs', KEY_CLUB = prefix + 'sdtm_club_name', KEY_CUSTOM = prefix + 'sdtm_custom_limits', KEY_FILLERS = prefix + 'sdtm_fillers';
+        const KEY_SPEAKERS = prefix + 'sdtm_speakers', KEY_LOGS = prefix + 'sdtm_logs', KEY_CLUB = prefix + 'sdtm_club_name', KEY_CUSTOM = prefix + 'sdtm_custom_limits', KEY_FILLERS = prefix + 'sdtm_fillers', KEY_MD = prefix + 'sdtm_md_toggle';
 
         let currentMode = 'timer', currentSpeaker = "", currentTally = {}, iv, start, elapsed=0, lims={g:0,y:0,r:0}, selectedTypeLabel="";
         let fillerList = JSON.parse(localStorage.getItem(KEY_FILLERS) || '["AH", "UM", "ER", "SO", "LIKE", "YOU KNOW", "WORD OF DAY"]');
@@ -187,7 +195,7 @@
             currentMode = mode;
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.getElementById(mode === 'timer' ? 'tabTimer' : 'tabCounter').classList.add('active');
-            document.getElementById('modeTitle').innerText = mode === 'timer' ? 'Meeting Timer' : 'Ah-Counter';
+            document.getElementById('modeTitle').innerText = mode === 'timer' ? 'Meeting Tools' : 'Ah-Counter';
             document.getElementById('timerMode').style.display = mode === 'timer' ? 'flex' : 'none';
             document.getElementById('counterMode').style.display = mode === 'counter' ? 'flex' : 'none';
             selectedTypeLabel = ""; 
@@ -204,54 +212,59 @@
             const logs = JSON.parse(localStorage.getItem(KEY_LOGS) || "[]");
             const club = localStorage.getItem(KEY_CLUB) || "Meeting Tools";
             const date = new Date().toLocaleDateString();
-            
-            let displayStr = `${club}\nMeeting Date: ${date}\n${'-'.repeat(20)}\n\n`;
-            
+            let displayStr = `${club}\nDate: ${date}\n${'-'.repeat(20)}\n\n`;
             if (logs.length > 0) {
-                // Table header for display
                 displayStr += `NAME             | ROLE             | RESULT\n`;
                 displayStr += `${'-'.repeat(16)}|${'-'.repeat(18)}|${'-'.repeat(20)}\n`;
                 logs.forEach(log => {
-                    const [namePart, resultPart] = log.split(' | ');
-                    const [rolePart, valPart] = resultPart.split(': ');
-                    displayStr += `${namePart.padEnd(16)} | ${rolePart.padEnd(16)} | ${valPart}\n`;
+                    const [n, r] = log.split(' | '); const [role, val] = r.split(': ');
+                    displayStr += `${n.padEnd(16)} | ${role.padEnd(16)} | ${val}\n`;
                 });
-            } else {
-                displayStr += "No data recorded.";
-            }
-
+            } else displayStr += "No data recorded.";
             document.getElementById('reportLog').innerText = displayStr;
-            document.getElementById('reportPageTitle').innerText = (currentMode === 'timer' ? "Meeting Timer" : "Ah-Counter") + " Report";
+            document.getElementById('reportPageTitle').innerText = (currentMode === 'timer' ? "Timer" : "Counter") + " Report";
         }
 
         function shareReport() { 
             const logs = JSON.parse(localStorage.getItem(KEY_LOGS) || "[]");
             if (!logs.length) return;
-            
             const club = localStorage.getItem(KEY_CLUB) || "Meeting Tools";
             const date = new Date().toLocaleDateString();
-            
-            // Format as Markdown Table for Notes/Email
-            let mdReport = `# ${club} Report\n`;
-            mdReport += `**Date:** ${date}\n\n`;
-            mdReport += `| Name | Role | Result |\n`;
-            mdReport += `| :--- | :--- | :--- |\n`;
-            
-            logs.forEach(log => {
-                const [namePart, resultPart] = log.split(' | ');
-                const [rolePart, valPart] = resultPart.split(': ');
-                mdReport += `| ${namePart} | ${rolePart} | ${valPart} |\n`;
-            });
+            const mdEnabled = document.getElementById('mdToggle').checked;
+
+            let finalReport = "";
+            if (mdEnabled) {
+                finalReport = `# ${club} Report\n**Date:** ${date}\n\n| Name | Role | Result |\n| :--- | :--- | :--- |\n`;
+                logs.forEach(log => {
+                    const [n, r] = log.split(' | '); const [role, val] = r.split(': ');
+                    finalReport += `| ${n} | ${role} | ${val} |\n`;
+                });
+            } else {
+                finalReport = `${club} Report - ${date}\n\n`;
+                logs.forEach(log => finalReport += `${log}\n`);
+            }
 
             if (navigator.share) {
-                navigator.share({ title: `${club} Report`, text: mdReport });
+                navigator.share({ title: `${club} Report`, text: finalReport });
             } else {
-                navigator.clipboard.writeText(mdReport);
-                openModal("Copied", "Report copied to clipboard as Markdown Table.", () => {});
+                navigator.clipboard.writeText(finalReport);
+                openModal("Copied", "Report copied to clipboard.", () => {});
             }
         }
 
-        /* --- PREVIOUS STABLE LOGIC CONTINUED --- */
+        function saveSettings() {
+            localStorage.setItem(KEY_MD, document.getElementById('mdToggle').checked);
+        }
+
+        function initApp() {
+            const sn = localStorage.getItem(KEY_CLUB); if (sn) document.getElementById('clubSubtitle').innerText = sn;
+            document.getElementById('mdToggle').checked = localStorage.getItem(KEY_MD) === 'true';
+            const vLabel = document.getElementById('versionLabel');
+            if (window.location.pathname.toLowerCase().includes('/test/')) vLabel.innerText = "Version 2.0 (TEST)";
+            renderSpeakerList(allSpeakers);
+        }
+
+        /* --- PRESET GRID LOGIC --- */
         function renderSetupGrid() {
             const grid = document.getElementById('roleGridArea'); grid.innerHTML = "";
             document.getElementById('setupHeader').innerText = currentMode === 'timer' ? 'Speech Info' : 'Counter Setup';
@@ -266,12 +279,12 @@
         }
         function selectRole(el, g, y, r, label) { document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected')); el.classList.add('selected'); selectedTypeLabel = label; lims = { g, y, r }; }
         function handleStart() {
-            const name = document.getElementById('name').value.trim().toUpperCase();
-            if (!name) { openModal("Missing Name", "Please select a speaker.", ()=>{}); return; }
-            if (!selectedTypeLabel) { openModal("Missing Role", "Please select a role.", ()=>{}); return; }
-            currentSpeaker = name;
-            if (currentMode === 'timer') { showScreen('timerDisplay'); document.getElementById('spkName').innerText = name; startTimer(); }
-            else { showScreen('counterDisplay'); document.getElementById('counterSpeakerName').innerText = name; document.getElementById('counterSpeakerRole').innerText = selectedTypeLabel; initTally(); }
+            const n = document.getElementById('name').value.trim().toUpperCase();
+            if (!n) { openModal("Error", "Enter speaker name.", ()=>{}); return; }
+            if (!selectedTypeLabel) { openModal("Error", "Select a role.", ()=>{}); return; }
+            currentSpeaker = n;
+            if (currentMode === 'timer') { showScreen('timerDisplay'); document.getElementById('spkName').innerText = n; startTimer(); }
+            else { showScreen('counterDisplay'); document.getElementById('counterSpeakerName').innerText = n; document.getElementById('counterSpeakerRole').innerText = selectedTypeLabel; initTally(); }
         }
         function initTally() { currentTally = {}; fillerList.forEach(f => currentTally[f] = 0); renderTally(); }
         function renderTally() {
@@ -281,7 +294,7 @@
         }
         function incTally(f) { currentTally[f]++; document.getElementById(`ct-${f}`).innerText = currentTally[f]; }
         function decTally(e, f) { e.stopPropagation(); if (currentTally[f] > 0) currentTally[f]--; document.getElementById(`ct-${f}`).innerText = currentTally[f]; }
-        function delFiller(e, f) { e.stopPropagation(); openModal("Delete Word?", `Remove "${f}"?`, () => { fillerList = fillerList.filter(word => word !== f); localStorage.setItem(KEY_FILLERS, JSON.stringify(fillerList)); renderTally(); }); }
+        function delFiller(e, f) { e.stopPropagation(); openModal("Delete?", `Remove "${f}"?`, () => { fillerList = fillerList.filter(word => word !== f); localStorage.setItem(KEY_FILLERS, JSON.stringify(fillerList)); renderTally(); }); }
         function addFiller() { const v = document.getElementById('newFiller').value.trim().toUpperCase(); if (v && !fillerList.includes(v)) { fillerList.push(v); localStorage.setItem(KEY_FILLERS, JSON.stringify(fillerList)); renderTally(); document.getElementById('newFiller').value = ""; } }
         function saveCounterSession() { 
             let logs = JSON.parse(localStorage.getItem(KEY_LOGS)||"[]");
@@ -289,27 +302,21 @@
             logs.push(`${currentSpeaker} | ${selectedTypeLabel}: ${res}`); localStorage.setItem(KEY_LOGS, JSON.stringify(logs));
             openModal("Saved", "Results recorded.", () => { showScreen('menu'); });
         }
-        function startTimer() { elapsed = 0; document.getElementById('timer').innerText = "00:00"; start = Date.now(); iv = setInterval(() => { elapsed = Math.floor((Date.now() - start) / 1000); let m = Math.floor(elapsed/60).toString().padStart(2,'0'), s = (elapsed%60).toString().padStart(2,'0'); document.getElementById('timer').innerText = `${m}:${s}`; if(elapsed >= lims.r) { document.body.style.background = "var(--red)"; document.body.style.color="white"; } else if(elapsed >= lims.y) { document.body.style.background = "var(--yellow)"; document.body.style.color="black"; } else if(elapsed >= lims.g) { document.body.style.background = "var(--green)"; document.body.style.color="white"; } }, 1000); }
+        function startTimer() { elapsed = 0; document.getElementById('timer').innerText = "00:00"; start = Date.now(); iv = setInterval(() => { elapsed = Math.floor((Date.now() - start) / 1000); let m = Math.floor(elapsed/60).toString().padStart(2,'0'), s = (elapsed%60).toString().padStart(2,'0'); document.getElementById('timer').innerText = `${m}:${s}`; if(elapsed >= lims.r) { document.body.style.background = "var(--red)"; } else if(elapsed >= lims.y) { document.body.style.background = "var(--yellow)"; } else if(elapsed >= lims.g) { document.body.style.background = "var(--green)"; } }, 1000); }
         function togglePause() { if (iv) { clearInterval(iv); iv = null; document.getElementById('pauseResumeBtn').innerText = "RESUME"; } else { start = Date.now() - (elapsed*1000); startTimer(); document.getElementById('pauseResumeBtn').innerText = "PAUSE"; } }
-        function commitAndExit() { clearInterval(iv); if (elapsed > 0) { let logs = JSON.parse(localStorage.getItem(KEY_LOGS)||"[]"); logs.push(`${currentSpeaker} | ${selectedTypeLabel}: ${document.getElementById('timer').innerText}`); localStorage.setItem(KEY_LOGS, JSON.stringify(logs)); } elapsed = 0; document.getElementById('timer').innerText = "00:00"; document.body.style.background = "var(--bg)"; document.body.style.color = "var(--text)"; showScreen('menu'); }
-        function askCustomTime(el) { const saved = JSON.parse(localStorage.getItem(KEY_CUSTOM) || '{"g":5,"cy":6,"r":7}'); const title = currentMode === 'timer' ? "Custom Thresholds" : "Enter Custom Role"; const body = currentMode === 'timer' ? `<div style="display:grid; gap:10px;"><label>Min: <input type="number" id="cg" value="${saved.g}"></label><label>Target: <input type="number" id="cy" value="${saved.cy}"></label><label>Max: <input type="number" id="cr" value="${saved.r}"></label></div>` : `<input type="text" id="customRole" placeholder="e.g. JOKE MASTER" style="text-transform:uppercase">`; openModal(title, body, () => { if (currentMode === 'timer') { const g = document.getElementById('cg').value, y = document.getElementById('cy').value, r = document.getElementById('cr').value; lims = { g: g*60, y: y*60, r: r*60 }; localStorage.setItem(KEY_CUSTOM, JSON.stringify({g, cy: y, r})); document.getElementById('customLabel').innerText = `${g}-${r}m`; selectedTypeLabel = "CUSTOM"; } else { selectedTypeLabel = document.getElementById('customRole').value.toUpperCase(); document.getElementById('customLabel').innerText = selectedTypeLabel; } document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected')); el.classList.add('selected'); }); }
-        function exportData() { const d = { speakers: allSpeakers, fillers: fillerList, club: localStorage.getItem(KEY_CLUB) || "" }; const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(d)], {type:'application/json'})); a.download = 'sdtm_backup.json'; a.click(); }
-        function handleImportFile(i) { const r = new FileReader(); r.onload = (e) => { const d = JSON.parse(e.target.result); if(d.speakers) localStorage.setItem(KEY_SPEAKERS, JSON.stringify(d.speakers)); if(d.fillers) localStorage.setItem(KEY_FILLERS, JSON.stringify(d.fillers)); if(d.club) localStorage.setItem(KEY_CLUB, d.club); location.reload(); }; r.readAsText(i.files[0]); }
-        function initApp() {
-            const sn = localStorage.getItem(KEY_CLUB); if (sn) document.getElementById('clubSubtitle').innerText = sn;
-            const vLabel = document.getElementById('versionLabel');
-            if (window.location.pathname.toLowerCase().includes('/test/')) vLabel.innerText = "Version 2.0 (TEST)";
-            renderSpeakerList(allSpeakers);
-        }
+        function commitAndExit() { clearInterval(iv); if (elapsed > 0) { let logs = JSON.parse(localStorage.getItem(KEY_LOGS)||"[]"); logs.push(`${currentSpeaker} | ${selectedTypeLabel}: ${document.getElementById('timer').innerText}`); localStorage.setItem(KEY_LOGS, JSON.stringify(logs)); } elapsed = 0; document.getElementById('timer').innerText = "00:00"; document.body.style.background = "var(--bg)"; showScreen('menu'); }
+        function askCustomTime(el) { const saved = JSON.parse(localStorage.getItem(KEY_CUSTOM) || '{"g":5,"cy":6,"r":7}'); const title = currentMode === 'timer' ? "Thresholds" : "Custom Role"; const body = currentMode === 'timer' ? `<div style="display:grid; gap:10px;"><label>Min: <input type="number" id="cg" value="${saved.g}"></label><label>Target: <input type="number" id="cy" value="${saved.cy}"></label><label>Max: <input type="number" id="cr" value="${saved.r}"></label></div>` : `<input type="text" id="customRole" placeholder="ROLE NAME" style="text-transform:uppercase">`; openModal(title, body, () => { if (currentMode === 'timer') { const g = document.getElementById('cg').value, y = document.getElementById('cy').value, r = document.getElementById('cr').value; lims = { g: g*60, y: y*60, r: r*60 }; localStorage.setItem(KEY_CUSTOM, JSON.stringify({g, cy: y, r})); document.getElementById('customLabel').innerText = `${g}-${r}m`; selectedTypeLabel = "CUSTOM"; } else { selectedTypeLabel = document.getElementById('customRole').value.toUpperCase(); document.getElementById('customLabel').innerText = selectedTypeLabel; } document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected')); el.classList.add('selected'); }); }
+        function exportData() { const d = { speakers: allSpeakers, fillers: fillerList, club: localStorage.getItem(KEY_CLUB) || "" }; const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(d)], {type:'application/json'})); a.download = 'backup.json'; a.click(); }
+        function handleImportFile(i) { const r = new FileReader(); r.onload = (e) => { const d = JSON.parse(e.target.result); if(d.speakers) localStorage.setItem(KEY_SPEAKERS, JSON.stringify(d.speakers)); if(d.fillers) localStorage.setItem(KEY_FILLERS, JSON.stringify(d.fillers)); location.reload(); }; r.readAsText(i.files[0]); }
+        function askClubName() { const cur = localStorage.getItem(KEY_CLUB) || ""; openModal("Club Name", `<input type="text" id="cInput" value="${cur}">`, () => { const v = document.getElementById('cInput').value; localStorage.setItem(KEY_CLUB, v); document.getElementById('clubSubtitle').innerText = v; }); }
+        function askClearLogs() { openModal("Clear?", "Delete meeting logs?", () => { localStorage.removeItem(KEY_LOGS); location.reload(); }); }
+        function handleNameInput(el) { el.value = el.value.toUpperCase(); filterSpeakers(); }
+        function filterSpeakers() { const q = document.getElementById('name').value.toUpperCase(); renderSpeakerList(allSpeakers.filter(s => s.includes(q))); }
         function saveSpeaker() { const n = document.getElementById('name').value.trim().toUpperCase(); if(n && !allSpeakers.includes(n)) { allSpeakers.push(n); allSpeakers.sort(); localStorage.setItem(KEY_SPEAKERS, JSON.stringify(allSpeakers)); } renderSpeakerList(allSpeakers); }
         function renderSpeakerList(l) { const a = document.getElementById('speakerArea'); if (!l.length) { a.innerHTML = `<div style="padding:15px; opacity:0.3; text-align:center;">Empty</div>`; return; } a.innerHTML = l.map(n => `<div class="speaker-item"><div class="sp-name" onclick="selectSpeaker('${n}')">${n}</div><div class="sp-del" onclick="askDeleteSpeaker('${n}')">✕</div></div>`).join(''); }
         function selectSpeaker(n) { document.getElementById('name').value = n; }
         function askDeleteSpeaker(n) { openModal("Delete?", `Remove ${n}?`, () => { allSpeakers = allSpeakers.filter(s => s !== n); localStorage.setItem(KEY_SPEAKERS, JSON.stringify(allSpeakers)); renderSpeakerList(allSpeakers); }); }
         function openModal(t, b, c) { document.getElementById('modalTitle').innerText = t; document.getElementById('modalBody').innerHTML = b; document.getElementById('customModal').style.display = 'flex'; document.getElementById('modalConfirm').onclick = () => { c(); document.getElementById('customModal').style.display = 'none'; }; document.getElementById('modalCancel').onclick = () => { document.getElementById('customModal').style.display = 'none'; }; }
-        function askClubName() { const cur = localStorage.getItem(KEY_CLUB) || ""; openModal("Club Name", `<input type="text" id="cInput" value="${cur}">`, () => { const v = document.getElementById('cInput').value; localStorage.setItem(KEY_CLUB, v); document.getElementById('clubSubtitle').innerText = v; }); }
-        function askClearLogs() { openModal("Clear Data?", "Wipe records?", () => { localStorage.removeItem(KEY_LOGS); location.reload(); }); }
-        function handleNameInput(el) { el.value = el.value.toUpperCase(); filterSpeakers(); }
-        function filterSpeakers() { const q = document.getElementById('name').value.toUpperCase(); renderSpeakerList(allSpeakers.filter(s => s.includes(q))); }
     </script>
 </body>
 </html>
