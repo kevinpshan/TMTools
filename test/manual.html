@@ -6,71 +6,81 @@
     <title>Meeting Tools - User Manual</title>
     <style>
         body { font-family: -apple-system, system-ui, sans-serif; line-height: 1.6; color: #1c1c1e; background: #f2f2f7; margin: 0; padding: 20px; }
-        .wrap { max-width: 800px; margin: 0 auto; background: white; padding: 40px; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        h1 { color: #007aff; font-size: 32px; border-bottom: 2px solid #f2f2f7; padding-bottom: 10px; }
-        h2 { color: #007aff; margin-top: 30px; font-size: 24px; }
-        h3 { color: #3a3a3c; margin-top: 20px; }
-        .badge { background: #007aff; color: white; padding: 2px 8px; border-radius: 6px; font-size: 14px; font-weight: bold; }
-        .role-box { background: #e8f2ff; border-left: 4px solid #007aff; padding: 15px; margin: 10px 0; border-radius: 0 10px 10px 0; }
-        code { background: #f2f2f7; padding: 2px 5px; border-radius: 4px; font-family: monospace; }
-        .footer { text-align: center; margin-top: 40px; font-size: 14px; color: #8e8e93; }
-        .back-link { display: inline-block; margin-bottom: 20px; text-decoration: none; color: #007aff; font-weight: bold; }
+        .wrap { max-width: 850px; margin: 0 auto; background: white; padding: 40px; border-radius: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        h1 { color: #007aff; font-size: 32px; border-bottom: 2px solid #f2f2f7; padding-bottom: 10px; margin-top: 0; }
+        h2 { color: #007aff; margin-top: 35px; font-size: 24px; border-left: 4px solid #007aff; padding-left: 15px; }
+        h3 { color: #3a3a3c; margin-top: 20px; font-size: 19px; }
+        .badge { background: #BF941A; color: white; padding: 2px 10px; border-radius: 8px; font-size: 14px; font-weight: bold; vertical-align: middle; }
+        .feature-box { background: #f8f9fa; border: 1px solid #d1d1d6; padding: 20px; border-radius: 15px; margin: 15px 0; }
+        .pro-tip { background: #fff9db; border: 1px solid #fab005; padding: 15px; border-radius: 12px; margin: 15px 0; font-size: 0.95em; }
+        .footer { text-align: center; margin-top: 50px; font-size: 13px; color: #8e8e93; border-top: 1px solid #f2f2f7; padding-top: 20px; }
+        .back-link { display: inline-block; margin-bottom: 25px; text-decoration: none; color: #007aff; font-weight: 700; font-size: 18px; }
+        li { margin-bottom: 8px; }
+        code { background: #f2f2f7; padding: 2px 5px; border-radius: 4px; font-family: monospace; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="wrap">
         <a href="index.html" class="back-link">← Back to App</a>
-        <h1>User Manual <span class="badge">v2.2</span></h1>
+        <h1>Meeting Tools Manual <span class="badge">v2.5.0</span></h1>
         
-        <p>This tool is designed to assist <strong>Timers</strong> and <strong>Ah-Counters</strong> during Toastmasters meetings. It is optimized for iPad but works on all modern mobile devices.</p>
+        <p>This application is an all-in-one suite for Toastmasters <strong>Timers</strong> and <strong>Grammarians/Ah-Counters</strong>. It works offline and saves all data locally to your device browser.</p>
 
-        <h2>1. Switching Modes</h2>
-        <p>At the top of the main screen, use the <strong>Tabs</strong> to toggle between the <strong>Timer</strong> and the <strong>Ah-Counter</strong>. Settings and Roster data are shared between both modes.</p>
-
-        <h2>2. Managing the Roster</h2>
-        <ul>
-            <li><strong>Add Members:</strong> Enter a name in the "Name" field and tap <strong>Add</strong>. Names are saved permanently to your device.</li>
-            <li><strong>Quick Search:</strong> Type in the search box to filter the list.</li>
-            <li><strong>Selection:</strong> Tap a name in the list to populate the name field instantly.</li>
-            <li><strong>Delete:</strong> Tap the red <strong>✕</strong> next to a name to remove them from your permanent roster.</li>
-        </ul>
-
-        <h2>3. Using the Timer</h2>
-        <div class="role-box">
-            <strong>Timing Logic:</strong> The screen will change color automatically based on Toastmasters standards:
+        <h2>1. Word of the Day (WOD)</h2>
+        <div class="feature-box">
+            <p>The Grammarian can now generate and set the <strong>Word of the Day</strong> directly within the app.</p>
             <ul>
-                <li><strong>Green:</strong> Minimum time reached.</li>
-                <li><strong>Yellow:</strong> Target time reached.</li>
-                <li><strong>Red:</strong> Maximum time reached.</li>
+                <li><strong>Generate:</strong> Tap the <strong>★ Word of the Day</strong> card. Tap <strong>Next</strong> to cycle through 1,000+ curated sophisticated words.</li>
+                <li><strong>Definitions & Usage:</strong> Definitions and example sentences are fetched automatically (requires internet during selection).</li>
+                <li><strong>Selection:</strong> Tapping <strong>Select</strong> does two things:
+                    <ol>
+                        <li>It locks the word, definition, and usage into the final <strong>Meeting Report</strong>.</li>
+                        <li>It automatically adds that word as a button in the <strong>Ah-Counter</strong> tracker.</li>
+                    </ol>
+                </li>
             </ul>
         </div>
-        <p>Tap <strong>Commit & Exit</strong> to save the time to the Meeting Report. The timer will automatically reset for the next speaker.</p>
 
-        <h2>4. Using the Ah-Counter</h2>
-        <p>Select a speaker and their current role. You will be taken to the Tally Screen.</p>
+        <h2>2. Grammarian & Ah-Counter</h2>
+        <h3>Smart Count Merging</h3>
+        <p>You no longer have to worry about tracking the <code>Toastmaster</code> or <code>General Evaluator</code> in multiple segments. If you track the same person in the same role twice, the app <strong>automatically merges</strong> the counts into one single entry in the report.</p>
+        
+        <h3>The Tally Interface</h3>
         <ul>
-            <li><strong>Increment:</strong> Tap the large center of any word card to add +1.</li>
-            <li><strong>Correction:</strong> Tap the gray <strong>−</strong> in the bottom-right corner to subtract -1.</li>
-            <li><strong>Custom Words:</strong> Use the input at the top to add a specific crutch word for that meeting.</li>
-            <li><strong>Permanent Delete:</strong> Tap the red <strong>✕</strong> in the bottom-left corner of a word card to remove that word from your permanent list.</li>
-            <li><strong>Word of the Day:</strong> Highlighted in gold to help you track its usage specifically.</li>
+            <li><strong>Tap Center:</strong> Increment the count (+1).</li>
+            <li><strong>Bottom Right (minus):</strong> Correct a mistake (-1).</li>
+            <li><strong>Bottom Left (red X):</strong> Permanently delete a word from your meeting list.</li>
+            <li><strong>Add Word:</strong> Use the input at the top to add a custom crutch word on the fly.</li>
         </ul>
 
-        <h2>5. Reports & Sharing</h2>
-        <p>Access the <strong>Meeting Report</strong> or <strong>Counter Report</strong> from the main menu to see all recorded data for the current session.</p>
+        <h2>3. Timer Functions</h2>
+        <p>Select a name and a speech type. The screen will change color based on the following logic:</p>
         <ul>
-            <li><strong>Copy:</strong> Copies the report to your clipboard. A confirmation will appear.</li>
-            <li><strong>Share:</strong> Opens the system share sheet to send data to Notes, Email, or Slack.</li>
-            <li><strong>Markdown Toggle:</strong> In <strong>Settings</strong>, enable this to export reports as structured Markdown tables—perfect for advanced users and professional formatting.</li>
+            <li><strong style="color:#34C759;">Green:</strong> Minimum time reached (e.g., 5:00 for a 5-7m speech).</li>
+            <li><strong style="color:#BF941A;">Yellow:</strong> Target time reached (e.g., 6:00).</li>
+            <li><strong style="color:#FF3B30;">Red:</strong> Maximum time reached (e.g., 7:00).</li>
+        </ul>
+        <p>Tap <strong>Commit & Exit</strong> to save the result. Tap <strong>Custom</strong> at the bottom of the grid to set unique thresholds for non-standard speeches.</p>
+
+        <h2>4. Reporting & Sharing</h2>
+        <div class="pro-tip">
+            <strong>Pro Tip:</strong> Use the <strong>Copy</strong> button if you want to paste the results into a specific Slack channel or Email. Use the <strong>Share</strong> button to send the full report directly to the Notes app.
+        </div>
+        <ul>
+            <li><strong>Meeting Report:</strong> Shows the Word of the Day section followed by a table of all recorded times and filler counts.</li>
+            <li><strong>Markdown Export:</strong> Toggle this in <strong>Settings</strong> to generate code that creates beautiful tables in apps like GitHub, Obsidian, or professional email clients.</li>
         </ul>
 
-        <h2>6. Backup & Maintenance</h2>
-        <p>Go to <strong>Settings</strong> to Export or Import your entire Roster and Filler word list. This allows you to sync data between devices or keep a backup of your club's member list.</p>
-        <p style="color: #ff3b30;"><strong>Clear Meeting Data:</strong> This button clears the current session's logs. Use this at the start of every new meeting.</p>
+        <h2>5. Data Management</h2>
+        <ul>
+            <li><strong>Roster:</strong> Names are saved permanently. Use the <strong>Search</strong> bar in Setup to quickly find a member.</li>
+            <li><strong>Backup/Restore:</strong> In Settings, you can export your entire roster and filler list as a <code>.json</code> file. This is useful for moving your data to a new iPad or sharing the club list with another member.</li>
+            <li><strong>Clear Meeting Data:</strong> This clears the session logs and the Word of the Day. <em>Note: This does not delete your member roster.</em></li>
+        </ul>
 
         <div class="footer">
-            Developed by Southern Dutchess Toastmasters<br>
-            Version 2.2 • 2026
+            Developed for Southern Dutchess Toastmasters<br>
+            © 2026 • Optimized for Mobile Safari & Chrome
         </div>
     </div>
 </body>
