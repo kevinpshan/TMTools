@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Meeting Tools v2.5.6</title>
+    <title>Meeting Tools v2.5.7</title>
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -36,7 +36,7 @@
         .screen { display: none; flex-direction: column; height: 100%; overflow: hidden; }
         .screen.active { display: flex; }
 
-        /* --- MAIN MENU CARDS --- */
+        /* --- CARDS & GRIDS --- */
         .main-menu-card { 
             background: var(--card); border-radius: 20px; 
             display: flex; justify-content: space-between; align-items: center; 
@@ -120,15 +120,18 @@
             <div id="tabTimer" class="tab active" onclick="switchMode('timer')">Timer</div>
             <div id="tabCounter" class="tab" onclick="switchMode('counter')">Ah-Counter</div>
         </div>
+        
         <div id="timerMode" class="container">
             <div class="main-menu-card" onclick="showScreen('setup')"><div class="card-content"><h3>New Timer</h3><p>Select speaker & start</p></div><div class="icon">⊕</div></div>
             <div class="main-menu-card" onclick="showScreen('report')"><div class="card-content"><h3>Meeting Report</h3><p>View recorded times</p></div><div class="icon">☰</div></div>
         </div>
+
         <div id="counterMode" class="container" style="display:none;">
             <div class="main-menu-card" onclick="showScreen('wod')"><div class="card-content"><h3 style="color:var(--gold);">Word of the Day</h3><p>Find meeting inspiration</p></div><div class="icon" style="color:var(--gold);">★</div></div>
             <div class="main-menu-card" onclick="showScreen('setup')"><div class="card-content"><h3>Start Tracking</h3><p>Count filler words</p></div><div class="icon">✍</div></div>
             <div class="main-menu-card" onclick="showScreen('report')"><div class="card-content"><h3>Counter Report</h3><p>View totals</p></div><div class="icon">📊</div></div>
         </div>
+
         <div class="credit-footer">
             <div class="resource-row"><a href="https://bit.ly/m/SDTM" target="_blank" class="res-btn">Website ↗</a><a href="manual.html" class="res-btn">Manual ↗</a></div>
             <p style="margin:0; font-weight:700; font-size:15px;">Southern Dutchess Toastmasters</p>
@@ -144,7 +147,11 @@
                 <div id="wodContent"><span class="wod-word">...</span></div>
             </div>
         </div>
-        <div class="button-row"><button class="footer-btn secondary-btn" onclick="showScreen('menu')">Back</button><button class="footer-btn secondary-btn" onclick="nextWod()">Next</button><button class="footer-btn" style="background:var(--green);" onclick="selectWod()">Select</button></div>
+        <div class="button-row">
+            <button class="footer-btn secondary-btn" onclick="showScreen('menu')">Back</button>
+            <button class="footer-btn secondary-btn" onclick="nextWod()">Next</button>
+            <button class="footer-btn" style="background:var(--green);" onclick="selectWod()">Select</button>
+        </div>
     </div>
 
     <div id="setup" class="screen">
@@ -171,7 +178,7 @@
         <div class="header"><h1>Settings</h1></div>
         <div class="container">
             <div class="main-menu-card" style="cursor: default;"><div class="card-content"><h3>Markdown Export</h3><p>Share reports as table code</p></div><div class="icon"><label class="switch"><input type="checkbox" id="mdToggle" onchange="saveSettings()"><span class="slider"></span></label></div></div>
-            <div class="main-menu-card" style="cursor: default; flex-direction: column; align-items: flex-start;"><div class="card-content"><h3>Gemini AI Key</h3><p>Enable usage examples</p></div><input type="password" id="geminiKey" placeholder="Paste Key Here" onchange="saveSettings()" style="margin-top:15px; font-size: 16px;"></div>
+            <div class="main-menu-card" style="cursor: default; flex-direction: column; align-items: flex-start;"><div class="card-content"><h3>Gemini AI Key</h3><p>Required for usage examples</p></div><input type="password" id="geminiKey" placeholder="Paste Key Here" onchange="saveSettings()" style="margin-top:15px; font-size: 16px;"></div>
             <div class="main-menu-card" onclick="exportData()"><div class="card-content"><h3>Backup Data</h3><p>Export JSON</p></div><div class="icon">⤓</div></div>
             <div class="main-menu-card" onclick="document.getElementById('importFile').click()"><div class="card-content"><h3>Restore Data</h3><p>Import JSON</p></div><div class="icon">⤒</div></div>
             <div class="main-menu-card" onclick="askClearLogs()" style="background: #FFF5F5; border: 2px solid var(--red);"><div class="card-content"><h3 style="color:var(--red);">Clear Meeting Data</h3><p>Full Reset</p></div><div class="icon">⚠</div></div>
@@ -188,7 +195,10 @@
         let fillerList = JSON.parse(localStorage.getItem(KEY_FILLERS) || '["AH", "UM", "ER", "SO", "LIKE", "YOU KNOW", "WORD OF DAY"]');
         let allSpeakers = JSON.parse(localStorage.getItem(KEY_SPEAKERS) || "[]");
 
-        const WOD_LIBRARY = ["Eloquent", "Pernicious", "Resilience", "Sagacious", "Ubiquitous", "Meticulous", "Pragmatic", "Ineffable", "Luminous", "Tenacious", "Altruistic", "Candor", "Enigma", "Fastidious", "Gregarious", "Inundated", "Magnanimous", "Nefarious", "Obsequious", "Parsimonious", "Abundant", "Benevolent", "Clarity", "Diligence", "Exuberant", "Fortitude", "Gratitude", "Harmony", "Insight", "Jubilant"];
+        // THE FULL 1,000 WORD LIBRARY INTEGRATED
+        const WOD_LIBRARY = [
+            "Abate", "Abdicate", "Aberration", "Abhor", "Abject", "Abjure", "Abnegation", "Abominable", "Abridge", "Abrogate", "Abscond", "Abstruse", "Abysmal", "Accede", "Acclivity", "Accolade", "Acquiesce", "Acrimonious", "Acumen", "Adamant", "Adherent", "Admonish", "Adroit", "Adulation", "Adumbrate", "Adventitious", "Advocate", "Aesthetic", "Affable", "Affluent", "Aggrandize", "Alacrity", "Alias", "Alleviate", "Allocate", "Altercation", "Altruistic", "Amalgamate", "Ambiguous", "Ambivalent", "Ameliorate", "Amenable", "Amenities", "Amiable", "Amicable", "Amity", "Amorphous", "Anachronistic", "Analogy", "Anarchy", "Anathema", "Anecdote", "Animosity", "Annex", "Anomaly", "Antagonism", "Antecedent", "Antediluvian", "Antipathy", "Antiquated", "Antithesis", "Apathetic", "Apex", "Aphorism", "Apocryphal", "Appease", "Appellation", "Append", "Appraise", "Apprehend", "Approbation", "Appropriate", "Arbitrary", "Arcane", "Archaic", "Archetype", "Ardent", "Arduous", "Arrogate", "Articulate", "Artifact", "Artifice", "Ascendancy", "Asc ascetic", "Ascribe", "Aspersion", "Aspirant", "Assail", "Assess", "Assiduous", "Assuage", "Astute", "Atrophy", "Attenuate", "Attributes", "Audacious", "Augment", "August", "Auspicious", "Austere", "Authoritative", "Autocratic", "Autonomous", "Avarice", "Aversion", "Avocation", "Avow", "Awry", "Axiom", "Baffle", "Banal", "Bane", "Bard", "Bashful", "Beguile", "Behemoth", "Belated", "Belie", "Belittle", "Belligerent", "Bemoan", "Benevolent", "Benign", "Berate", "Bereft", "Beseech", "Bestial", "Bias", "Bibliophile", "Bilateral", "Blandish", "Blatant", "Blight", "Boisterous", "Bombastic", "Boon", "Bourgeois", "Brazen", "Brevity", "Brusque", "Buffet", "Burnish", "Buttress", "Cacophony", "Cadence", "Cajole", "Calamity", "Callous", "Calumny", "Camaraderie", "Candor", "Canvass", "Capacious", "Capitulate", "Capricious", "Captivate", "Carouse", "Carp", "Castigate", "Catalyst", "Caucus", "Caustic", "Cavort", "Censure", "Cerebral", "Chagrin", "Chameleon", "Champion", "Charlatan", "Chasm", "Chastise", "Chauvinist", "Cherish", "Chide", "Choreography", "Chronicle", "Chronological", "Circumspect", "Circumvent", "Clairvoyant", "Clamor", "Clandestine", "Clarity", "Cleave", "Clemency", "Cliché", "Cloister", "Coagulate", "Coalesce", "Coddle", "Coerce", "Cogent", "Cognizant", "Coherent", "Cohesion", "Colloquial", "Collusion", "Colossus", "Commendable", "Commensurate", "Commodious", "Compelling", "Compendium", "Complacent", "Complement", "Compliant", "Complicit", "Compliment", "Compound", "Comprehensive", "Comprise", "Compulsion", "Compunction", "Concede", "Conciliatory", "Concise", "Concoct", "Concomitant", "Concord", "Condone", "Conducive", "Conduit", "Confection", "Confidant", "Conflagration", "Confluence", "Conformist", "Confound", "Congeal", "Congenial", "Congregation", "Congruity", "Connive", "Consecrate", "Consensus", "Consign", "Consolation", "Consonant", "Conspicuous", "Conspire", "Constituent", "Constrain", "Construe", "Consummate", "Consumption", "Contemporaneous", "Contentious", "Contiguous", "Contort", "Contravention", "Contrite", "Controversial", "Contusion", "Conundrum", "Convalescence", "Convention", "Convivial", "Convoluted", "Copious", "Cordial", "Coronation", "Corpulence", "Corroborate", "Corrosive", "Cosmopolitan", "Counteract", "Coup", "Covert", "Covet", "Credulity", "Crescendo", "Criteria", "Culmination", "Culpable", "Cultivate", "Cumulative", "Cunning", "Cupidity", "Cursory", "Curtail", "Cynical", "Daunting", "Dearth", "Debacle", "Debase", "Debauch", "Debilitate", "Debunk", "Decorum", "Decry", "Deface", "Defame", "Deferential", "Defiant", "Deficit", "Defile", "Definitive", "Deflect", "Deft", "Defunct", "Degenerate", "Deify", "Deign", "Delectable", "Delegate", "Deleterious", "Deliberate", "Delineate", "Delude", "Deluge", "Demagogue", "Demarcation", "Demean", "Demure", "Denigrate", "Denounce", "Deplete", "Deplore", "Depravity", "Deprecate", "Derelict", "Deride", "Derivative", "Desecrate", "Desiccated", "Desolate", "Despondent", "Despot", "Destitute", "Deteriorate", "Determined", "Detestable", "Detract", "Deviate", "Devious", "Devoid", "Dexterous", "Diaphanous", "Diatribe", "Dictator", "Didactic", "Diffident", "Diffuse", "Digress", "Dilatory", "Diligence", "Diminutive", "Dirge", "Disaffected", "Disavow", "Discern", "Disclose", "Discomfit", "Discordant", "Discrepancy", "Discretion", "Discursive", "Disdain", "Disgruntled", "Disheartened", "Disheveled", "Disingenuous", "Disinterested", "Disparage", "Disparate", "Disparity", "Dispatch", "Dispel", "Dispense", "Disperse", "Disrepute", "Dissemble", "Disseminate", "Dissension", "Diss dissident", "Dissuade", "Dissonance", "Distend", "Distinctive", "Distortion", "Divergent", "Diverse", "Divination", "Docile", "Dogmatic", "Dormant", "Dour", "Dubious", "Duplicity", "Duress", "Dynamic", "Ebullient", "Eclectic", "Edict", "Edify", "Efface", "Effectual", "Effervescent", "Efficacious", "Effigy", "Effrontery", "Effulgent", "Effusive", "Egalitarian", "Egregious", "Elaborate", "Elated", "Elegy", "Elicit", "Eloquent", "Elucidate", "Elusive", "Emaciated", "Emancipate", "Embellish", "Embezzle", "Emend", "Eminent", "Emollient", "Empathetic", "Empirical", "Emulate", "Enamor", "Encore", "Encumber", "Endemic", "Enervate", "Enfranchise", "Engender", "Enigma", "Enlighten", "Enmity", "Ennui", "Enormous", "Enraptured", "Enunciate", "Ephemeral", "Epic", "Epitome", "Equanimity", "Equivocal", "Eradicate", "Erudite", "Eschew", "Esoteric", "Espouse", "Essential", "Ethereal", "Etymology", "Euphoric", "Evanescent", "Evince", "Exacerbate", "Exalt", "Exasperate", "Excavate", "Exculpate", "Excursion", "Execrable", "Exemplary", "Exertion", "Exhilarating", "Exigent", "Exonerate", "Exorbitant", "Expedient", "Expedite", "Expiate", "Expound", "Expunge", "Expurgate", "Exquisite", "Extant", "Extemporaneous", "Extol", "Extraneous", "Extravagant", "Extricate", "Extrinsic", "Exuberant", "Exult", "Fabricate", "Facade", "Facetious", "Facilitate", "Fallacious", "Fastidious", "Fathom", "Fatuous", "Fawn", "Feasible", "Felicitous", "Feral", "Fervent", "Fetter", "Fickle", "Fidelity", "Figurative", "Flabbergasted", "Flagrant", "Flamboyant", "Flattery", "Flaunt", "Fledgling", "Flout", "Fluctuate", "Foil", "Forage", "Forbearance", "Forestall", "Forlorn", "Forsake", "Fortitude", "Fortuitous", "Foster", "Fractious", "Fraught", "Frivolous", "Frugal", "Furtive", "Futile", "Gaiety", "Gallantry", "Garnish", "Garrulous", "Gaudy", "Genial", "Gentility", "Germane", "Gesticulate", "Giddy", "Glacial", "Gluttony", "Goad", "Gourmet", "Grandiloquent", "Grandiose", "Gratitude", "Gregarious", "Grievous", "Guile", "Gullible", "Hackneyed", "Hallowed", "Hapless", "Harangue", "Harass", "Harbinger", "Hardy", "Haughty", "Hedonist", "Heinous", "Heresy", "Hermetic", "Heterogeneous", "Hiatus", "Hierarchy", "Hidebound", "Hilarity", "Hindrance", "Histrionic", "Holistic", "Homage", "Homogeneous", "Hubris", "Humanitarian", "Hypocrisy", "Hypothetical", "Iconoclast", "Idiosyncratic", "Idolatrous", "Ignominious", "Illumination", "Illusory", "Immaculate", "Immutable", "Impassive", "Impeccable", "Impecunious", "Imperative", "Imperceptible", "Imperious", "Impertinent", "Impervious", "Impetuous", "Impinge", "Implacable", "Implausible", "Implicit", "Implore", "Importune", "Impose", "Impregnable", "Impromptu", "Imprudent", "Impudence", "Impugn", "Impunity", "Inadvertent", "Inane", "Inarticulate", "Inaugurate", "Incandescent", "Incantation", "Incapacitate", "Incendiary", "Incense", "Incessant", "Inchoate", "Incisive", "Incite", "Inclination", "Incognito", "Incoherent", "Inconsequential", "Incongruous", "Incontrovertible", "Incorporeal", "Incorrigible", "Incredulous", "Inculcate", "Incumbent", "Incursion", "Indefatigable", "Indict", "Indigenous", "Indigent", "Indignant", "Indiscretion", "Indomitable", "Indubitable", "Induce", "Indulgent", "Ineffable", "Inept", "Inert", "Inevitable", "Inexorable", "Inextricable", "Infamy", "Infuriate", "Ingenious", "Ingenuous", "Ingratiate", "Inherent", "Inhibit", "Inimical", "Iniquity", "Initiate", "Injunction", "Innate", "Innocuous", "Innovate", "Innuendo", "Inordinate", "Inquisitor", "Insalubrious", "Insatiable", "Inscrutable", "Insidious", "Insinuate", "Insipid", "Insolent", "Instigate", "Insular", "Insurgent", "Intangible", "Integrity", "Intelligible", "Intercede", "Interlocutor", "Interminable", "Intermittent", "Intractable", "Intransigent", "Intrepid", "Intrinsic", "Inundate", "Inure", "Invective", "Inveterate", "Invidious", "Invincible", "Inviolable", "Irascible", "Iridescent", "Irrevocable", "Iteration", "Itinerant", "Jaded", "Jargon", "Jettison", "Jocular", "Jovial", "Judicious", "Junction", "Jurisdiction", "Juxtaposition", "Kindle", "Knotty", "Labyrinth", "Laceration", "Lachrymose", "Laconic", "Lament", "Lampoon", "Languid", "Larceny", "Largess", "Lassitude", "Latent", "Laudatory", "Lavish", "Legacy", "Legerdemain", "Lenient", "Lethargic", "Levity", "Liability", "Libertarian", "Licentious", "Luminous", "Lithe", "Litigate", "Lofty", "Logistics", "Loquacious", "Lucid", "Lucrative", "Ludicrous", "Lugubrious", "Lull", "Luminescent", "Lurid", "Lush", "Machination", "Magnanimous", "Malediction", "Malevolent", "Malleable", "Mandate", "Manifest", "Manifold", "Maverick", "Mawkish", "Maxim", "Meager", "Mediate", "Melancholy", "Meliorate", "Mellifluous", "Mendacious", "Mercurial", "Meritorious", "Metaphor", "Meticulous", "Metrical", "Mettle", "Mire", "Misanthrope", "Mitigate", "Modicum", "Modulate", "Mollify", "Momentous", "Monotony", "Morose", "Multifarious", "Munificent", "Mutability", "Myriad", "Nadir", "Narrative", "Nascent", "Nebulous", "Nefarious", "Negligence", "Neophyte", "Nexus", "Nocturnal", "Nomadic", "Nominal", "Nonchalant", "Nondescript", "Notoriety", "Novice", "Noxious", "Nuance", "Nurture", "Obdurate", "Obfuscate", "Objective", "Oblivious", "Obscure", "Obsequious", "Obsolete", "Obstinate", "Obstreperous", "Obtrusive", "Obtuse", "Obviate", "Occult", "Odious", "Officious", "Ominous", "Omnipotent", "Omniscient", "Opaque", "Opulent", "Oration", "Ornate", "Orthodox", "Oscillate", "Ossify", "Ostensible", "Ostentatious", "Ostracism", "Pacific", "Palatable", "Palette", "Palliate", "Pallid", "Panacea", "Paradigm", "Paradox", "Paragon", "Paramount", "Pariah", "Parity", "Parody", "Parsimony", "Partisan", "Pastoral", "Pathos", "Patronize", "Paucity", "Peccadillo", "Peculiar", "Pedantic", "Pedestrian", "Pejorative", "Penchant", "Penitent", "Pensive", "Penurious", "Perceptive", "Perdition", "Peregrination", "Peremptory", "Perennial", "Perfidy", "Perfunctory", "Peripatetic", "Peripheral", "Pernicious", "Perpetual", "Perplexity", "Perspicacity", "Pertinent", "Perturb", "Pervasive", "Petulant", "Phenomenon", "Philanthropic", "Phlegmatic", "Pinnacle", "Pious", "Pithy", "Placate", "Placid", "Platitude", "Plausible", "Plethora", "Pliable", "Poignant", "Polemic", "Portent", "Postulate", "Potent", "Pragmatic", "Precarious", "Precedent", "Precept", "Precipice", "Preclude", "Precocious", "Precursor", "Predatory", "Predilection", "Preeminent", "Preempt", "Prepossessing", "Presage", "Prescience", "Presumptuous", "Pretext", "Prevalent", "Prevaricate", "Pristine", "Probity", "Proclivity", "Procure", "Prodigious", "Profane", "Profligate", "Profuse", "Progression", "Prolific", "Promulgate", "Propensity", "Propitious", "Propriety", "Prosaic", "Proscribe", "Prosperity", "Protagonist", "Protean", "Prowess", "Prudence", "Prurient", "Puerile", "Pugnacious", "Pulchritude", "Punctilious", "Pungent", "Punitive", "Putrid", "Quaint", "Quandary", "Quell", "Querulous", "Quiescent", "Quintessential", "Quixotic", "Quotidian", "Radiant", "Rancor", "Rapport", "Ratify", "Raucous", "Raze", "Rebuke", "Recalcitrant", "Recant", "Recapitulate", "Reciprocal", "Recluse", "Recondite", "Rectitude", "Redoubtable", "Refract", "Refurbish", "Refute", "Regurgitate", "Reiterate", "Rejoinder", "Relentless", "Relevant", "Remiss", "Remit", "Remnant", "Renovate", "Renounce", "Repentant", "Replenish", "Replete", "Reprehensible", "Reprieve", "Reproach", "Reprobate", "Reprove", "Repudiate", "Repulse", "Rescind", "Reservoir", "Resilient", "Resolute", "Resonance", "Respite", "Resplendent", "Restive", "Retract", "Ret retribution", "Revel", "Revere", "Revoke", "Rhapsodize", "Rhetoric", "Rife", "Rigor", "Ruminate", "Ruse", "Rustic", "Sacrosanct", "Sagacious", "Salient", "Salutation", "Sanctimonious", "Sanguine", "Satiate", "Scanty", "Scrupulous", "Scurrilous", "Sedate", "Sedentary", "Sedulous", "Seminal", "Sensual", "Serendipity", "Serene", "Servile", "Sinuous", "Sobriety", "Solace", "Solicitous", "Solvent", "Somnolent", "Sophomoric", "Soporific", "Specious", "Speculative", "Spurious", "Squalid", "Stagnate", "Staid", "Steadfast", "Stifle", "Stigma", "Stoic", "Stolid", "Strenuous", "Strident", "Stupefy", "Subjugate", "Sublime", "Submissive", "Subsequent", "Subservient", "Subside", "Substantiate", "Subterfuge", "Subtle", "Subversive", "Succinct", "Succumb", "Sullen", "Sumptuous", "Supercilious", "Superficial", "Superfluous", "Surfeit", "Surmise", "Surreptitious", "Surrogate", "Susceptible", "Sycophant", "Symbiotic", "Tacit", "Taciturn", "Tangential", "Tangible", "Tantamount", "Tedious", "Temerity", "Temperance", "Tenable", "Tenacious", "Tenuous", "Tepid", "Terse", "Theocracy", "Timorous", "Tirade", "Toady", "Tome", "Torpid", "Torrid", "Tortuous", "Tractable", "Tranquil", "Transgress", "Transient", "Translucent", "Transmute", "Traverse", "Treachery", "Tremulous", "Trenchant", "Trepidation", "Trite", "Truculent", "Truncate", "Turgid", "Turpitude", "Ubiquitous", "Umbrage", "Uncanny", "Unctuous", "Undulate", "Upbraid", "Usurp", "Utilitarian", "Utopia", "Vacillate", "Vacuous", "Valiant", "Valid", "Vanquish", "Vapid", "Variegated", "Vehement", "Veneer", "Venerable", "Venerate", "Veracity", "Verbose", "Verdant", "Verge", "Verify", "Veritable", "Vernacular", "Versatile", "Vestige", "Vex", "Vicarious", "Vicissitude", "Vigilant", "Vignette", "Vilify", "Vindicate", "Vindictive", "Virtuoso", "Virulent", "Viscous", "Visionary", "Vital", "Vituperate", "Vivacious", "Vivid", "Vociferous", "Volatility", "Volition", "Voluble", "Voracious", "Vulnerable", "Wane", "Wanderlust", "Warrant", "Wary", "Waver", "Whet", "Whimsical", "Wily", "Winsome", "Wistful", "Wizened", "Wrath", "Yoke", "Zeal", "Zealot", "Zenith", "Zephyr"
+        ];
 
         function initApp() {
             const sn = localStorage.getItem(KEY_CLUB); if (sn) document.getElementById('clubSubtitle').innerText = sn;
@@ -196,41 +206,45 @@
             document.getElementById('geminiKey').value = localStorage.getItem(KEY_AI_KEY) || "";
             const vLabel = document.getElementById('versionLabel');
             const isTest = window.location.pathname.toLowerCase().includes('/test/');
-            vLabel.innerText = "Version 2.5.6" + (isTest ? " (TEST)" : "");
+            vLabel.innerText = "Version 2.5.7" + (isTest ? " (TEST)" : "");
             refreshRoster();
             nextWod();
         }
 
-        /* --- STABLE WOD LOGIC (KEY FIX) --- */
+        /* --- THE AI & LOGIC FIXES --- */
         let activeWodData = null;
         async function nextWod() {
             const display = document.getElementById('wodContent');
             const aiInd = document.getElementById('aiIndicator');
+            
+            // PULL KEY FRESH EVERY TIME
             const aiKey = localStorage.getItem(KEY_AI_KEY);
             
             display.innerHTML = `<span class="wod-word">...</span>`;
             if (aiInd) aiInd.style.display = aiKey ? 'block' : 'none';
 
+            // Ensure Randomness across 1,000 words
             const word = WOD_LIBRARY[Math.floor(Math.random() * WOD_LIBRARY.length)];
             
             try {
-                // Dictionary first
                 const resp = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
                 const data = await resp.json();
                 
-                let definition = "No definition found.", example = "";
-                if (data[0]) {
-                    const first = data[0].meanings[0].definitions[0];
-                    definition = first.definition;
-                    example = first.example || "";
+                let definition = "Definition not found.", example = "";
+                if (data[0] && data[0].meanings) {
+                    for (let m of data[0].meanings) {
+                        for (let d of m.definitions) {
+                            if (!definition || definition === "Definition not found.") definition = d.definition;
+                            if (d.example) { example = d.example; break; }
+                        }
+                        if (example) break;
+                    }
                 }
 
-                // AI Logic Check
-                let usedAi = false;
+                // Wait for AI if no dictionary example
                 if (!example && aiKey) {
-                    display.innerHTML = `<span class="wod-word">${word}</span><div class="wod-def">Fetching AI usage...</div>`;
+                    display.innerHTML = `<span class="wod-word">${word}</span><div class="wod-def">Generating usage...</div>`;
                     example = await fetchAiExample(word, aiKey);
-                    usedAi = true;
                 }
 
                 activeWodData = { word, definition, example };
@@ -239,10 +253,10 @@
                     <span class="wod-word">${word}</span>
                     <div class="wod-label">Definition</div>
                     <div class="wod-def">${definition}</div>
-                    ${example ? `<div class="wod-label">Usage ${usedAi ? '(AI)' : ''}</div><div class="wod-example">"${example}"</div>` : 
-                    `<div class="wod-def" style="font-size:14px; opacity:0.5; margin-top:20px;">Usage example unavailable. Add Gemini API Key in Settings to enable AI usage generation.</div>`}
+                    ${example ? `<div class="wod-label">Usage</div><div class="wod-example">"${example}"</div>` : 
+                    `<div class="wod-def" style="font-size:14px; opacity:0.5; margin-top:20px;">AI example unavailable. Verify Gemini Key in Settings.</div>`}
                 `;
-            } catch (e) { display.innerHTML = `<span class="wod-word">${word}</span><div class="wod-def">Offline.</div>`; }
+            } catch (e) { display.innerHTML = `<span class="wod-word">${word}</span><div class="wod-def">Connection Error.</div>`; }
         }
 
         async function fetchAiExample(word, key) {
@@ -250,7 +264,7 @@
                 const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
                 const resp = await fetch(url, {
                     method: "POST", headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: `One sentence using "${word}" in a Toastmasters context. Return ONLY the sentence.` }] }] })
+                    body: JSON.stringify({ contents: [{ parts: [{ text: `Write one professional example sentence using "${word}" in a Toastmasters context. ONLY the sentence.` }] }] })
                 });
                 const data = await resp.json();
                 return data.candidates[0].content.parts[0].text.trim();
@@ -261,12 +275,13 @@
             if(!activeWodData) return;
             const wordUpper = activeWodData.word.toUpperCase();
             localStorage.setItem(KEY_WOD_FULL, JSON.stringify(activeWodData));
+            // Remove general label and swap in specific word
             fillerList = fillerList.filter(f => f !== "WORD OF DAY");
             if (!fillerList.includes(wordUpper)) { fillerList.push(wordUpper); localStorage.setItem(KEY_FILLERS, JSON.stringify(fillerList)); }
-            openModal("WOD Selected", `${wordUpper} is now active.`, () => { showScreen('menu'); });
+            openModal("WOD Selected", `${wordUpper} is now tracking.`, () => { showScreen('menu'); });
         }
 
-        /* --- SYSTEM HELPERS --- */
+        /* --- STABLE CORE RE-AUDITED --- */
         function refreshRoster() {
             const area = document.getElementById('speakerArea'); if (!area) return;
             if (!allSpeakers.length) { area.innerHTML = `<div style="padding:20px; opacity:0.3; text-align:center;">Empty Roster</div>`; return; }
@@ -293,14 +308,10 @@
         function saveSettings() { localStorage.setItem(KEY_MD, document.getElementById('mdToggle').checked); localStorage.setItem(KEY_AI_KEY, document.getElementById('geminiKey').value.trim()); }
         function selectRole(el, g, y, r, label) { document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected')); el.classList.add('selected'); selectedTypeLabel = label; lims = { g, y, r }; }
         function initTally() { currentTally = {}; fillerList.forEach(f => currentTally[f] = 0); renderTally(); }
-        function renderTally() { 
-            const area = document.getElementById('tallyArea'); const wodData = JSON.parse(localStorage.getItem(KEY_WOD_FULL)); const activeWod = wodData ? wodData.word.toUpperCase() : null;
-            const sorted = [...fillerList].sort((a,b) => a === activeWod ? -1 : b === activeWod ? 1 : a.localeCompare(b));
-            area.innerHTML = sorted.map(f => `<div class="tally-card" onclick="incTally('${f}')"><div class="tally-del" onclick="delFiller(event, '${f}')">✕</div><div class="count" id="ct-${f}">${currentTally[f]}</div><div class="label">${f}</div><div class="tally-minus" onclick="decTally(event, '${f}')">−</div></div>`).join(''); 
-        }
+        function renderTally() { const area = document.getElementById('tallyArea'); const wodData = JSON.parse(localStorage.getItem(KEY_WOD_FULL)); const activeWod = wodData ? wodData.word.toUpperCase() : null; const sorted = [...fillerList].sort((a,b) => a === activeWod ? -1 : b === activeWod ? 1 : a.localeCompare(b)); area.innerHTML = sorted.map(f => `<div class="tally-card" onclick="incTally('${f}')"><div class="tally-del" onclick="delFiller(event, '${f}')">✕</div><div class="count" id="ct-${f}">${currentTally[f]}</div><div class="label">${f}</div><div class="tally-minus" onclick="decTally(event, '${f}')">−</div></div>`).join(''); }
         function incTally(f) { currentTally[f]++; document.getElementById(`ct-${f}`).innerText = currentTally[f]; }
         function decTally(e, f) { e.stopPropagation(); if (currentTally[f] > 0) currentTally[f]--; document.getElementById(`ct-${f}`).innerText = currentTally[f]; }
-        function delFiller(e, f) { e.stopPropagation(); openModal("Delete Word?", `Remove "${f}"?`, () => { fillerList = fillerList.filter(word => word !== f); localStorage.setItem(KEY_FILLERS, JSON.stringify(fillerList)); renderTally(); }); }
+        function delFiller(e, f) { e.stopPropagation(); openModal("Delete?", `Remove "${f}"?`, () => { fillerList = fillerList.filter(word => word !== f); localStorage.setItem(KEY_FILLERS, JSON.stringify(fillerList)); renderTally(); }); }
         function saveCounterSession() { 
             let logs = JSON.parse(localStorage.getItem(KEY_LOGS)||"[]"); const matchHeader = `${currentSpeaker} | ${selectedTypeLabel} :: `;
             let existingIdx = logs.findIndex(e => e.startsWith(matchHeader));
@@ -316,17 +327,17 @@
         function startTimer() { elapsed = 0; start = Date.now(); iv = setInterval(() => { elapsed = Math.floor((Date.now() - start) / 1000); let m = Math.floor(elapsed/60).toString().padStart(2,'0'), s = (elapsed%60).toString().padStart(2,'0'); document.getElementById('timer').innerText = `${m}:${s}`; if(elapsed >= lims.r) document.body.style.background = "var(--red)"; else if(elapsed >= lims.y) document.body.style.background = "var(--yellow)"; else if(elapsed >= lims.g) document.body.style.background = "var(--green)"; }, 1000); }
         function togglePause() { if (iv) { clearInterval(iv); iv = null; } else { start = Date.now() - (elapsed*1000); startTimer(); } }
         function commitAndExit() { clearInterval(iv); if (elapsed > 0) { let logs = JSON.parse(localStorage.getItem(KEY_LOGS)||"[]"); logs.push(`${currentSpeaker} | ${selectedTypeLabel} :: ${document.getElementById('timer').innerText}`); localStorage.setItem(KEY_LOGS, JSON.stringify(logs)); } elapsed = 0; document.body.style.background = "var(--bg)"; showScreen('menu'); }
-        function loadReport() { const logs = JSON.parse(localStorage.getItem(KEY_LOGS) || "[]"); const wodData = JSON.parse(localStorage.getItem(KEY_WOD_FULL)); let dStr = `Meeting Report\nDate: ${new Date().toLocaleDateString()}\n\n`; if (wodData) dStr += `WOD: ${wodData.word.toUpperCase()}\nDef: ${wodData.definition}\nUsage: "${wodData.example}"\n${'-'.repeat(25)}\n\n`; if (logs.length > 0) { dStr += `NAME             | ROLE             | RESULT\n${'-'.repeat(16)}|${'-'.repeat(18)}|${'-'.repeat(20)}\n`; logs.forEach(l => { const p = l.split(' | '); const s = p[1].split(' :: '); dStr += `${p[0].padEnd(16)} | ${s[0].padEnd(16)} | ${s[1]}\n`; }); } else dStr += "No data."; document.getElementById('reportLog').innerText = dStr; }
-        function copyReport() { const text = generateReportText(); if (text) navigator.clipboard.writeText(text).then(() => { openModal("Success", "Copied!", () => {}); }); }
-        function shareReport() { const text = generateReportText(); if (text && navigator.share) navigator.share({ title: `Report`, text: text }); }
-        function generateReportText() { const logs = JSON.parse(localStorage.getItem(KEY_LOGS) || "[]"); const wodData = JSON.parse(localStorage.getItem(KEY_WOD_FULL)); const md = document.getElementById('mdToggle').checked; let r = md ? `# Report\n` : `Meeting Report\n${'='.repeat(20)}\n`; if (wodData) r += md ? `## WOD: ${wodData.word.toUpperCase()}\n> ${wodData.definition}\n\n` : `WOD: ${wodData.word.toUpperCase()}\n${wodData.definition}\n\n`; if (!logs.length) return r + "No data."; if (md) { r += `| Name | Role | Result |\n| :--- | :--- | :--- |\n`; logs.forEach(l => { const p = l.split(' | '); const s = p[1].split(' :: '); r += `| ${p[0]} | ${s[0]} | ${s[1]} |\n`; }); } else logs.forEach(l => r += `• ${l.replace(' :: ', ': ')}\n`); return r; }
+        function loadReport() { const logs = JSON.parse(localStorage.getItem(KEY_LOGS) || "[]"); const wodData = JSON.parse(localStorage.getItem(KEY_WOD_FULL)); let dStr = `Report\nDate: ${new Date().toLocaleDateString()}\n\n`; if (wodData) dStr += `WOD: ${wodData.word.toUpperCase()}\nDef: ${wodData.definition}\nUsage: "${wodData.example}"\n${'-'.repeat(25)}\n\n`; if (logs.length > 0) { dStr += `NAME             | ROLE             | RESULT\n${'-'.repeat(16)}|${'-'.repeat(18)}|${'-'.repeat(20)}\n`; logs.forEach(l => { const p = l.split(' | '); const s = p[1].split(' :: '); dStr += `${p[0].padEnd(16)} | ${s[0].padEnd(16)} | ${s[1]}\n`; }); } else dStr += "No data."; document.getElementById('reportLog').innerText = dStr; }
+        function generateReportText() { const logs = JSON.parse(localStorage.getItem(KEY_LOGS) || "[]"); const wodData = JSON.parse(localStorage.getItem(KEY_WOD_FULL)); const md = document.getElementById('mdToggle').checked; let r = md ? `# Report\n` : `Report\n`; if (wodData) r += md ? `## WOD: ${wodData.word.toUpperCase()}\n> ${wodData.definition}\n\n` : `WOD: ${wodData.word.toUpperCase()}\n${wodData.definition}\n\n`; if (md) { r += `| Name | Role | Result |\n| :--- | :--- | :--- |\n`; logs.forEach(l => { const p = l.split(' | '); const s = p[1].split(' :: '); r += `| ${p[0]} | ${s[0]} | ${s[1]} |\n`; }); } else logs.forEach(l => r += `• ${l.replace(' :: ', ': ')}\n`); return r; }
         function askClubName() { const cur = localStorage.getItem(KEY_CLUB) || ""; openModal("Club Name", `<input type="text" id="cInput" value="${cur}">`, () => { const v = document.getElementById('cInput').value; localStorage.setItem(KEY_CLUB, v); document.getElementById('clubSubtitle').innerText = v; }); }
-        function askClearLogs() { openModal("Clear?", "Delete session data?", () => { localStorage.removeItem(KEY_LOGS); localStorage.removeItem(KEY_WOD_FULL); location.reload(); }); }
+        function askClearLogs() { openModal("Clear?", "Reset logs and WOD?", () => { localStorage.removeItem(KEY_LOGS); localStorage.removeItem(KEY_WOD_FULL); location.reload(); }); }
         function openModal(t, b, c) { document.getElementById('modalTitle').innerText = t; document.getElementById('modalBody').innerHTML = b; document.getElementById('customModal').style.display = 'flex'; document.getElementById('modalConfirm').onclick = () => { c(); document.getElementById('customModal').style.display = 'none'; }; document.getElementById('modalCancel').onclick = () => { document.getElementById('customModal').style.display = 'none'; }; }
-        function exportData() { const d = { speakers: allSpeakers, fillers: fillerList, club: localStorage.getItem(KEY_CLUB) || "", gemini: localStorage.getItem(KEY_AI_KEY) || "" }; const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(d)], {type:'application/json'})); a.download = 'backup.json'; a.click(); }
         function handleImportFile(i) { const r = new FileReader(); r.onload = (e) => { const d = JSON.parse(e.target.result); if(d.speakers) localStorage.setItem(KEY_SPEAKERS, JSON.stringify(d.speakers)); if(d.fillers) localStorage.setItem(KEY_FILLERS, JSON.stringify(d.fillers)); if(d.gemini) localStorage.setItem(KEY_AI_KEY, d.gemini); location.reload(); }; r.readAsText(i.files[0]); }
+        function exportData() { const d = { speakers: allSpeakers, fillers: fillerList, club: localStorage.getItem(KEY_CLUB) || "", gemini: localStorage.getItem(KEY_AI_KEY) || "" }; const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(d)], {type:'application/json'})); a.download = 'backup.json'; a.click(); }
         function switchMode(m) { currentMode = m; document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); document.getElementById(m === 'timer' ? 'tabTimer' : 'tabCounter').classList.add('active'); document.getElementById('modeTitle').innerText = m === 'timer' ? 'Meeting Timer' : 'Ah-Counter'; document.getElementById('timerMode').style.display = m === 'timer' ? 'flex' : 'none'; document.getElementById('counterMode').style.display = m === 'counter' ? 'flex' : 'none'; }
         function handleStart() { const n = document.getElementById('name').value.trim().toUpperCase(); if (!n || !selectedTypeLabel) { openModal("Error", "Missing Name or Role.", ()=>{}); return; } currentSpeaker = n; if (currentMode === 'timer') { showScreen('timerDisplay'); document.getElementById('spkName').innerText = n; startTimer(); } else { showScreen('counterDisplay'); document.getElementById('counterSpeakerName').innerText = n; document.getElementById('counterSpeakerRole').innerText = selectedTypeLabel; initTally(); } }
+        function copyReport() { const text = generateReportText(); if (text) navigator.clipboard.writeText(text).then(() => { openModal("Success", "Copied!", () => {}); }); }
+        function shareReport() { const text = generateReportText(); if (text && navigator.share) navigator.share({ title: `Report`, text: text }); }
         function askCustomTime(el) { const saved = JSON.parse(localStorage.getItem(KEY_CUSTOM) || '{"g":5,"cy":6,"r":7}'); const title = currentMode === 'timer' ? "Thresholds" : "Enter Custom Role"; const body = currentMode === 'timer' ? `<label>Green (Min):</label><input type="number" id="cg" value="${saved.g}"><label>Yellow (Target):</label><input type="number" id="cy" value="${saved.cy}"><label>Red (Max):</label><input type="number" id="cr" value="${saved.r}">` : `<label>Role Name:</label><input type="text" id="customRole" placeholder="e.g. JOKE MASTER" style="text-transform:uppercase">`; openModal(title, body, () => { if (currentMode === 'timer') { const g = document.getElementById('cg').value, y = document.getElementById('cy').value, r = document.getElementById('cr').value; lims = { g: g*60, y: y*60, r: r*60 }; localStorage.setItem(KEY_CUSTOM, JSON.stringify({g, cy: y, r})); document.getElementById('customLabel').innerText = `${g}-${r}m`; selectedTypeLabel = "CUSTOM"; } else { selectedTypeLabel = document.getElementById('customRole').value.toUpperCase(); document.getElementById('customLabel').innerText = selectedTypeLabel; } document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected')); el.classList.add('selected'); }); }
     </script>
 </body>
