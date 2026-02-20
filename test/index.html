@@ -47,6 +47,7 @@
         #customModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
         .modal-content { background: var(--card); width: 85%; max-width: 500px; padding: 25px; border-radius: 24px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.2); border: 1px solid var(--border); }
 
+        /* MAIN MENU CARDS */
         .menu-card { 
             background: var(--card); border-radius: 20px; padding: clamp(20px, 3.5vw, 35px); 
             display: flex; align-items: center; justify-content: space-between; 
@@ -72,27 +73,25 @@
         .select-card { background: var(--card); border-radius: 16px; padding: 15px 10px; text-align: center; border: 1px solid var(--border); cursor: pointer; display: flex; flex-direction: column; justify-content: center; min-height: 80px; }
         .select-card h4 { margin: 0; font-size: 19px; color: #1C1C1E; font-weight: 700; }
         .select-card p { margin: 4px 0 0; font-size: 14px; color: var(--subtext); }
-        .select-card.selected { border: 3px solid var(--accent); background: #E8F2FF; padding: 13px 8px; }
+        .select-card.selected { border: 3px solid var(--accent); background: #E8F2FF; }
 
-        /* TIGHTER TALLY GRID */
-        .tally-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; padding: 10px 0; }
+        /* TALLY GRID */
+        .tally-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; padding: 15px 0; }
         @media (min-width: 650px) { .tally-grid { grid-template-columns: repeat(3, 1fr); } }
-        
         .tally-btn { 
-            background: white; border: 1px solid var(--border); border-radius: 20px; 
+            background: white; border: 1px solid var(--border); border-radius: 24px; 
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            padding: 15px 5px; box-shadow: 0 3px 8px rgba(0,0,0,0.06); position: relative; 
-            min-height: 100px; /* Reduced from 140px */
+            padding: 20px 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); position: relative; 
+            min-height: 110px;
         }
         .tally-btn:active { background: #E8F2FF; transform: scale(0.96); }
-        .tally-count { font-size: 40px; font-weight: 800; color: var(--accent); pointer-events: none; line-height: 1; }
-        .tally-label { font-size: 14px; font-weight: 700; color: var(--subtext); text-transform: uppercase; pointer-events: none; margin-top: 4px; }
+        .tally-count { font-size: 48px; font-weight: 800; color: var(--accent); pointer-events: none; line-height: 1; }
+        .tally-label { font-size: 16px; font-weight: 700; color: var(--subtext); text-transform: uppercase; pointer-events: none; margin-top: 5px; }
         
-        /* ICONS SLIGHTLY SMALLER AND TUCKED IN CORNERS */
-        .tally-del { position: absolute; bottom: 5px; left: 5px; width: 30px; height: 30px; background: var(--red); color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 900; z-index: 10; box-shadow: 0 1px 4px rgba(0,0,0,0.15); cursor: pointer; }
-        .tally-minus { position: absolute; bottom: 5px; right: 5px; width: 30px; height: 30px; background: #8E8E93; color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; z-index: 10; box-shadow: 0 1px 4px rgba(0,0,0,0.15); cursor: pointer; }
+        .tally-del { position: absolute; bottom: 8px; left: 8px; width: 38px; height: 38px; background: var(--red); color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 900; z-index: 10; box-shadow: 0 2px 6px rgba(0,0,0,0.15); cursor: pointer; }
+        .tally-minus { position: absolute; bottom: 8px; right: 8px; width: 38px; height: 38px; background: #8E8E93; color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 700; z-index: 10; box-shadow: 0 2px 6px rgba(0,0,0,0.15); cursor: pointer; }
 
-        .wod-btn { border: 3px solid var(--gold); }
+        .wod-btn { border: 4px solid var(--gold); }
         .wod-btn .tally-count { color: var(--gold); }
 
         .button-row { display: flex; gap: 15px; padding: 10px 20px 20px; flex-shrink: 0; background: transparent; max-width: 950px; margin: 0 auto; width: 100%; box-sizing: border-box; }
@@ -154,7 +153,7 @@
         <div class="credit-footer">
             <div class="resource-row"><a href="https://bit.ly/m/SDTM" target="_blank" class="res-btn">Website ↗</a><a href="manual.html" class="res-btn">Manual ↗</a></div>
             <p style="margin:0; font-weight:700; font-size:15px;">Southern Dutchess Toastmasters</p>
-            <span id="versionLabel" class="version-tag">Version 2.9</span>
+            <span id="versionLabel" class="version-tag">Version 2.9.1</span>
         </div>
     </div>
 
@@ -174,13 +173,32 @@
             <div id="counterSpeakerRole" class="subtitle">ROLE</div>
         </div>
         <div class="container">
-            <div style="display:flex; gap:10px; flex-shrink:0; margin-bottom:10px;"><input type="text" id="newFiller" placeholder="NEW CRUTCH WORD"><button class="footer-btn" style="flex:0; padding:0 25px; font-size:18px;" onclick="addFiller()">Add</button></div>
+            <div style="display:flex; gap:10px; flex-shrink:0; margin-bottom:15px;"><input type="text" id="newFiller" placeholder="NEW CRUTCH WORD"><button class="footer-btn" style="flex:0; padding:0 25px; font-size:18px;" onclick="addFiller()">Add</button></div>
             <div id="tallyArea" class="tally-grid"></div>
         </div>
         <div class="button-row"><button class="footer-btn secondary-btn" onclick="showScreen('menu')">Back</button><button class="footer-btn commit-btn" onclick="saveCounterSession()">SAVE RESULTS</button></div>
     </div>
 
     <div id="timerDisplay" class="screen"><div id="spkName" style="font-size:30px; color:#666; margin-top:20px; text-align:center; text-transform: uppercase; font-weight:700;">Speaker</div><div id="timer">00:00</div><div class="button-row"><button id="pauseResumeBtn" class="footer-btn secondary-btn" onclick="togglePause()">PAUSE</button><button class="footer-btn commit-btn" onclick="commitAndExit()">COMMIT & EXIT</button></div></div>
+
+    <div id="settings" class="screen">
+        <div class="header"><h1>Settings</h1></div>
+        <div class="container">
+            <div class="menu-card" onclick="exportData()"><div class="card-content"><h3>Backup All Data</h3><p>Export Roster & Fillers to JSON</p></div><div class="icon">⤓</div></div>
+            <div class="menu-card" onclick="document.getElementById('importFile').click()"><div class="card-content"><h3>Restore Data</h3><p>Import Roster & Fillers from JSON</p></div><div class="icon">⤒</div></div>
+            <input type="file" id="importFile" style="display:none" onchange="handleImportFile(this)">
+        </div>
+        <div class="button-row"><button class="footer-btn" onclick="showScreen('menu')">Done</button></div>
+    </div>
+
+    <div id="report" class="screen">
+        <div class="header"><h1 id="reportPageTitle">Meeting Report</h1></div>
+        <div class="container"><div id="reportLog"></div></div>
+        <div class="button-row">
+            <button class="footer-btn secondary-btn" onclick="shareReport()">Share</button>
+            <button class="footer-btn" onclick="showScreen('menu')">Done</button>
+        </div>
+    </div>
 
     <script>
         const isTestEnv = window.location.pathname.toLowerCase().includes('/test/');
@@ -262,6 +280,7 @@
         }
 
         function initTally() { currentTally = {}; fillerList.forEach(f => currentTally[f] = 0); renderTally(); }
+        
         function renderTally() {
             const area = document.getElementById('tallyArea');
             const sorted = [...fillerList].sort((a,b) => {
@@ -284,12 +303,12 @@
         function askDeleteFiller(e, f) { e.stopPropagation(); openModal("Delete Word?", `Remove "${f}"?`, () => { fillerList = fillerList.filter(word => word !== f); localStorage.setItem(KEY_FILLERS, JSON.stringify(fillerList)); renderTally(); }); }
         
         function saveCounterSession() { 
-            let logs = JSON.parse(localStorage.getItem(prefix + 'sdtm_logs')||"[]");
+            let logs = JSON.parse(localStorage.getItem(KEY_LOGS)||"[]");
             let results = Object.entries(currentTally).filter(([f, c]) => c > 0).map(([f, count]) => `${f}: ${count}`).join(', ');
             if (!results) results = "0 Fillers";
             logs.push(`${currentSpeaker} | ${selectedTypeLabel} (AH): ${results}`);
-            localStorage.setItem(prefix + 'sdtm_logs', JSON.stringify(logs));
-            openModal("Saved", `Results for ${currentSpeaker} recorded.`, () => { showScreen('menu'); }); 
+            localStorage.setItem(KEY_LOGS, JSON.stringify(logs));
+            openModal("Saved", `Results recorded.`, () => { showScreen('menu'); }); 
         }
 
         function startTimer() { elapsed = 0; start = Date.now(); iv = setInterval(() => {
@@ -302,11 +321,35 @@
         }, 1000); }
 
         function togglePause() { if (iv) { clearInterval(iv); iv = null; document.getElementById('pauseResumeBtn').innerText = "RESUME"; } else { start = Date.now() - (elapsed*1000); iv = setInterval(() => { /* logic */ }, 1000); document.getElementById('pauseResumeBtn').innerText = "PAUSE"; } }
-        function commitAndExit() { clearInterval(iv); if (elapsed > 0) {
-            let logs = JSON.parse(localStorage.getItem(prefix + 'sdtm_logs')||"[]");
-            logs.push(`${currentSpeaker} | ${selectedTypeLabel} (TIME): ${document.getElementById('timer').innerText}`);
-            localStorage.setItem(prefix + 'sdtm_logs', JSON.stringify(logs));
-        } showScreen('menu'); }
+        
+        function commitAndExit() { 
+            clearInterval(iv); 
+            if (elapsed > 0) {
+                let logs = JSON.parse(localStorage.getItem(KEY_LOGS)||"[]");
+                logs.push(`${currentSpeaker} | ${selectedTypeLabel} (TIME): ${document.getElementById('timer').innerText}`);
+                localStorage.setItem(KEY_LOGS, JSON.stringify(logs));
+            } 
+            showScreen('menu'); 
+        }
+
+        function loadReport() { 
+            const logs = JSON.parse(localStorage.getItem(KEY_LOGS) || "[]");
+            const logArea = document.getElementById('reportLog');
+            logArea.innerText = logs.length > 0 ? logs.join('\n') : "No data recorded for this meeting.";
+            
+            // Set correct title based on mode
+            const club = localStorage.getItem(KEY_CLUB) || "";
+            document.getElementById('reportPageTitle').innerText = (club ? club + " " : "") + (currentMode === 'timer' ? "Meeting Report" : "Counter Report");
+        }
+
+        function shareReport() { 
+            const logs = JSON.parse(localStorage.getItem(KEY_LOGS) || "[]");
+            if (!logs.length) return;
+            const club = localStorage.getItem(KEY_CLUB) || "Meeting";
+            const text = club + " Report:\n\n" + logs.join('\n');
+            if (navigator.share) navigator.share({ title: 'Report', text: text }); 
+            else alert("Share feature not available on this browser, but logs are saved below.");
+        }
 
         function askCustomTime(el) {
             const saved = JSON.parse(localStorage.getItem(KEY_CUSTOM) || '{"g":5,"cy":6,"r":7}');
@@ -326,8 +369,28 @@
             });
         }
 
+        function exportData() {
+            const data = { speakers: allSpeakers, fillers: fillerList, club: localStorage.getItem(KEY_CLUB) || "" };
+            const blob = new Blob([JSON.stringify(data)], {type:'application/json'});
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'sdtm_backup.json'; a.click();
+        }
+
+        function handleImportFile(input) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const data = JSON.parse(e.target.result);
+                if(data.speakers) localStorage.setItem(KEY_SPEAKERS, JSON.stringify(data.speakers));
+                if(data.fillers) localStorage.setItem(KEY_FILLERS, JSON.stringify(data.fillers));
+                if(data.club) localStorage.setItem(KEY_CLUB, data.club);
+                location.reload();
+            };
+            reader.readAsText(input.files[0]);
+        }
+
         function initApp() {
-            const sn = localStorage.getItem(KEY_CLUB); if (sn) document.getElementById('clubSubtitle').innerText = sn;
+            const sn = localStorage.getItem(KEY_CLUB); 
+            if (sn) document.getElementById('clubSubtitle').innerText = sn;
+            if (isTestEnv) document.getElementById('versionLabel').innerText += " (TEST)";
             renderSpeakerList(allSpeakers);
         }
         function saveSpeaker() { const n = document.getElementById('name').value.trim().toUpperCase(); if(n && !allSpeakers.includes(n)) { allSpeakers.push(n); allSpeakers.sort(); localStorage.setItem(KEY_SPEAKERS, JSON.stringify(allSpeakers)); } renderSpeakerList(allSpeakers); }
@@ -336,11 +399,9 @@
         function askDeleteSpeaker(n) { openModal("Delete?", `Remove ${n}?`, () => { allSpeakers = allSpeakers.filter(s => s !== n); localStorage.setItem(KEY_SPEAKERS, JSON.stringify(allSpeakers)); renderSpeakerList(allSpeakers); }); }
         function openModal(t, b, c) { document.getElementById('modalTitle').innerText = t; document.getElementById('modalBody').innerHTML = b; document.getElementById('customModal').style.display = 'flex'; document.getElementById('modalConfirm').onclick = () => { c(); document.getElementById('customModal').style.display = 'none'; }; document.getElementById('modalCancel').onclick = () => { document.getElementById('customModal').style.display = 'none'; }; }
         function askClubName() { const cur = localStorage.getItem(KEY_CLUB) || ""; openModal("Club Name", `<input type="text" id="cInput" value="${cur}">`, () => { const v = document.getElementById('cInput').value; localStorage.setItem(KEY_CLUB, v); document.getElementById('clubSubtitle').innerText = v; }); }
-        function askClearLogs() { openModal("Clear Data?", "Wipe records?", () => { localStorage.removeItem(prefix + 'sdtm_logs'); location.reload(); }); }
+        function askClearLogs() { openModal("Clear Data?", "Wipe records?", () => { localStorage.removeItem(KEY_LOGS); location.reload(); }); }
         function handleNameInput(el) { el.value = el.value.toUpperCase(); filterSpeakers(); }
         function filterSpeakers() { const q = document.getElementById('name').value.toUpperCase(); renderSpeakerList(allSpeakers.filter(s => s.includes(q))); }
-        function loadReport() { let logs = JSON.parse(localStorage.getItem(prefix + 'sdtm_logs')||"[]"); document.getElementById('reportLog').innerText = logs.length ? logs.join('\n') : "No data."; }
-        function shareReport() { const logs = JSON.parse(localStorage.getItem(prefix + 'sdtm_logs')||"[]"); if (!logs.length) return; const club = localStorage.getItem(KEY_CLUB) || "Meeting"; const text = (localStorage.getItem(KEY_CLUB) || "Meeting") + " Report:\n\n" + logs.join('\n'); if (navigator.share) navigator.share({ title: 'Report', text: text }); else alert("Logs saved!"); }
     </script>
 </body>
 </html>
