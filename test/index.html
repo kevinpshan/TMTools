@@ -63,31 +63,27 @@
 
         input { background: var(--card); border: 2px solid var(--border); color: var(--text); padding: 15px; border-radius: 14px; font-size: 22px; outline: none; width: 100%; box-sizing: border-box; }
 
-        .speaker-area { background: var(--card); border-radius: 16px; padding: 2px; flex: 1; overflow-y: auto; border: 1px solid var(--border); min-height: 150px; margin-bottom: 10px; }
-        .speaker-item { padding: 14px 18px; border-bottom: 1px solid var(--bg); display: flex; justify-content: space-between; align-items: center; }
-        .sp-name { font-size: 24px; flex: 1; color: var(--accent); font-weight: 600; text-transform: uppercase; }
-        .sp-del { padding: 5px 10px; color: var(--red); font-weight: bold; font-size: 24px; cursor: pointer; }
+        .speaker-area { background: var(--card); border-radius: 16px; padding: 2px; flex: 1; overflow-y: auto; border: 1px solid var(--border); min-height: 120px; margin-bottom: 5px; }
+        .speaker-item { padding: 12px 18px; border-bottom: 1px solid var(--bg); display: flex; justify-content: space-between; align-items: center; }
+        .sp-name { font-size: 22px; flex: 1; color: var(--accent); font-weight: 600; text-transform: uppercase; }
+        .sp-del { padding: 5px 10px; color: var(--red); font-weight: bold; font-size: 22px; cursor: pointer; }
 
-        .selection-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; flex-shrink: 0; padding-bottom: 10px; }
+        /* TIGHTER ROLE/PRESET GRID (SETUP SCREEN) */
+        .selection-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; flex-shrink: 0; padding-bottom: 10px; }
         @media (min-width: 650px) { .selection-grid { grid-template-columns: repeat(3, 1fr); } }
-        .select-card { background: var(--card); border-radius: 16px; padding: 15px 10px; text-align: center; border: 1px solid var(--border); cursor: pointer; display: flex; flex-direction: column; justify-content: center; min-height: 80px; }
-        .select-card h4 { margin: 0; font-size: 19px; color: #1C1C1E; font-weight: 700; }
-        .select-card p { margin: 4px 0 0; font-size: 14px; color: var(--subtext); }
+        
+        .select-card { background: var(--card); border-radius: 12px; padding: 10px 8px; text-align: center; border: 1px solid var(--border); cursor: pointer; display: flex; flex-direction: column; justify-content: center; min-height: 55px; }
+        .select-card h4 { margin: 0; font-size: 16px; color: #1C1C1E; font-weight: 700; line-height: 1.1; }
+        .select-card p { margin: 2px 0 0; font-size: 12px; color: var(--subtext); }
         .select-card.selected { border: 3px solid var(--accent); background: #E8F2FF; }
 
-        /* TALLY GRID */
-        .tally-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; padding: 15px 0; }
+        /* TIGHTER TALLY GRID */
+        .tally-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; padding: 15px 0; }
         @media (min-width: 650px) { .tally-grid { grid-template-columns: repeat(3, 1fr); } }
-        .tally-btn { 
-            background: white; border: 1px solid var(--border); border-radius: 24px; 
-            display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            padding: 20px 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); position: relative; 
-            min-height: 110px;
-        }
+        .tally-btn { background: white; border: 1px solid var(--border); border-radius: 22px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 25px 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.06); position: relative; min-height: 110px; }
         .tally-btn:active { background: #E8F2FF; transform: scale(0.96); }
         .tally-count { font-size: 48px; font-weight: 800; color: var(--accent); pointer-events: none; line-height: 1; }
         .tally-label { font-size: 16px; font-weight: 700; color: var(--subtext); text-transform: uppercase; pointer-events: none; margin-top: 5px; }
-        
         .tally-del { position: absolute; bottom: 8px; left: 8px; width: 38px; height: 38px; background: var(--red); color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 900; z-index: 10; box-shadow: 0 2px 6px rgba(0,0,0,0.15); cursor: pointer; }
         .tally-minus { position: absolute; bottom: 8px; right: 8px; width: 38px; height: 38px; background: #8E8E93; color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 700; z-index: 10; box-shadow: 0 2px 6px rgba(0,0,0,0.15); cursor: pointer; }
 
@@ -153,7 +149,7 @@
         <div class="credit-footer">
             <div class="resource-row"><a href="https://bit.ly/m/SDTM" target="_blank" class="res-btn">Website ↗</a><a href="manual.html" class="res-btn">Manual ↗</a></div>
             <p style="margin:0; font-weight:700; font-size:15px;">Southern Dutchess Toastmasters</p>
-            <span id="versionLabel" class="version-tag">Version 2.9.1</span>
+            <span id="versionLabel" class="version-tag">Version 2.9.2</span>
         </div>
     </div>
 
@@ -227,7 +223,7 @@
             currentMode = mode;
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.getElementById(mode === 'timer' ? 'tabTimer' : 'tabCounter').classList.add('active');
-            document.getElementById('modeTitle').innerText = mode === 'timer' ? 'Meeting Timer' : 'Ah-Counter';
+            document.getElementById('modeTitle').innerText = mode === 'timer' ? 'Meeting Tools' : 'Ah-Counter';
             document.getElementById('timerMode').style.display = mode === 'timer' ? 'flex' : 'none';
             document.getElementById('counterMode').style.display = mode === 'counter' ? 'flex' : 'none';
             selectedTypeLabel = ""; 
@@ -280,7 +276,6 @@
         }
 
         function initTally() { currentTally = {}; fillerList.forEach(f => currentTally[f] = 0); renderTally(); }
-        
         function renderTally() {
             const area = document.getElementById('tallyArea');
             const sorted = [...fillerList].sort((a,b) => {
@@ -321,35 +316,11 @@
         }, 1000); }
 
         function togglePause() { if (iv) { clearInterval(iv); iv = null; document.getElementById('pauseResumeBtn').innerText = "RESUME"; } else { start = Date.now() - (elapsed*1000); iv = setInterval(() => { /* logic */ }, 1000); document.getElementById('pauseResumeBtn').innerText = "PAUSE"; } }
-        
-        function commitAndExit() { 
-            clearInterval(iv); 
-            if (elapsed > 0) {
-                let logs = JSON.parse(localStorage.getItem(KEY_LOGS)||"[]");
-                logs.push(`${currentSpeaker} | ${selectedTypeLabel} (TIME): ${document.getElementById('timer').innerText}`);
-                localStorage.setItem(KEY_LOGS, JSON.stringify(logs));
-            } 
-            showScreen('menu'); 
-        }
-
-        function loadReport() { 
-            const logs = JSON.parse(localStorage.getItem(KEY_LOGS) || "[]");
-            const logArea = document.getElementById('reportLog');
-            logArea.innerText = logs.length > 0 ? logs.join('\n') : "No data recorded for this meeting.";
-            
-            // Set correct title based on mode
-            const club = localStorage.getItem(KEY_CLUB) || "";
-            document.getElementById('reportPageTitle').innerText = (club ? club + " " : "") + (currentMode === 'timer' ? "Meeting Report" : "Counter Report");
-        }
-
-        function shareReport() { 
-            const logs = JSON.parse(localStorage.getItem(KEY_LOGS) || "[]");
-            if (!logs.length) return;
-            const club = localStorage.getItem(KEY_CLUB) || "Meeting";
-            const text = club + " Report:\n\n" + logs.join('\n');
-            if (navigator.share) navigator.share({ title: 'Report', text: text }); 
-            else alert("Share feature not available on this browser, but logs are saved below.");
-        }
+        function commitAndExit() { clearInterval(iv); if (elapsed > 0) {
+            let logs = JSON.parse(localStorage.getItem(KEY_LOGS)||"[]");
+            logs.push(`${currentSpeaker} | ${selectedTypeLabel} (TIME): ${document.getElementById('timer').innerText}`);
+            localStorage.setItem(KEY_LOGS, JSON.stringify(logs));
+        } showScreen('menu'); }
 
         function askCustomTime(el) {
             const saved = JSON.parse(localStorage.getItem(KEY_CUSTOM) || '{"g":5,"cy":6,"r":7}');
@@ -388,9 +359,7 @@
         }
 
         function initApp() {
-            const sn = localStorage.getItem(KEY_CLUB); 
-            if (sn) document.getElementById('clubSubtitle').innerText = sn;
-            if (isTestEnv) document.getElementById('versionLabel').innerText += " (TEST)";
+            const sn = localStorage.getItem(KEY_CLUB); if (sn) document.getElementById('clubSubtitle').innerText = sn;
             renderSpeakerList(allSpeakers);
         }
         function saveSpeaker() { const n = document.getElementById('name').value.trim().toUpperCase(); if(n && !allSpeakers.includes(n)) { allSpeakers.push(n); allSpeakers.sort(); localStorage.setItem(KEY_SPEAKERS, JSON.stringify(allSpeakers)); } renderSpeakerList(allSpeakers); }
@@ -402,6 +371,13 @@
         function askClearLogs() { openModal("Clear Data?", "Wipe records?", () => { localStorage.removeItem(KEY_LOGS); location.reload(); }); }
         function handleNameInput(el) { el.value = el.value.toUpperCase(); filterSpeakers(); }
         function filterSpeakers() { const q = document.getElementById('name').value.toUpperCase(); renderSpeakerList(allSpeakers.filter(s => s.includes(q))); }
+        function loadReport() { 
+            const logs = JSON.parse(localStorage.getItem(KEY_LOGS) || "[]");
+            document.getElementById('reportLog').innerText = logs.length > 0 ? logs.join('\n') : "No data.";
+            const club = localStorage.getItem(KEY_CLUB) || "";
+            document.getElementById('reportPageTitle').innerText = (club ? club + " " : "") + (currentMode === 'timer' ? "Meeting Report" : "Counter Report");
+        }
+        function shareReport() { const logs = JSON.parse(localStorage.getItem(KEY_LOGS)||"[]"); if (!logs.length) return; const text = (localStorage.getItem(KEY_CLUB) || "Meeting") + " Report:\n\n" + logs.join('\n'); if (navigator.share) navigator.share({ title: 'Report', text: text }); else alert("Logs saved!"); }
     </script>
 </body>
 </html>
