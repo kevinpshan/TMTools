@@ -1,69 +1,38 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Meeting Tools v3.0</title>
+<div id="menu" class="screen active">
+    <div class="header">
+        <h1 id="mainTitle">Timing Tools</h1>
+        <div id="clubSubtitle" class="subtitle">Southern Dutchess Toastmasters</div>
+        <div class="settings-icon" onclick="showScreen('settings')">⚙</div>
+    </div>
+    <div class="tab-container">
+        <div id="tabTimer" class="tab active" onclick="switchMode('timer')">Timer</div>
+        <div id="tabCounter" class="tab" onclick="switchMode('counter')">Ah-Counter</div>
+    </div>
     
-    <link rel="stylesheet" href="styles.css">
-    
-    <link rel="manifest" href="manifest.json">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <link rel="apple-touch-icon" href="icon-timer.png">
-</head>
-<body onload="initApp()">
-
-    <div id="customModal">
-        <div class="modal-content">
-            <h2 id="modalTitle"></h2>
-            <div id="modalBody"></div>
-            <div class="button-row">
-                <button id="modalCancel" class="footer-btn secondary-btn">Cancel</button>
-                <button id="modalConfirm" class="footer-btn">OK</button>
-            </div>
+    <div id="timerMode" class="container">
+        <div class="main-menu-card" onclick="showScreen('setup')">
+            <div class="card-content"><h3>New Timer</h3><p>Select speaker & start</p></div>
+            <div class="icon">⊕</div>
+        </div>
+        <div class="main-menu-card" onclick="showScreen('report')">
+            <div class="card-content"><h3>Meeting Report</h3><p>View recorded times</p></div>
+            <div class="icon">☰</div>
         </div>
     </div>
 
-    <div id="menu" class="screen active">
-        <div class="header">
-            <h1 id="mainTitle">Timing Tools</h1>
-            <div class="subtitle">Southern Dutchess Toastmasters</div>
-            <div class="settings-icon" onclick="showScreen('settings')">⚙</div>
-        </div>
-        <div class="tab-container">
-            <div id="tabTimer" class="tab active" onclick="switchMode('timer')">Timer</div>
-            <div id="tabCounter" class="tab" onclick="switchMode('counter')">Ah-Counter</div>
-        </div>
-        <div id="timerMode" class="container">
-            <div class="main-menu-card" onclick="showScreen('setup')"><div class="card-content"><h3>New Timer</h3><p>Select speaker & start</p></div><div class="icon">⊕</div></div>
-            <div class="main-menu-card" onclick="showScreen('report')"><div class="card-content"><h3>Meeting Report</h3><p>View recorded times</p></div><div class="icon">☰</div></div>
-        </div>
-        <div id="counterMode" class="container" style="display:none;">
-            <div class="main-menu-card" onclick="showScreen('wod')"><div class="card-content"><h3 style="color:var(--gold);">Word of the Day</h3><p>AI definition & search</p></div><div class="icon" style="color:var(--gold);">★</div></div>
-            <div class="main-menu-card" onclick="showScreen('setup')"><div class="card-content"><h3>Start Tracking</h3><p>Count filler words</p></div><div class="icon">✍</div></div>
+    <div id="counterMode" class="container" style="display:none;">
+        <div class="main-menu-card" onclick="showScreen('setup')">
+            <div class="card-content"><h3>Start Tracking</h3><p>Count filler words</p></div>
+            <div class="icon">✍</div>
         </div>
     </div>
 
-    <div id="setup" class="screen">
-        <div class="header"><h1>Setup</h1></div>
-        <div class="container">
-            <div class="roster-input-row">
-                <input type="text" id="nameInput" placeholder="SPEAKER NAME" oninput="filterRoster()">
-                <button class="footer-btn" onclick="saveSpeaker()">Add</button>
-            </div>
-            <div id="speakerArea"></div>
-            <div id="roleGridArea" class="role-grid"></div>
+    <div class="credit-footer">
+        <div class="resource-row">
+            <a href="https://bit.ly/m/SDTM" target="_blank" class="res-btn">Website ↗</a>
+            <a href="manual.html" class="res-btn">Manual ↗</a>
         </div>
-        <div class="button-row">
-            <button class="footer-btn secondary-btn" onclick="showScreen('menu')">Cancel</button>
-            <button class="footer-btn" onclick="handleStart()">START</button>
-        </div>
+        <p style="margin:0; font-weight:700; font-size:15px;">Southern Dutchess Toastmasters</p>
+        <div class="version-tag">Version 3.0.1 (Modular)</div>
     </div>
-
-    <script src="app.js"></script>
-    <script src="roster.js"></script>
-    <script src="timer.js"></script>
-    <script src="counter.js"></script>
-</body>
-</html>
+</div>
