@@ -3,12 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Meeting Tools v3.0.4-TEST</title>
-    <link rel="stylesheet" href="styles.css?v=1.2">
+    <title>Meeting Tools v3.0.6-MASTER</title>
+    
+    <link rel="stylesheet" href="styles.css?v=3.0.6">
+    
     <style>
-        /* Fail-safe for tab stretching */
-        .tab-container { display: flex !important; width: calc(100% - 40px) !important; margin: 10px auto !important; }
-        .tab { flex: 1 !important; }
+        /* FAIL-SAFE STYLES: These guarantee the Production Look even if the CSS file lags */
+        :root { --bg: #F2F2F7; --card: #FFFFFF; --accent: #007AFF; --border: #D1D1D6; }
+        body { margin: 0; background: var(--bg); font-family: -apple-system, sans-serif; display: flex; flex-direction: column; height: 100dvh; overflow: hidden; }
+        
+        /* Header Lock */
+        .header { padding: 40px 20px 10px; max-width: 900px; margin: 0 auto; width: 100%; box-sizing: border-box; }
+        h1 { margin: 0; font-size: 55px; font-weight: 800; letter-spacing: -2px; line-height: 0.9; color: #1C1C1E; }
+        .subtitle { font-size: 24px; margin-top: 8px; color: var(--accent); font-weight: 700; }
+
+        /* Tab Stretching Lock */
+        .tab-container { display: flex !important; background: #E3E3E8; border-radius: 10px; padding: 2px; margin: 10px 20px 20px; max-width: 860px; width: calc(100% - 40px) !important; margin-left: auto; margin-right: auto; }
+        .tab { flex: 1 !important; padding: 14px; text-align: center; font-weight: 600; font-size: 18px; border-radius: 8px; cursor: pointer; color: #3A3A3C; }
+        .tab.active { background: white; color: var(--accent); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+
+        /* Screen & Container Lock */
+        .container { flex: 1; display: flex; flex-direction: column; padding: 0 20px; gap: 15px; overflow-y: auto; max-width: 900px; margin: 0 auto; width: 100%; box-sizing: border-box; }
+        .screen { display: none; flex-direction: column; height: 100%; overflow: hidden; }
+        .screen.active { display: flex; }
+        
+        /* Modal Hidden State Lock */
+        #customModal { display: none; } 
     </style>
 </head>
 <body onload="initApp()">
@@ -17,7 +37,7 @@
         <div class="modal-content">
             <h2 id="modalTitle">Confirm</h2>
             <div id="modalBody" style="margin:20px 0; font-size:18px;"></div>
-            <div class="button-row" style="padding:0;">
+            <div class="button-row" style="padding:0; display:flex; gap:12px;">
                 <button id="modalCancel" class="footer-btn secondary-btn">Cancel</button>
                 <button id="modalConfirm" class="footer-btn">OK</button>
             </div>
@@ -27,24 +47,39 @@
     <div id="menu" class="screen active">
         <div class="header">
             <h1 id="mainTitle">Timing Tools</h1>
-            <div id="clubSubtitle" class="subtitle">Southern Dutchess Toastmasters</div>
+            <div class="subtitle">Southern Dutchess Toastmasters</div>
             <div class="settings-icon" onclick="showScreen('settings')">⚙</div>
         </div>
         <div class="tab-container">
             <div id="tabTimer" class="tab active" onclick="switchMode('timer')">Timer</div>
             <div id="tabCounter" class="tab" onclick="switchMode('counter')">Ah-Counter</div>
         </div>
+        
         <div id="timerMode" class="container">
-            <div class="main-menu-card" onclick="showScreen('setup')"><div class="card-content"><h3>New Timer</h3><p>Select speaker & start</p></div><div style="font-size:40px; color:var(--accent);">⊕</div></div>
-            <div class="main-menu-card" onclick="showScreen('report')"><div class="card-content"><h3>Meeting Report</h3><p>View recorded times</p></div><div style="font-size:40px; color:var(--accent);">☰</div></div>
+            <div class="main-menu-card" onclick="showScreen('setup')">
+                <div class="card-content"><h3>New Timer</h3><p>Select speaker & start</p></div>
+                <div style="font-size:40px; color:var(--accent);">⊕</div>
+            </div>
+            <div class="main-menu-card" onclick="showScreen('report')">
+                <div class="card-content"><h3>Meeting Report</h3><p>View recorded times</p></div>
+                <div style="font-size:40px; color:var(--accent);">☰</div>
+            </div>
         </div>
+
         <div id="counterMode" class="container" style="display:none;">
-            <div class="main-menu-card" onclick="showScreen('setup')"><div class="card-content"><h3>Start Tracking</h3><p>Count filler words</p></div><div style="font-size:40px; color:var(--accent);">✍</div></div>
+            <div class="main-menu-card" onclick="showScreen('setup')">
+                <div class="card-content"><h3>Start Tracking</h3><p>Count filler words</p></div>
+                <div style="font-size:40px; color:var(--accent);">✍</div>
+            </div>
         </div>
+
         <div class="credit-footer">
-            <div class="resource-row"><a href="https://bit.ly/m/SDTM" target="_blank" class="res-btn">Website ↗</a><a href="manual.html" class="res-btn">Manual ↗</a></div>
+            <div class="resource-row">
+                <a href="https://bit.ly/m/SDTM" target="_blank" class="res-btn">Website ↗</a>
+                <a href="manual.html" class="res-btn">Manual ↗</a>
+            </div>
             <p style="margin:0; font-weight:700; font-size:15px;">Southern Dutchess Toastmasters</p>
-            <div class="version-tag">Version 3.0.4-TEST</div>
+            <div style="opacity:0.4; font-size:12px; margin-top:5px;">Version 3.0.6-MASTER</div>
         </div>
     </div>
 
@@ -64,9 +99,9 @@
         </div>
     </div>
 
-    <script src="app.js?v=1.2"></script>
-    <script src="roster.js?v=1.2"></script>
-    <script src="timer.js?v=1.2"></script>
-    <script src="counter.js?v=1.2"></script>
+    <script src="app.js?v=3.0.6"></script>
+    <script src="roster.js?v=3.0.6"></script>
+    <script src="timer.js?v=3.0.6"></script>
+    <script src="counter.js?v=3.0.6"></script>
 </body>
 </html>
