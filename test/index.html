@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Meeting Tools v2.9.17</title>
+    <title>Meeting Tools v2.9.18</title>
     <style>
         :root {
             --bg: #F2F2F7; --card: #FFFFFF; --accent: #007AFF; 
@@ -23,92 +23,83 @@
         .subtitle { font-size: 18px; margin-top: 5px; color: var(--accent); font-weight: 700; }
         
         .tab-container { display: flex; background: #E3E3E8; border-radius: 10px; padding: 2px; margin: 0 20px 15px; flex-shrink: 0; max-width: 860px; width: calc(100% - 40px); margin-left: auto; margin-right: auto; }
-        .tab { flex: 1; padding: 12px; text-align: center; font-weight: 600; font-size: 16px; border-radius: 8px; cursor: pointer; transition: all 0.2s; color: var(--subtext); }
+        .tab { flex: 1; padding: 12px; text-align: center; font-weight: 600; font-size: 16px; border-radius: 8px; cursor: pointer; color: var(--subtext); }
         .tab.active { background: white; color: var(--accent); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
 
         .container { flex: 1; display: flex; flex-direction: column; padding: 0 20px; gap: 15px; overflow-y: auto; width: 100%; box-sizing: border-box; max-width: 900px; margin: 0 auto; }
         .screen { display: none; flex-direction: column; height: 100%; overflow: hidden; }
         .screen.active { display: flex; }
 
-        /* --- CARDS --- */
+        /* --- CARDS & SETUP --- */
         .main-menu-card { 
             background: var(--card); border-radius: 20px; display: flex; justify-content: space-between; align-items: center; 
-            padding: 30px 25px; border: 1px solid var(--border); color: var(--text); box-shadow: 0 4px 12px rgba(0,0,0,0.05); cursor: pointer; margin-bottom: 12px;
+            padding: 30px 25px; border: 1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.05); cursor: pointer;
         }
         .card-content h3 { margin: 0; font-size: 28px; font-weight: 800; line-height: 1.1; }
         .card-content p { margin: 8px 0 0; font-size: 18px; color: var(--subtext); }
-        .main-menu-card .icon { font-size: 45px; color: var(--accent); }
-
-        /* --- SETUP/TALLY ELEMENTS --- */
-        .role-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 10px; padding-bottom: 20px; }
-        .role-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 15px; text-align: center; cursor: pointer; }
-        .role-card.selected { border: 3px solid var(--accent); background: #E8F2FF; }
-        .role-card h4 { font-size: 16px; font-weight: 800; margin: 0; text-transform: uppercase; }
-        .role-card p { font-size: 13px; color: var(--subtext); margin: 4px 0 0; font-weight: 600; }
         
         #speakerArea { background: white; border-radius: 18px; border: 1px solid var(--border); overflow-y: auto; flex: 1; min-height: 120px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
         .roster-item { padding: 15px 18px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
         .roster-name { font-weight: 700; flex: 1; font-size: 20px; color: var(--accent); cursor: pointer; }
 
+        .role-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding-bottom: 20px; }
+        .role-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 15px; text-align: center; cursor: pointer; }
+        .role-card.selected { border: 3px solid var(--accent); background: #E8F2FF; }
+        .role-card h4 { font-size: 16px; font-weight: 800; margin: 0; text-transform: uppercase; }
+
         /* --- FOOTER --- */
         .button-row { display: flex; gap: 12px; padding: 15px 20px 25px; flex-shrink: 0; max-width: 900px; margin: 0 auto; width: 100%; box-sizing: border-box; }
         .footer-btn { flex: 1; padding: 20px; border-radius: 15px; font-size: 20px; font-weight: 700; border: none; background: var(--accent); color: white; cursor: pointer; }
         .secondary-btn { background: #E5E5EA; color: #000; border: 1px solid var(--border); }
-        .credit-footer { text-align: center; padding: 25px 20px; border-top: 1px solid var(--border); flex-shrink: 0; background: var(--card); width: 100%; box-sizing: border-box; }
-
-        #customModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
-        .modal-content { background: var(--card); width: 85%; max-width: 500px; padding: 25px; border-radius: 24px; text-align: center; border: 1px solid var(--border); }
     </style>
 </head>
 <body onload="initApp()">
 
-    <div id="customModal">
-        <div class="modal-content">
-            <h2 id="modalTitle" style="margin:0;"></h2>
-            <div id="modalBody" style="margin:20px 0; text-align: left;"></div>
-            <div class="button-row" style="padding:0;"><button id="modalCancel" class="footer-btn secondary-btn">Cancel</button><button id="modalConfirm" class="footer-btn">OK</button></div>
-        </div>
-    </div>
-
     <div id="menu" class="screen active">
-        <div class="header">
-            <h1>Meeting Tools</h1>
-            <div id="clubSubtitle" class="subtitle">Southern Dutchess Toastmasters</div>
-        </div>
+        <div class="header"><h1>Meeting Tools</h1><div class="subtitle">Southern Dutchess Toastmasters</div></div>
         <div class="tab-container">
             <div id="tabTimer" class="tab active" onclick="switchMode('timer')">Timer</div>
             <div id="tabCounter" class="tab" onclick="switchMode('counter')">Ah-Counter</div>
         </div>
         <div id="timerMode" class="container">
-            <div class="main-menu-card" onclick="showScreen('setup')"><div class="card-content"><h3>New Timer</h3><p>Select speaker & start</p></div><div class="icon">⊕</div></div>
-            <div class="main-menu-card" onclick="showScreen('report')"><div class="card-content"><h3>Meeting Report</h3><p>View recorded times</p></div><div class="icon">☰</div></div>
+            <div class="main-menu-card" onclick="showScreen('setup')"><div class="card-content"><h3>New Timer</h3><p>Select speaker & start</p></div><div style="font-size:40px; color:var(--accent);">⊕</div></div>
         </div>
         <div id="counterMode" class="container" style="display:none;">
-            <div class="main-menu-card" onclick="showScreen('setup')"><div class="card-content"><h3>Start Tracking</h3><p>Count filler words</p></div><div class="icon">✍</div></div>
+            <div class="main-menu-card" onclick="showScreen('setup')"><div class="card-content"><h3>Start Tracking</h3><p>Count filler words</p></div><div style="font-size:40px; color:var(--accent);">✍</div></div>
         </div>
-        <div class="credit-footer"><p style="margin:0; font-weight:700; font-size:14px;">Southern Dutchess Toastmasters</p><p style="opacity:0.3; font-size:10px; margin-top:5px;">Version 2.9.17</p></div>
     </div>
 
     <div id="setup" class="screen">
         <div class="header"><h1>Setup</h1></div>
         <div class="container">
-            <div style="display:flex; gap:10px;"><input type="text" id="name" placeholder="SPEAKER NAME" style="background:white; border:1px solid var(--border); padding:15px; border-radius:12px; font-size:18px; width:100%;"><button class="footer-btn" style="flex:0; padding:0 25px; font-size:16px;" onclick="saveSpeaker()">Add</button></div>
+            <div style="display:flex; gap:10px;">
+                <input type="text" id="nameInput" placeholder="SPEAKER NAME" style="background:white; border:1px solid var(--border); padding:15px; border-radius:12px; font-size:18px; width:100%;" oninput="filterRoster()">
+                <button class="footer-btn" style="flex:0; padding:0 25px; font-size:16px;" onclick="saveSpeaker()">Add</button>
+            </div>
             <div id="speakerArea"></div>
             <div id="roleGridArea" class="role-grid"></div>
         </div>
-        <div class="button-row"><button class="footer-btn secondary-btn" onclick="showScreen('menu')">Cancel</button><button class="footer-btn" onclick="handleStart()">START</button></div>
+        <div class="button-row">
+            <button class="footer-btn secondary-btn" onclick="showScreen('menu')">Cancel</button>
+            <button class="footer-btn" onclick="handleStart()">START</button>
+        </div>
     </div>
 
     <script>
         const KEY_SPEAKERS = 'prod_sdtm_speakers';
-        let allSpeakers = JSON.parse(localStorage.getItem(KEY_SPEAKERS)||"[]"), currentMode = 'timer', selectedRole = "";
+        let allSpeakers = JSON.parse(localStorage.getItem(KEY_SPEAKERS) || "[]");
+        let currentMode = 'timer', selectedRole = "";
 
         function initApp() { refreshRoster(); }
 
         function showScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
-            if(id === 'setup') renderSetupGrid();
+            if(id === 'setup') {
+                document.getElementById('nameInput').value = "";
+                refreshRoster();
+                renderSetupGrid();
+            }
         }
 
         function switchMode(m) {
@@ -119,21 +110,53 @@
             document.getElementById('counterMode').style.display = m === 'counter' ? 'flex' : 'none';
         }
 
-        function refreshRoster() {
+        /* ROSTER ENGINE (PRODUCTION LOGIC) */
+        function refreshRoster(filter = "") {
             const area = document.getElementById('speakerArea');
-            area.innerHTML = allSpeakers.map(n => `<div class="roster-item"><span class="roster-name" onclick="document.getElementById('name').value='${n}'">${n}</span><span style="color:red; font-weight:800; cursor:pointer;" onclick="delSpeaker('${n}')">✕</span></div>`).join('');
+            const filtered = allSpeakers.filter(n => n.toLowerCase().includes(filter.toLowerCase()));
+            
+            area.innerHTML = filtered.map(n => `
+                <div class="roster-item">
+                    <span class="roster-name" onclick="selectSpeaker('${n}')">${n}</span>
+                    <span style="color:var(--red); font-weight:800; cursor:pointer; padding:10px;" onclick="delSpeaker('${n}')">✕</span>
+                </div>
+            `).join('');
+        }
+
+        function filterRoster() {
+            const val = document.getElementById('nameInput').value;
+            refreshRoster(val);
+        }
+
+        function selectSpeaker(name) {
+            document.getElementById('nameInput').value = name;
+            refreshRoster(name); // Snap list to just this name
         }
 
         function saveSpeaker() {
-            const n = document.getElementById('name').value.trim().toUpperCase();
-            if(n && !allSpeakers.includes(n)) { allSpeakers.push(n); allSpeakers.sort(); localStorage.setItem(KEY_SPEAKERS, JSON.stringify(allSpeakers)); refreshRoster(); }
+            const n = document.getElementById('nameInput').value.trim().toUpperCase();
+            if(n && !allSpeakers.includes(n)) {
+                allSpeakers.push(n);
+                allSpeakers.sort();
+                localStorage.setItem(KEY_SPEAKERS, JSON.stringify(allSpeakers));
+                document.getElementById('nameInput').value = "";
+                refreshRoster();
+            }
+        }
+
+        function delSpeaker(n) {
+            if(confirm(`Remove ${n}?`)) {
+                allSpeakers = allSpeakers.filter(s => s !== n);
+                localStorage.setItem(KEY_SPEAKERS, JSON.stringify(allSpeakers));
+                refreshRoster();
+            }
         }
 
         function renderSetupGrid() {
             const grid = document.getElementById('roleGridArea'); grid.innerHTML = "";
-            const timerRoles = [{l:"1-2M",s:"Table Topics"},{l:"2-3M",s:"Evaluation"},{l:"5-7M",s:"Speech"},{l:"4-6M",s:"Ice Breaker"},{l:"CUSTOM",s:"Custom"}];
-            const counterRoles = [{l:"AH COUNTER",s:"Fillers"},{l:"GRAMMARIAN",s:"Language"}];
-            const roles = currentMode === 'timer' ? timerRoles : counterRoles;
+            const roles = currentMode === 'timer' 
+                ? [{l:"1-2M",s:"Table Topics"},{l:"2-3M",s:"Evaluation"},{l:"5-7M",s:"Speech"},{l:"4-6M",s:"Ice Breaker"},{l:"CUSTOM",s:"Custom"}]
+                : [{l:"AH COUNTER",s:""},{l:"GRAMMARIAN",s:""}];
 
             roles.forEach(r => {
                 grid.innerHTML += `<div class="role-card" onclick="selectRole(this, '${r.l}')"><h4>${r.l}</h4><p>${r.s}</p></div>`;
@@ -145,7 +168,11 @@
             el.classList.add('selected'); selectedRole = r;
         }
 
-        function handleStart() { alert("Starting..."); }
+        function handleStart() {
+            const name = document.getElementById('nameInput').value;
+            if(!name || !selectedRole) { alert("Select Name & Role"); return; }
+            alert(`Ready to start ${selectedRole} for ${name}`);
+        }
     </script>
 </body>
 </html>
