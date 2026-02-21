@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Transcription Lab v1.1</title>
+    <title>Transcription Lab v1.2</title>
     <style>
         body { 
             font-family: -apple-system, system-ui, sans-serif; 
@@ -12,119 +12,111 @@
         }
         .header { margin-bottom: 20px; }
         .transcript-box { 
-            flex: 1; background: white; border-radius: 18px; border: 1px solid #D1D1D6;
-            padding: 20px; overflow-y: auto; font-size: 19px; line-height: 1.6;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+            flex: 1; background: white; border-radius: 18px; border: 2px solid #D1D1D6;
+            padding: 25px; overflow-y: auto; font-size: 20px; line-height: 1.7;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
-        .interim { color: #007AFF; font-style: italic; } /* Blue for words currently being processed */
-        .final-chunk { color: #000; font-weight: 400; }
-        .controls { padding: 20px 0; display: flex; gap: 10px; }
+        .interim { color: #007AFF; opacity: 0.6; } 
+        .final-chunk { color: #000; }
+        .controls { padding: 20px 0; display: flex; flex-direction: column; gap: 10px; }
         .btn { 
-            flex: 1; padding: 20px; border-radius: 14px; border: none; 
-            font-size: 18px; font-weight: 700; cursor: pointer;
+            padding: 20px; border-radius: 14px; border: none; 
+            font-size: 20px; font-weight: 700; cursor: pointer;
         }
-        .btn-start { background: #007AFF; color: white; }
+        .btn-start { background: #34C759; color: white; }
         .btn-stop { background: #FF3B30; color: white; display: none; }
-        .status { font-size: 13px; font-weight: 700; text-transform: uppercase; color: #8E8E93; margin-top: 10px; text-align: center; }
-        .filler { background: #FFE6E6; border-bottom: 2px solid #FF3B30; border-radius: 4px; padding: 0 2px; }
+        .status { font-size: 14px; font-weight: 800; text-transform: uppercase; color: #8E8E93; text-align: center; margin-bottom: 5px; }
+        .filler-alert { background: #FF3B30; color: white; padding: 2px 6px; border-radius: 6px; font-weight: 800; animation: pop 0.3s ease-out; }
+        @keyframes pop { 0% {transform: scale(0.8);} 100% {transform: scale(1);} }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <a href="index.html" style="text-decoration: none; color: #007AFF; font-weight: 600;">← Back to App</a>
-        <h1 style="margin: 10px 0 0;">Transcription Lab v1.1</h1>
-        <p style="margin: 5px 0; color: #3A3A3C;">Long-form Accumulation Test</p>
+        <h1 style="margin: 0;">Speech Lab v1.2</h1>
+        <p style="margin: 5px 0; color: #3A3A3C;">Testing Neural Dictation Mode</p>
     </div>
 
     <div id="transcriptArea" class="transcript-box">
-        <p id="placeholder" style="color: #8E8E93;">Tap "Start" to begin recording. The transcript will be saved here even during long speeches.</p>
+        <p id="placeholder" style="color: #8E8E93;">Tap "Start" and speak. This version attempts to use the iPad's high-accuracy dictation engine.</p>
     </div>
 
-    <div id="statusLabel" class="status">Microphone Ready</div>
-
     <div class="controls">
-        <button id="startBtn" class="btn btn-start" onclick="startListening()">Start Speech</button>
-        <button id="stopBtn" class="btn btn-stop" onclick="stopListening()">Stop & Copy All</button>
+        <div id="statusLabel" class="status">Microphone Offline</div>
+        <button id="startBtn" class="btn btn-start" onclick="startListening()">Start Recording</button>
+        <button id="stopBtn" class="btn btn-stop" onclick="stopListening()">Finish Speech</button>
     </div>
 
     <script>
         let recognition;
-        let finalTranscript = ""; // THE MASTER STORAGE: This will not disappear.
+        let masterTranscript = "";
         
         const transcriptArea = document.getElementById('transcriptArea');
         const statusLabel = document.getElementById('statusLabel');
         const startBtn = document.getElementById('startBtn');
         const stopBtn = document.getElementById('stopBtn');
 
-        const fillers = ["LIKE", "SO", "UM", "AH", "ER", "ACTUALLY", "BASICALLY", "YOU KNOW"];
+        // We are strictly looking for these
+        const fillers = ["LIKE", "SO", "UM", "AH", "ER", "UH", "YOU KNOW", "BASICALLY"];
 
-        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-            transcriptArea.innerHTML = "<p style='color:red;'>Error: Browser not supported.</p>";
-        } else {
+        function setupRecognition() {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                transcriptArea.innerHTML = "Error: This iPad version does not support advanced Speech Recognition in Safari.";
+                return;
+            }
+
             recognition = new SpeechRecognition();
-            
             recognition.continuous = true;
             recognition.interimResults = true;
             recognition.lang = 'en-US';
+            
+            // This is a "hack" to nudge the engine into Dictation mode
+            recognition.maxAlternatives = 1; 
 
             recognition.onstart = () => {
-                statusLabel.innerText = "● RECORDING LIVE...";
+                statusLabel.innerText = "● Neural Engine Active";
                 statusLabel.style.color = "#FF3B30";
                 startBtn.style.display = "none";
                 stopBtn.style.display = "block";
-                finalTranscript = ""; // Reset for new speech
-                transcriptArea.innerHTML = ""; 
+                transcriptArea.innerHTML = "";
             };
 
             recognition.onresult = (event) => {
-                let interimTranscript = '';
+                let interim = '';
+                let currentFinal = '';
 
-                // We loop starting from the current resultIndex
                 for (let i = event.resultIndex; i < event.results.length; ++i) {
-                    let chunk = event.results[i][0].transcript;
+                    let text = event.results[i][0].transcript;
                     
-                    // Grammarian Highlight logic
-                    fillers.forEach(word => {
-                        const regex = new RegExp(`\\b${word}\\b`, 'gi');
-                        chunk = chunk.replace(regex, `<span class="filler">$&</span>`);
+                    // Logic to detect fillers in the stream
+                    let formattedText = text;
+                    fillers.forEach(f => {
+                        const regex = new RegExp(`\\b${f}\\b`, 'gi');
+                        formattedText = formattedText.replace(regex, `<span class="filler-alert">$&</span>`);
                     });
 
                     if (event.results[i].isFinal) {
-                        // If it's final, add it to our PERMANENT variable
-                        finalTranscript += `<span class="final-chunk">${chunk} </span>`;
+                        masterTranscript += formattedText + " ";
                     } else {
-                        // If it's still being guessed, hold it in a TEMPORARY variable
-                        interimTranscript += `<span class="interim">${chunk}</span>`;
+                        interim += formattedText;
                     }
+                 masterTranscript = masterTranscript.replace(/ {2,}/g, ' '); // Clean double spaces
                 }
 
-                // Render both: The permanent history + the current active guess
-                transcriptArea.innerHTML = finalTranscript + interimTranscript;
-                
-                // Auto-scroll to keep the newest text in view
+                transcriptArea.innerHTML = masterTranscript + `<span class="interim">${interim}</span>`;
                 transcriptArea.scrollTop = transcriptArea.scrollHeight;
             };
 
-            recognition.onerror = (event) => {
-                console.error("Speech Error: ", event.error);
-                if(event.error === 'no-speech') statusLabel.innerText = "Waiting for sound...";
-            };
-
             recognition.onend = () => {
-                // Safari often kills the mic after 60 seconds of silence. 
-                // This auto-restarts it if the Stop button hasn't been pressed.
                 if (stopBtn.style.display === "block") {
-                    recognition.start();
-                } else {
-                    statusLabel.innerText = "Speech Captured";
-                    statusLabel.style.color = "#8E8E93";
+                    recognition.start(); // Auto-restart keep-alive
                 }
             };
         }
 
         function startListening() {
+            if (!recognition) setupRecognition();
             recognition.start();
         }
 
@@ -132,11 +124,8 @@
             recognition.stop();
             startBtn.style.display = "block";
             stopBtn.style.display = "none";
-            
-            // Clean HTML tags to get raw text for clipboard
-            const rawText = transcriptArea.innerText;
-            navigator.clipboard.writeText(rawText);
-            alert("Full transcript copied to clipboard!");
+            statusLabel.innerText = "Processing Complete";
+            statusLabel.style.color = "#34C759";
         }
     </script>
 </body>
