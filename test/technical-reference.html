@@ -71,6 +71,15 @@
         .rules li { margin: 8px 0; font-size: 15px; }
         .rules li strong { color: var(--accent); }
 
+        /* Back to top */
+        .back-to-top {
+            display: block; text-align: right; margin-top: 18px;
+            padding-top: 12px; border-top: 1px solid var(--bg);
+            font-size: 13px; font-weight: 700; color: #8E8E93;
+            text-decoration: none;
+        }
+        .back-to-top:hover { color: var(--accent); }
+
         /* Warning box */
         .warn {
             background: #FFF3CD; border-left: 4px solid var(--gold);
@@ -81,7 +90,7 @@
     </style>
 </head>
 <body>
-<div class="content">
+<div class="content" id="top">
 
     <a href="manual.html" class="btn-back">← Back to Manual</a>
 
@@ -117,6 +126,9 @@
         <p style="margin-top:12px;">When the file runs from <code>/test/</code> it uses <code>test_</code> prefixed keys. From the root it uses <code>prod_</code>. Copying a file from <code>/test/index.html</code> to <code>/index.html</code> requires <strong>zero code changes</strong> — the prefix shifts automatically. Test and production data are fully isolated in localStorage on the same device.</p>
     </div>
 
+        <a href="#top" class="back-to-top">&#x2191; Back to Contents</a>
+    </div>
+
     <!-- LOCALSTORAGE -->
     <div class="section" id="localstorage">
         <h2>2. LocalStorage Keys</h2>
@@ -132,6 +144,9 @@
             <tr><td><code>KEY_CUSTOM</code></td><td><code>prod_sdtm_custom_limits</code></td><td>Object <code>{g, cy, r}</code> in minutes</td></tr>
             <tr><td><code>KEY_AI_KEY</code></td><td><code>prod_sdtm_openai_key</code></td><td>OpenAI API key string</td></tr>
         </table>
+    </div>
+
+        <a href="#top" class="back-to-top">&#x2191; Back to Contents</a>
     </div>
 
     <!-- GLOBALS -->
@@ -160,6 +175,9 @@
         </table>
     </div>
 
+        <a href="#top" class="back-to-top">&#x2191; Back to Contents</a>
+    </div>
+
     <!-- SCREENS -->
     <div class="section" id="screens">
         <h2>4. Screens</h2>
@@ -175,6 +193,9 @@
             <tr><td><code>settings</code></td><td>API key, markdown toggle, backup/restore, clear data</td></tr>
             <tr><td><code>transcription</code></td><td><span class="new-badge">v2.9</span> Whisper speech recording — 4 states: Ready → Recording → Analyzing → Results</td></tr>
         </table>
+    </div>
+
+        <a href="#top" class="back-to-top">&#x2191; Back to Contents</a>
     </div>
 
     <!-- FUNCTIONS -->
@@ -274,6 +295,9 @@
         </table>
     </div>
 
+        <a href="#top" class="back-to-top">&#x2191; Back to Contents</a>
+    </div>
+
     <!-- CSS CLASSES -->
     <div class="section" id="css">
         <h2>6. CSS — Key Classes to Preserve</h2>
@@ -301,6 +325,9 @@
         </table>
     </div>
 
+        <a href="#top" class="back-to-top">&#x2191; Back to Contents</a>
+    </div>
+
     <!-- CSS VARIABLES -->
     <div class="section" id="cssvars">
         <h2>7. CSS Variables (<code>:root</code>)</h2>
@@ -319,6 +346,9 @@
         </table>
     </div>
 
+        <a href="#top" class="back-to-top">&#x2191; Back to Contents</a>
+    </div>
+
     <!-- DEPLOYMENT -->
     <div class="section" id="deployment">
         <h2>8. Deployment Notes</h2>
@@ -326,7 +356,10 @@
         <p><strong>Service worker caching:</strong> The cache name in <code>sw.js</code> must be bumped on every deployment (e.g. <code>SDTM-TIMER-V2.9.0</code>). The worker uses <code>skipWaiting()</code> and <code>clients.claim()</code> for immediate activation, and deletes all old caches on activate. If users report seeing a stale version, have them test in an incognito window first to confirm the new code is live before troubleshooting further.</p>
         <p><strong>Version label:</strong> The version string is set inside <code>initApp()</code> — update it there when bumping versions. The "(TEST)" suffix is appended automatically when running from <code>/test/</code>.</p>
         <p><strong>External API calls:</strong> The app calls two OpenAI endpoints — <code>/v1/chat/completions</code> (GPT-4o-mini, for WOD definitions) and <code>/v1/audio/transcriptions</code> (Whisper-1, for speech transcription). Both require the user's own API key stored in <code>KEY_AI_KEY</code>. No API key is bundled in the app.</p>
-        <p><strong>Microphone permissions:</strong> The transcription feature requires <code>getUserMedia</code>. On iOS, this only works in Safari — Chrome on iOS does not support microphone access in PWA mode. Android Chrome works correctly.</p>
+        <p><strong>Microphone permissions:</strong> The transcription feature requires <code>getUserMedia</code>. Recording has been confirmed working on iPad with Chrome. If users experience microphone access issues, Safari is a reliable fallback. Behavior may vary on older iOS versions or in installed PWA mode on iPhone.</p>
+    </div>
+
+        <a href="#top" class="back-to-top">&#x2191; Back to Contents</a>
     </div>
 
     <!-- RULES -->
@@ -344,6 +377,9 @@
             <li><strong><code>openModal(t, b, c)</code> is the only modal system.</strong> Do not introduce <code>alert()</code>, <code>confirm()</code>, or any third-party modal library.</li>
             <li><strong>The microphone stream (<code>recordingStream</code>) must be stopped</strong> on every exit path from the transcription screen — including cancel, error, and successful merge. Orphaned streams leave the browser recording indicator active.</li>
         </ol>
+    </div>
+
+        <a href="#top" class="back-to-top">&#x2191; Back to Contents</a>
     </div>
 
     <div class="footer">
