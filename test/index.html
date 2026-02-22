@@ -17,10 +17,13 @@
         }
 
 ```
+    html { height: -webkit-fill-available; }
     body { 
         margin: 0; background: var(--bg); color: var(--text); 
         font-family: -apple-system, system-ui, sans-serif; display: flex; 
-        flex-direction: column; height: 100dvh; 
+        flex-direction: column;
+        height: 100vh;
+        height: -webkit-fill-available;
         padding-bottom: env(safe-area-inset-bottom); box-sizing: border-box; overflow: hidden;
     }
 
