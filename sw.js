@@ -1,4 +1,4 @@
-const CACHE_NAME = 'SDTM-TIMER-V1.1'; // Update this whenever you change index.html
+const CACHE_NAME = 'SDTM-TIMER-V2.9.0'; // Bumped — forces all clients to fetch fresh files
 
 const ASSETS = [
   'index.html',
