@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Meeting Tools v2.11.0</title>
+    <title>Meeting Tools v2.11.1</title>
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -256,7 +256,7 @@
     </div>
 </div>
 
-<!-- ===================== TRANSCRIPT LIST SCREEN (NEW v2.11.0) ===================== -->
+<!-- ===================== TRANSCRIPT LIST SCREEN (NEW v2.11.1) ===================== -->
 <div id="transcriptList" class="screen">
     <div class="header"><h1>Transcripts</h1><div class="subtitle">Saved this meeting</div></div>
     <div class="container">
@@ -265,7 +265,7 @@
     <div class="button-row"><button class="footer-btn secondary-btn" onclick="showScreen('menu')">Back</button></div>
 </div>
 
-<!-- ===================== TRANSCRIPT VIEW SCREEN (NEW v2.11.0) ===================== -->
+<!-- ===================== TRANSCRIPT VIEW SCREEN (NEW v2.11.1) ===================== -->
 <div id="transcriptView" class="screen">
     <div class="header">
         <h1 id="transcriptViewName">Name</h1>
@@ -308,7 +308,7 @@
         document.getElementById('mdToggle').checked = (mdSaved === 'true');
         document.getElementById('openaiKey').value = localStorage.getItem(KEY_AI_KEY) || "";
         const vLabel = document.getElementById('versionLabel');
-        vLabel.innerText = "Version 2.11.0" + (window.location.pathname.toLowerCase().includes('/test/') ? " (TEST)" : "");
+        vLabel.innerText = "Version 2.11.1" + (window.location.pathname.toLowerCase().includes('/test/') ? " (TEST)" : "");
         refreshRoster();
         nextWod();
     }
@@ -634,7 +634,8 @@
             <div>
                 <div style="font-size:13px; font-weight:800; color:#8E8E93; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Filler Score</div>
                 <div style="font-size:28px; font-weight:900; color:${scoreColor};">${fillerPct}%</div>
-                <div style="font-size:13px; color:${scoreColor}; font-weight:700;">${totalFillers} filler${totalFillers !== 1 ? 's' : ''} of ${totalWords} words${fillersPerMin ? ' · ' + fillersPerMin + '/min' : ''}</div>
+                <div style="font-size:13px; color:${scoreColor}; font-weight:700;">${totalFillers} filler${totalFillers !== 1 ? 's' : ''} of ${totalWords} words</div>
+                ${durationMins ? `<div style="font-size:12px; color:#8E8E93; margin-top:3px;">Speech: ${durationMins} min &nbsp;·&nbsp; Rate: ${fillersPerMin} fillers/min</div>` : ''}
             </div>
             <div style="font-size:15px; font-weight:900; color:${scoreColor}; text-align:right; letter-spacing:1px;">${scoreLabel}</div>
         </div>`;
@@ -714,7 +715,7 @@
     }
 
     /* ============================================================
-       NEW: TRANSCRIPT LIST & VIEW FUNCTIONS (v2.11.0)
+       NEW: TRANSCRIPT LIST & VIEW FUNCTIONS (v2.11.1)
     ============================================================ */
 
     let activeTranscriptIndex = -1;
@@ -757,7 +758,8 @@
                 <div>
                     <div style="font-size:12px; font-weight:800; color:#8E8E93; text-transform:uppercase; letter-spacing:1px; margin-bottom:2px;">Filler Score</div>
                     <div style="font-size:26px; font-weight:900; color:${scoreColor};">${t.fillerPct}%</div>
-                    <div style="font-size:13px; color:${scoreColor}; font-weight:700;">${t.totalFillers} fillers of ${t.totalWords} words${t.fillersPerMin ? ' · ' + t.fillersPerMin + '/min' : ''}</div>
+                    <div style="font-size:13px; color:${scoreColor}; font-weight:700;">${t.totalFillers} fillers of ${t.totalWords} words</div>
+                    ${t.durationMins ? `<div style="font-size:12px; color:#8E8E93; margin-top:3px;">Speech: ${t.durationMins} min &nbsp;·&nbsp; Rate: ${t.fillersPerMin} fillers/min</div>` : ''}
                 </div>
                 <div style="font-size:14px; font-weight:900; color:${scoreColor}; letter-spacing:1px;">${t.fillerScore}</div>
             </div>`;
