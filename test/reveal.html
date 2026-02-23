@@ -289,7 +289,6 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    z-index: 5;
   }
 
   #revealCanvas {
@@ -297,14 +296,15 @@
     max-height: 100dvh;
     width: auto;
     height: auto;
-    display: block;   /* always in DOM — z-index hides it during act */
+    display: block;
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     image-rendering: -webkit-optimize-contrast;
     image-rendering: crisp-edges;
-    z-index: 2;       /* below act video (z-index 5) during pre-roll */
+    opacity: 0;   /* hidden by opacity — no z-index tricks needed */
+    transition: opacity 0.05s;
   }
 
   /* Tap-to-start overlay */
@@ -679,14 +679,11 @@
 // ─────────────────────────────────────────
 // STATE
 // ─────────────────────────────────────────
-let actURL = null;
-let boardURL = null;
-let markerX = null;
-let markerY = null;
+let actURL = null, boardURL = null;
+let markerX = null, markerY = null;
 let animFrameId = null;
 let revealStartTime = null;
-let numberOpacity = 0;
-let scaleVal = 1;
+let numberOpacity = 0, scaleVal = 1;
 let db = null;
 
 // Player state
@@ -694,9 +691,8 @@ let currentPhase = 'act'; // 'act' | 'reveal'
 let isPaused = false;
 let scrubbing = false;
 let controlsTimeout = null;
-let totalDuration = 0;   // act duration + board duration
-let actDuration = 0;
-let boardDuration = 0;
+let totalDuration = 0, actDuration = 0, boardDuration = 0;
+let decoderWarmed = false; // board video first-frame decoded?
 
 const actVideoEl   = document.getElementById('actVideo');
 const boardVideoEl = document.getElementById('boardVideoEl');
@@ -704,7 +700,7 @@ const revealCanvas = document.getElementById('revealCanvas');
 const ctx = revealCanvas.getContext('2d');
 
 // ─────────────────────────────────────────
-// INDEXEDDB SETUP
+// INDEXEDDB
 // ─────────────────────────────────────────
 function openDB() {
   return new Promise((resolve, reject) => {
@@ -718,53 +714,44 @@ function openDB() {
     req.onerror   = e => reject(e.target.error);
   });
 }
-
-function dbSet(storeName, key, value) {
-  return new Promise((resolve, reject) => {
-    const tx  = db.transaction(storeName, 'readwrite');
-    const req = tx.objectStore(storeName).put(value, key);
-    req.onsuccess = () => resolve();
-    req.onerror   = e => reject(e.target.error);
+function dbSet(store, key, val) {
+  return new Promise((res, rej) => {
+    const tx = db.transaction(store, 'readwrite');
+    const r  = tx.objectStore(store).put(val, key);
+    r.onsuccess = () => res(); r.onerror = e => rej(e.target.error);
   });
 }
-
-function dbGet(storeName, key) {
-  return new Promise((resolve, reject) => {
-    const tx  = db.transaction(storeName, 'readonly');
-    const req = tx.objectStore(storeName).get(key);
-    req.onsuccess = e => resolve(e.target.result);
-    req.onerror   = e => reject(e.target.error);
+function dbGet(store, key) {
+  return new Promise((res, rej) => {
+    const tx = db.transaction(store, 'readonly');
+    const r  = tx.objectStore(store).get(key);
+    r.onsuccess = e => res(e.target.result); r.onerror = e => rej(e.target.error);
   });
 }
 
 // ─────────────────────────────────────────
-// SAVE & LOAD SETTINGS
+// SETTINGS PERSISTENCE
 // ─────────────────────────────────────────
 async function saveSettings() {
   if (!db) return;
-  const settings = {
-    markerX,
-    markerY,
+  await dbSet('settings', 'prefs', {
+    markerX, markerY,
     numColor:     document.getElementById('numColor').value,
     numSize:      document.getElementById('numSize').value,
     numFont:      document.getElementById('numFont').value,
     numShadow:    document.getElementById('numShadow').value,
     revealEffect: document.getElementById('revealEffect').value,
     revealTiming: document.getElementById('revealTiming').value,
-  };
-  await dbSet('settings', 'prefs', settings);
+  });
 }
-
 async function loadSettings() {
   if (!db) return;
   const s = await dbGet('settings', 'prefs');
   if (!s) return;
-  if (s.markerX !== null && s.markerX !== undefined) {
-    markerX = s.markerX;
-    markerY = s.markerY;
+  if (s.markerX != null) {
+    markerX = s.markerX; markerY = s.markerY;
     const dot = document.getElementById('markerDot');
-    dot.style.left    = (markerX * 100) + '%';
-    dot.style.top     = (markerY * 100) + '%';
+    dot.style.left = (markerX*100)+'%'; dot.style.top = (markerY*100)+'%';
     dot.style.display = 'block';
     document.getElementById('positionReadout').innerText =
       `Position set — ${Math.round(markerX*100)}% from left, ${Math.round(markerY*100)}% from top`;
@@ -778,49 +765,38 @@ async function loadSettings() {
 }
 
 // ─────────────────────────────────────────
-// SAVE & LOAD VIDEOS
+// VIDEO PERSISTENCE
 // ─────────────────────────────────────────
 async function saveVideo(key, file) {
   if (!db || !file) return;
-  const buf = await file.arrayBuffer();
-  await dbSet('videos', key, { buffer: buf, type: file.type, name: file.name });
+  await dbSet('videos', key, { buffer: await file.arrayBuffer(), type: file.type, name: file.name });
 }
-
 async function loadVideoFromDB(key) {
   if (!db) return null;
-  const record = await dbGet('videos', key);
-  if (!record) return null;
-  const blob = new Blob([record.buffer], { type: record.type });
-  return { url: URL.createObjectURL(blob), name: record.name };
+  const rec = await dbGet('videos', key);
+  if (!rec) return null;
+  return { url: URL.createObjectURL(new Blob([rec.buffer], { type: rec.type })), name: rec.name };
 }
-
 function setStoredLabel(zoneId, badgeId, name) {
   document.getElementById(zoneId).classList.add('has-file');
-  const badge = document.getElementById(badgeId);
-  badge.style.display = 'inline-block';
-  badge.innerText = `✓ ${name}`;
+  const b = document.getElementById(badgeId);
+  b.style.display = 'inline-block'; b.innerText = `✓ ${name}`;
 }
 
 // ─────────────────────────────────────────
-// INIT — restore everything on load
+// INIT
 // ─────────────────────────────────────────
 async function initApp() {
   db = await openDB();
   await loadSettings();
-
-  // Restore act video
   const act = await loadVideoFromDB('act');
   if (act) {
     if (actURL) URL.revokeObjectURL(actURL);
     actURL = act.url;
     actVideoEl.src = actURL;
     actVideoEl.load();
-    actVideoEl.onended = handleActEnd;
-    actVideoEl.ontimeupdate = updateProgress;
     setStoredLabel('actZone', 'actBadge', act.name);
   }
-
-  // Restore board video
   const board = await loadVideoFromDB('board');
   if (board) {
     if (boardURL) URL.revokeObjectURL(boardURL);
@@ -830,19 +806,13 @@ async function initApp() {
     document.getElementById('boardBadge').innerText = `✓ ${board.name} — tap preview to adjust position`;
     document.getElementById('boardPreviewWrap').style.display = 'block';
   }
-
   updateDots();
   updateStorageInfo();
 }
-
 function setupBoardPreview(url) {
-  const preview = document.getElementById('boardPreview');
-  preview.src = url;
-  preview.load();
-  preview.play().catch(()=>{});
-  preview.onclick = markPosition;
-  boardVideoEl.src = url;
-  boardVideoEl.load();
+  const p = document.getElementById('boardPreview');
+  p.src = url; p.load(); p.play().catch(()=>{}); p.onclick = markPosition;
+  boardVideoEl.src = url; boardVideoEl.load();
 }
 
 // ─────────────────────────────────────────
@@ -853,19 +823,13 @@ async function loadActVideo(input) {
   const file = input.files[0];
   if (actURL) URL.revokeObjectURL(actURL);
   actURL = URL.createObjectURL(file);
-  actVideoEl.src = actURL;
-  actVideoEl.load();
-  actVideoEl.onended = handleActEnd;
-  actVideoEl.ontimeupdate = updateProgress;
+  actVideoEl.src = actURL; actVideoEl.load();
   setStoredLabel('actZone', 'actBadge', file.name);
   updateDots();
-
-  // Save to DB (show saving indicator)
   document.getElementById('actBadge').innerText = '⏳ Saving…';
   await saveVideo('act', file);
   document.getElementById('actBadge').innerText = `✓ ${file.name}`;
 }
-
 async function loadBoardVideo(input) {
   if (!input.files[0]) return;
   const file = input.files[0];
@@ -876,219 +840,178 @@ async function loadBoardVideo(input) {
   document.getElementById('boardBadge').innerText = `✓ ${file.name} — tap preview to mark position`;
   document.getElementById('boardPreviewWrap').style.display = 'block';
   updateDots();
-
-  // Save to DB
   document.getElementById('boardBadge').innerText = '⏳ Saving…';
   await saveVideo('board', file);
   document.getElementById('boardBadge').innerText = `✓ ${file.name} — tap preview to adjust position`;
+  decoderWarmed = false; // new video, needs re-warming
 }
-
 function markPosition(e) {
   const preview = document.getElementById('boardPreview');
   const rect = preview.getBoundingClientRect();
   const dot  = document.getElementById('markerDot');
-
   markerX = (e.clientX - rect.left) / rect.width;
-  markerY = (e.clientY - rect.top) / rect.height;
-
-  // Position the dot visually
-  dot.style.left = (markerX * 100) + '%';
-  dot.style.top  = (markerY * 100) + '%';
+  markerY = (e.clientY - rect.top)  / rect.height;
+  dot.style.left = (markerX*100)+'%'; dot.style.top = (markerY*100)+'%';
   dot.style.display = 'block';
-
   document.getElementById('positionReadout').innerText =
     `Position set — ${Math.round(markerX*100)}% from left, ${Math.round(markerY*100)}% from top`;
-
-  updateDots();
+  updateDots(); saveSettings();
 }
 
 // ─────────────────────────────────────────
 // STATUS DOTS
 // ─────────────────────────────────────────
 function updateDots() {
-  const d = (id, ok) => document.getElementById(id).className = 'req-dot' + (ok ? ' ok' : '');
+  const d = (id, ok) => document.getElementById(id).className = 'req-dot' + (ok?' ok':'');
   const num = document.getElementById('numberInput').value.trim();
-  d('dot1', !!actURL);
-  d('dot2', !!boardURL);
-  d('dot3', markerX !== null);
-  d('dot4', num.length > 0);
-
-  const ready = actURL && boardURL && markerX !== null && num.length > 0;
-  document.getElementById('launchBtn').disabled = !ready;
+  d('dot1', !!actURL); d('dot2', !!boardURL); d('dot3', markerX!==null); d('dot4', num.length>0);
+  document.getElementById('launchBtn').disabled = !(actURL && boardURL && markerX!==null && num.length>0);
 }
 document.getElementById('numberInput').addEventListener('input', updateDots);
+['numColor','numSize','numFont','numShadow','revealEffect','revealTiming'].forEach(id =>
+  document.getElementById(id).addEventListener('change', saveSettings));
 
-// Auto-save settings when any style field changes
-['numColor','numSize','numFont','numShadow','revealEffect','revealTiming'].forEach(id => {
-  document.getElementById(id).addEventListener('change', saveSettings);
-});
+// ─────────────────────────────────────────
+// DECODER WARM-UP
+// Plays board muted for just enough to decode frame 0,
+// then pauses — so the GPU has it ready for instant play() later.
+// ─────────────────────────────────────────
+function warmBoardDecoder() {
+  if (decoderWarmed) return Promise.resolve();
+  return new Promise(resolve => {
+    boardVideoEl.muted = true;
+    boardVideoEl.currentTime = 0;
+
+    function onWarmed() {
+      boardVideoEl.pause();
+      boardVideoEl.currentTime = 0;
+      boardVideoEl.muted = false;
+      decoderWarmed = true;
+      boardDuration = boardVideoEl.duration || 0;
+      boardVideoEl.ontimeupdate = null;
+      resolve();
+    }
+
+    // First timeupdate means a frame is decoded and displayed
+    boardVideoEl.ontimeupdate = onWarmed;
+
+    // If it times out (no frames), resolve anyway
+    const timeout = setTimeout(() => {
+      boardVideoEl.ontimeupdate = null;
+      boardVideoEl.pause();
+      boardVideoEl.currentTime = 0;
+      boardVideoEl.muted = false;
+      decoderWarmed = true;
+      resolve();
+    }, 1500);
+
+    boardVideoEl.ontimeupdate = () => { clearTimeout(timeout); onWarmed(); };
+    boardVideoEl.play().catch(() => { clearTimeout(timeout); resolve(); });
+  });
+}
 
 // ─────────────────────────────────────────
 // LAUNCH
 // ─────────────────────────────────────────
-function launchPerformance() {
+async function launchPerformance() {
   const num = document.getElementById('numberInput').value.trim();
   if (!num) return;
 
-  // Show performance screen
   document.getElementById('setupScreen').style.display = 'none';
   const ps = document.getElementById('performScreen');
   ps.style.display = 'flex';
-
-  // Show tap overlay with the number
   document.getElementById('tapNumber').innerText = num;
-
-  // Request fullscreen
   ps.requestFullscreen && ps.requestFullscreen().catch(()=>{});
 
-  // Show exit button after 2s
-  setTimeout(() => document.getElementById('exitBtn').classList.add('visible'), 2000);
+  // Warm decoder in background while user sees the tap-to-start screen
+  // This is safe — user hasn't tapped yet, no video is playing
+  await warmBoardDecoder();
 
-  // Pre-load board video
-  boardVideoEl.load();
+  // Also measure durations
+  await new Promise(resolve => {
+    if (actVideoEl.readyState >= 1) { actDuration = actVideoEl.duration||0; resolve(); }
+    else { actVideoEl.onloadedmetadata = () => { actDuration = actVideoEl.duration||0; resolve(); }; }
+  });
+  totalDuration = actDuration + boardDuration;
+  document.getElementById('scrubber').max = totalDuration;
+  document.getElementById('durationDisplay').innerText = formatTime(totalDuration);
 }
 
-let preRollDone = false;
-
+// ─────────────────────────────────────────
+// START ACT
+// ─────────────────────────────────────────
 function startAct() {
   document.getElementById('tapOverlay').style.display = 'none';
   actVideoEl.style.display = 'block';
+  actVideoEl.style.opacity = '1';
   currentPhase = 'act';
   isPaused = false;
   scrubbing = false;
-  preRollDone = false;
+  revealStartTime = null;
+  numberOpacity = 0;
+  scaleVal = 0.6;
 
-  // Capture durations
-  function onActMeta() {
-    actDuration = actVideoEl.duration || 0;
-    totalDuration = actDuration + boardDuration;
-    document.getElementById('durationDisplay').innerText = formatTime(totalDuration);
-    document.getElementById('scrubber').max = totalDuration;
-  }
-  if (actVideoEl.readyState >= 1) onActMeta();
-  else actVideoEl.onloadedmetadata = onActMeta;
-
-  if (boardVideoEl.readyState >= 1) {
-    boardDuration = boardVideoEl.duration || 0;
-  } else {
-    boardVideoEl.onloadedmetadata = () => {
-      boardDuration = boardVideoEl.duration || 0;
-      totalDuration = actDuration + boardDuration;
-      document.getElementById('durationDisplay').innerText = formatTime(totalDuration);
-      document.getElementById('scrubber').max = totalDuration;
-    };
-  }
-
-  // Pre-roll: size canvas and start board drawing BEFORE act ends
-  // Canvas stays z-index below act video so it's invisible to viewer
-  function maybePreRoll() {
-    if (preRollDone || scrubbing || isPaused) return;
-    if (!actVideoEl.duration) return;
-    const remaining = actVideoEl.duration - actVideoEl.currentTime;
-    if (remaining <= 0.7) {
-      preRollDone = true;
-      primeBoard();
-    }
-  }
-
-  // Wire the timeupdate for both scrubber sync and pre-roll trigger
-  actVideoEl.ontimeupdate = () => {
-    updateProgress();
-    maybePreRoll();
-  };
-
+  actVideoEl.currentTime = 0;
+  actVideoEl.onended     = handleActEnd;
+  actVideoEl.ontimeupdate = updateProgress;
   actVideoEl.play();
+
   document.getElementById('playerControls').style.display = 'flex';
   document.getElementById('transitionPill').style.display = 'flex';
   document.getElementById('playPauseBtn').innerText = '⏸';
   showControls();
 }
 
-function primeBoard() {
-  // Set canvas dimensions from board video's real resolution
+// ─────────────────────────────────────────
+// TRANSITION  ACT → REVEAL
+// Board decoder is already warm from launchPerformance.
+// We just need to: show canvas, seek board to 0, play.
+// Since first frame is decoded, play() returns on frame 1 instantly.
+// ─────────────────────────────────────────
+function handleActEnd() {
+  currentPhase = 'reveal';
+  const mode  = document.getElementById('transitionSelect').value;
+  const flash = document.getElementById('flashOverlay');
+
+  // Size canvas to board video's exact resolution
   const vw = boardVideoEl.videoWidth;
   const vh = boardVideoEl.videoHeight;
-  if (vw && vh) {
-    revealCanvas.width  = vw;
-    revealCanvas.height = vh;
-  }
+  if (vw && vh) { revealCanvas.width = vw; revealCanvas.height = vh; }
   fitCanvas();
 
-  // Reset compositor state — number hidden until act actually ends
+  // Reset number compositor
   revealStartTime = null;
   numberOpacity   = 0;
   scaleVal        = 0.6;
 
-  // Seek to frame 0 and start playing into canvas — canvas is still
-  // visually behind the act video (z-index), so viewer sees nothing yet
-  boardVideoEl.currentTime = 0;
-  boardVideoEl.loop = false;
-  boardVideoEl.onended = () => { /* freeze on last frame */ };
-  boardVideoEl.ontimeupdate = updateProgress;
-
-  // Start draw loop immediately — paints board frames onto hidden canvas
+  // Start draw loop NOW — it will draw frames as soon as boardVideoEl has them
   cancelAnimationFrame(animFrameId);
   drawReveal();
 
-  boardVideoEl.play().catch(() => {});
-}
+  function doSwap() {
+    // Seek board to start and play — decoder is warm so first frame is instant
+    boardVideoEl.currentTime = 0;
+    boardVideoEl.muted = false;
+    boardVideoEl.loop  = false;
+    boardVideoEl.ontimeupdate = updateProgress;
+    boardVideoEl.onended      = () => { /* freeze on last frame */ };
+    boardVideoEl.play().catch(()=>{});
 
-// ─────────────────────────────────────────
-// PROGRESS BAR
-// ─────────────────────────────────────────
-function updateProgress() {
-  if (scrubbing) return;
-  const current = currentPhase === 'act'
-    ? actVideoEl.currentTime
-    : actDuration + boardVideoEl.currentTime;
-  document.getElementById('scrubber').value = current;
-  document.getElementById('timeDisplay').innerText = formatTime(current);
-  if (totalDuration) {
-    document.getElementById('durationDisplay').innerText = formatTime(totalDuration);
-  }
-}
-
-function formatTime(s) {
-  if (!isFinite(s)) return '0:00';
-  const m = Math.floor(s / 60);
-  const sec = Math.floor(s % 60).toString().padStart(2, '0');
-  return m + ':' + sec;
-}
-
-// ─────────────────────────────────────────
-// TRANSITION FROM ACT → REVEAL
-// ─────────────────────────────────────────
-function handleActEnd() {
-  currentPhase = 'reveal';
-  const mode = document.getElementById('transitionSelect').value;
-  const flash = document.getElementById('flashOverlay');
-  totalDuration = actDuration + boardDuration;
-
-  // If pre-roll didn't fire (very short act video), prime now
-  if (!preRollDone) {
-    preRollDone = true;
-    primeBoard();
-  }
-
-  function swapToCanvas() {
-    // Board already running on canvas behind act video — just hide act video
-    actVideoEl.style.display = 'none';
-    revealCanvas.style.zIndex = '5';  // now on top
-    fitCanvas();
-    // Unblock the number reveal animation from this moment
-    revealStartTime = null;
-    flash.style.opacity = '0';
+    // Show canvas, hide act video
+    revealCanvas.style.opacity = '1';
+    actVideoEl.style.display   = 'none';
+    flash.style.opacity        = '0';
   }
 
   if (mode === 'cut') {
-    swapToCanvas();
+    doSwap();
   } else {
-    const dur = mode === 'fade' ? 300 : mode === 'fade-slow' ? 800 : 1500;
+    const dur  = mode === 'fade' ? 300 : mode === 'fade-slow' ? 800 : 1500;
     const half = dur / 2;
     flash.style.transition = `opacity ${half}ms ease`;
     flash.style.opacity = '1';
     setTimeout(() => {
-      swapToCanvas();
+      doSwap();
       flash.style.transition = `opacity ${half}ms ease`;
     }, half);
   }
@@ -1106,11 +1029,10 @@ function drawReveal(timestamp) {
   const effect   = document.getElementById('revealEffect').value;
   const revealAt = parseFloat(document.getElementById('revealTiming').value);
 
-  // Init timestamp
   if (!revealStartTime) revealStartTime = timestamp;
-  const elapsed = (timestamp - revealStartTime) / 1000; // seconds
+  const elapsed = (timestamp - revealStartTime) / 1000;
 
-  // Draw board video frame
+  // Draw board video frame (black if not ready yet)
   if (boardVideoEl.readyState >= 2) {
     ctx.drawImage(boardVideoEl, 0, 0, revealCanvas.width, revealCanvas.height);
   } else {
@@ -1118,65 +1040,37 @@ function drawReveal(timestamp) {
     ctx.fillRect(0, 0, revealCanvas.width, revealCanvas.height);
   }
 
-  // Compute number position in canvas pixels
-  const px = markerX * revealCanvas.width;
-  const py = markerY * revealCanvas.height;
-
-  // Compute opacity / scale based on effect
+  // Number reveal animation — only starts after revealAt seconds from swap
   const revealElapsed = elapsed - revealAt;
-
   if (revealElapsed > 0) {
-    const t = Math.min(revealElapsed / 0.6, 1); // 0.6s transition
-
-    if (effect === 'instant') {
-      numberOpacity = 1;
-      scaleVal = 1;
-    } else if (effect === 'fade') {
-      numberOpacity = t;
-      scaleVal = 1;
-    } else if (effect === 'scale') {
-      numberOpacity = t;
-      scaleVal = 0.4 + (0.6 * t);
-    } else if (effect === 'glow') {
-      numberOpacity = 1;
-      scaleVal = 1;
-      // glow pulses
+    const t = Math.min(revealElapsed / 0.6, 1);
+    if      (effect === 'instant') { numberOpacity = 1; scaleVal = 1; }
+    else if (effect === 'fade')    { numberOpacity = t; scaleVal = 1; }
+    else if (effect === 'scale')   { numberOpacity = t; scaleVal = 0.4 + 0.6*t; }
+    else if (effect === 'glow')    {
+      numberOpacity = 1; scaleVal = 1;
       const pulse = 1 + 0.06 * Math.sin(elapsed * 8);
-      scaleVal = t < 1 ? (0.5 + 0.5 * t) * pulse : pulse;
+      scaleVal = t < 1 ? (0.5 + 0.5*t) * pulse : pulse;
     }
   } else {
     numberOpacity = 0;
   }
 
-  if (numberOpacity > 0) {
+  if (numberOpacity > 0 && markerX !== null) {
+    const px = markerX * revealCanvas.width;
+    const py = markerY * revealCanvas.height;
     ctx.save();
     ctx.globalAlpha = numberOpacity;
     ctx.translate(px, py);
     ctx.scale(scaleVal, scaleVal);
-
     ctx.font = `${size}px ${font}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-
-    // Shadow / outline
-    if (shadow === 'dark') {
-      ctx.shadowColor = 'rgba(0,0,0,0.9)';
-      ctx.shadowBlur = size * 0.15;
-      ctx.shadowOffsetX = size * 0.04;
-      ctx.shadowOffsetY = size * 0.04;
-    } else if (shadow === 'glow') {
-      ctx.shadowColor = color;
-      ctx.shadowBlur = size * 0.4;
-    } else if (shadow === 'outline') {
-      ctx.strokeStyle = '#000';
-      ctx.lineWidth = size * 0.06;
-      ctx.lineJoin = 'round';
-      ctx.strokeText(num, 0, 0);
-    }
-
+    if      (shadow === 'dark')    { ctx.shadowColor='rgba(0,0,0,0.9)'; ctx.shadowBlur=size*0.15; ctx.shadowOffsetX=size*0.04; ctx.shadowOffsetY=size*0.04; }
+    else if (shadow === 'glow')    { ctx.shadowColor=color; ctx.shadowBlur=size*0.4; }
+    else if (shadow === 'outline') { ctx.strokeStyle='#000'; ctx.lineWidth=size*0.06; ctx.lineJoin='round'; ctx.strokeText(num,0,0); }
     ctx.fillStyle = color;
     ctx.fillText(num, 0, 0);
-
     ctx.restore();
   }
 
@@ -1184,8 +1078,58 @@ function drawReveal(timestamp) {
 }
 
 // ─────────────────────────────────────────
-// EXIT
+// SCRUBBER & PROGRESS
 // ─────────────────────────────────────────
+function updateProgress() {
+  if (scrubbing) return;
+  const current = currentPhase === 'act'
+    ? actVideoEl.currentTime
+    : actDuration + boardVideoEl.currentTime;
+  document.getElementById('scrubber').value = current;
+  document.getElementById('timeDisplay').innerText = formatTime(current);
+}
+function formatTime(s) {
+  if (!isFinite(s)) return '0:00';
+  const m = Math.floor(s/60), sec = Math.floor(s%60).toString().padStart(2,'0');
+  return m+':'+sec;
+}
+function onScrub(val) {
+  scrubbing = true;
+  document.getElementById('timeDisplay').innerText = formatTime(parseFloat(val));
+}
+function onScrubEnd() {
+  const t = parseFloat(document.getElementById('scrubber').value);
+  scrubbing = false;
+
+  if (t <= actDuration) {
+    if (currentPhase === 'reveal') {
+      cancelAnimationFrame(animFrameId);
+      boardVideoEl.pause();
+      revealCanvas.style.opacity = '0';
+      actVideoEl.style.display   = 'block';
+      actVideoEl.style.opacity   = '1';
+      currentPhase = 'act';
+      document.getElementById('flashOverlay').style.opacity = '0';
+    }
+    actVideoEl.currentTime = t;
+    if (!isPaused) actVideoEl.play();
+  } else {
+    const boardT = t - actDuration;
+    if (currentPhase === 'act') {
+      actVideoEl.pause(); actVideoEl.style.display = 'none';
+      revealCanvas.style.opacity = '1';
+      currentPhase = 'reveal';
+      revealStartTime = null; numberOpacity = 1; scaleVal = 1;
+      const vw = boardVideoEl.videoWidth, vh = boardVideoEl.videoHeight;
+      if (vw && vh) { revealCanvas.width = vw; revealCanvas.height = vh; fitCanvas(); }
+      cancelAnimationFrame(animFrameId); drawReveal();
+    }
+    boardVideoEl.currentTime = boardT;
+    if (!isPaused) boardVideoEl.play().catch(()=>{});
+  }
+  showControls();
+}
+
 // ─────────────────────────────────────────
 // PLAYER CONTROLS
 // ─────────────────────────────────────────
@@ -1194,112 +1138,41 @@ function showControls() {
   ctrl.style.display = 'flex';
   ctrl.classList.add('visible');
   clearTimeout(controlsTimeout);
-  // Auto-hide after 3s unless paused
-  controlsTimeout = setTimeout(() => {
-    if (!isPaused) ctrl.classList.remove('visible');
-  }, 3000);
+  controlsTimeout = setTimeout(() => { if (!isPaused) ctrl.classList.remove('visible'); }, 3000);
 }
-
 function togglePlayPause() {
   isPaused = !isPaused;
-  const btn = document.getElementById('playPauseBtn');
+  document.getElementById('playPauseBtn').innerText = isPaused ? '▶' : '⏸';
   if (isPaused) {
-    btn.innerText = '▶';
-    if (currentPhase === 'act') actVideoEl.pause();
-    else boardVideoEl.pause();
+    if (currentPhase==='act') actVideoEl.pause(); else boardVideoEl.pause();
   } else {
-    btn.innerText = '⏸';
-    if (currentPhase === 'act') actVideoEl.play();
-    else boardVideoEl.play();
+    if (currentPhase==='act') actVideoEl.play(); else boardVideoEl.play().catch(()=>{});
     showControls();
   }
 }
-
 function restartPerformance() {
   cancelAnimationFrame(animFrameId);
-  boardVideoEl.pause();
-  boardVideoEl.currentTime = 0;
-  actVideoEl.pause();
-  actVideoEl.currentTime = 0;
-  revealCanvas.style.zIndex = '2';  // back below act video
+  boardVideoEl.pause(); boardVideoEl.currentTime = 0;
+  actVideoEl.pause();   actVideoEl.currentTime  = 0;
+  revealCanvas.style.opacity = '0';
   document.getElementById('flashOverlay').style.opacity = '0';
-  actVideoEl.style.display = 'block';
-  currentPhase = 'act';
-  isPaused = false;
-  preRollDone = false;
-  revealStartTime = null;
-  numberOpacity = 0;
-  scaleVal = 0.6;
+  actVideoEl.style.display = 'block'; actVideoEl.style.opacity = '1';
+  currentPhase = 'act'; isPaused = false;
+  revealStartTime = null; numberOpacity = 0; scaleVal = 0.6;
   document.getElementById('playPauseBtn').innerText = '⏸';
   document.getElementById('scrubber').value = 0;
   document.getElementById('timeDisplay').innerText = '0:00';
-  actVideoEl.play();
-  showControls();
+  actVideoEl.play(); showControls();
 }
 
-function onScrub(val) {
-  scrubbing = true;
-  const t = parseFloat(val);
-  document.getElementById('timeDisplay').innerText = formatTime(t);
-  // Visual feedback while dragging
-}
-
-function onScrubEnd() {
-  const t = parseFloat(document.getElementById('scrubber').value);
-  scrubbing = false;
-
-  if (t <= actDuration) {
-    // Scrubbing into act video
-    if (currentPhase === 'reveal') {
-      // Switch back to act video
-      cancelAnimationFrame(animFrameId);
-      boardVideoEl.pause();
-      revealCanvas.style.display = 'none';
-      actVideoEl.style.display = 'block';
-      currentPhase = 'act';
-      document.getElementById('flashOverlay').style.opacity = '0';
-    }
-    actVideoEl.currentTime = t;
-    if (!isPaused) actVideoEl.play();
-  } else {
-    // Scrubbing into reveal
-    const boardT = t - actDuration;
-    if (currentPhase === 'act') {
-      // Jump to reveal phase without transition
-      actVideoEl.pause();
-      actVideoEl.style.display = 'none';
-      revealCanvas.style.display = 'block';
-      fitCanvas();
-      currentPhase = 'reveal';
-      revealStartTime = null;
-      numberOpacity = 1; // Already revealed
-      scaleVal = 1;
-
-      function jumpToBoard() {
-        const vw = boardVideoEl.videoWidth;
-        const vh = boardVideoEl.videoHeight;
-        if (vw && vh) { revealCanvas.width = vw; revealCanvas.height = vh; fitCanvas(); }
-        boardVideoEl.currentTime = boardT;
-        if (!isPaused) boardVideoEl.play();
-        cancelAnimationFrame(animFrameId);
-        drawReveal();
-      }
-      if (boardVideoEl.readyState >= 1) jumpToBoard();
-      else boardVideoEl.onloadedmetadata = jumpToBoard;
-    } else {
-      boardVideoEl.currentTime = boardT;
-      if (!isPaused) boardVideoEl.play();
-    }
-  }
-  showControls();
-}
-
+// ─────────────────────────────────────────
+// EXIT
+// ─────────────────────────────────────────
 function exitPerformance() {
   cancelAnimationFrame(animFrameId);
-  actVideoEl.pause();
-  boardVideoEl.pause();
-  actVideoEl.style.display = 'none';
-  revealCanvas.style.display = 'none';
+  actVideoEl.pause(); boardVideoEl.pause();
+  actVideoEl.style.display   = 'none';
+  revealCanvas.style.opacity = '0';
   document.getElementById('flashOverlay').style.opacity = '0';
   document.getElementById('tapOverlay').style.display = 'flex';
   document.getElementById('playerControls').style.display = 'none';
@@ -1307,60 +1180,50 @@ function exitPerformance() {
   document.getElementById('transitionPill').style.display = 'none';
   document.getElementById('scrubber').value = 0;
   document.getElementById('timeDisplay').innerText = '0:00';
-  currentPhase = 'act';
-  isPaused = false;
-
+  currentPhase = 'act'; isPaused = false; decoderWarmed = false;
   const ps = document.getElementById('performScreen');
   ps.style.display = 'none';
   document.getElementById('setupScreen').style.display = 'block';
-
   document.exitFullscreen && document.exitFullscreen().catch(()=>{});
 }
 
 // ─────────────────────────────────────────
-// CANVAS RESIZE — keep it filling screen
+// CANVAS FIT
 // ─────────────────────────────────────────
 function fitCanvas() {
-  // Let the canvas scale to fit the screen without stretching
-  // Works for both portrait (9:16) and landscape (16:9) videos
-  revealCanvas.style.maxWidth   = '100%';
-  revealCanvas.style.maxHeight  = '100dvh';
-  revealCanvas.style.width      = 'auto';
-  revealCanvas.style.height     = 'auto';
-  revealCanvas.style.display    = revealCanvas.style.display; // preserve current display value
-  revealCanvas.style.position   = 'absolute';
-  revealCanvas.style.top        = '50%';
-  revealCanvas.style.left       = '50%';
-  revealCanvas.style.transform  = 'translate(-50%, -50%)';
+  revealCanvas.style.maxWidth  = '100%';
+  revealCanvas.style.maxHeight = '100dvh';
+  revealCanvas.style.width     = 'auto';
+  revealCanvas.style.height    = 'auto';
+  revealCanvas.style.position  = 'absolute';
+  revealCanvas.style.top       = '50%';
+  revealCanvas.style.left      = '50%';
+  revealCanvas.style.transform = 'translate(-50%, -50%)';
 }
 fitCanvas();
 window.addEventListener('resize', fitCanvas);
 
 // ─────────────────────────────────────────
-// STORAGE MANAGEMENT
+// STORAGE
 // ─────────────────────────────────────────
 async function clearStoredVideos() {
-  if (!confirm('Remove saved videos from this device? Your settings will be kept.')) return;
-  const tx = db.transaction('videos', 'readwrite');
-  tx.objectStore('videos').clear();
+  if (!confirm('Remove saved videos? Settings will be kept.')) return;
+  db.transaction('videos','readwrite').objectStore('videos').clear();
   if (actURL)   { URL.revokeObjectURL(actURL);   actURL = null; }
   if (boardURL) { URL.revokeObjectURL(boardURL); boardURL = null; }
-  actVideoEl.src  = '';
-  boardVideoEl.src = '';
-  document.getElementById('actZone').classList.remove('has-file');
-  document.getElementById('boardZone').classList.remove('has-file');
-  document.getElementById('actBadge').style.display  = 'none';
-  document.getElementById('boardBadge').style.display = 'none';
+  actVideoEl.src = ''; boardVideoEl.src = '';
+  ['actZone','boardZone'].forEach(id => document.getElementById(id).classList.remove('has-file'));
+  ['actBadge','boardBadge'].forEach(id => document.getElementById(id).style.display = 'none');
   document.getElementById('boardPreviewWrap').style.display = 'none';
   document.getElementById('storageInfo').innerText = 'Videos cleared.';
+  decoderWarmed = false;
   updateDots();
 }
-
 async function updateStorageInfo() {
-  if (!navigator.storage || !navigator.storage.estimate) return;
+  if (!navigator.storage?.estimate) return;
   const est = await navigator.storage.estimate();
-  const used = est.usage ? (est.usage / (1024*1024)).toFixed(1) : '?';
-  const quota = est.quota ? (est.quota / (1024*1024*1024)).toFixed(1) : '?';
+  const used  = est.usage  ? (est.usage  / 1048576).toFixed(1) : '?';
+  const quota = est.quota  ? (est.quota  / 1073741824).toFixed(1) : '?';
   document.getElementById('storageInfo').innerText =
     'Browser storage: ' + used + ' MB used of ' + quota + ' GB available';
 }
@@ -1370,10 +1233,8 @@ async function updateStorageInfo() {
 // ─────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', initApp);
 
-// Prevent sleep on iOS/Android during performance
 let wakeLock = null;
 document.getElementById('performScreen').addEventListener('click', async (e) => {
-  // Don't trigger for button clicks inside controls
   if (e.target.closest('#playerControls') || e.target.closest('#tapOverlay') || e.target.closest('#transitionPill')) return;
   showControls();
   if ('wakeLock' in navigator && !wakeLock) {
