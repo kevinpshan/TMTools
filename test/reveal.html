@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -8,378 +7,376 @@
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=DM+Mono:wght@400;500&display=swap');
 
-:root {
-–bg: #0a0a0b;
-–surface: #111114;
-–surface2: #18181c;
-–border: #2a2a30;
-–gold: #c9a84c;
-–gold-dim: #7a6030;
-–text: #e8e4dc;
-–text-dim: #6b6860;
-–red: #c0392b;
-}
+  :root {
+    --bg: #0a0a0b;
+    --surface: #111114;
+    --surface2: #18181c;
+    --border: #2a2a30;
+    --gold: #c9a84c;
+    --gold-dim: #7a6030;
+    --text: #e8e4dc;
+    --text-dim: #6b6860;
+    --red: #c0392b;
+  }
 
-- { box-sizing: border-box; margin: 0; padding: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
-body {
-background: var(–bg);
-color: var(–text);
-font-family: ‘DM Mono’, monospace;
-min-height: 100dvh;
-overflow-x: hidden;
-}
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
 
-/* ── SETUP SCREEN ── */
-#setupScreen {
-max-width: 680px;
-margin: 0 auto;
-padding: 40px 20px 60px;
-}
+  /* ── SETUP SCREEN ── */
+  #setupScreen {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 40px 20px 60px;
+  }
 
-.brand {
-text-align: center;
-margin-bottom: 44px;
-}
-.brand h1 {
-font-family: ‘Cormorant Garamond’, serif;
-font-size: 52px;
-font-weight: 300;
-letter-spacing: 8px;
-text-transform: uppercase;
-color: var(–gold);
-line-height: 1;
-}
-.brand p {
-font-size: 11px;
-color: var(–text-dim);
-letter-spacing: 3px;
-text-transform: uppercase;
-margin-top: 8px;
-}
+  .brand {
+    text-align: center;
+    margin-bottom: 44px;
+  }
+  .brand h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 52px;
+    font-weight: 300;
+    letter-spacing: 8px;
+    text-transform: uppercase;
+    color: var(--gold);
+    line-height: 1;
+  }
+  .brand p {
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-top: 8px;
+  }
 
-.section {
-margin-bottom: 28px;
-}
-.section-label {
-font-size: 10px;
-letter-spacing: 3px;
-text-transform: uppercase;
-color: var(–gold-dim);
-margin-bottom: 10px;
-padding-left: 2px;
-}
+  .section {
+    margin-bottom: 28px;
+  }
+  .section-label {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gold-dim);
+    margin-bottom: 10px;
+    padding-left: 2px;
+  }
 
-/* Upload zones */
-.upload-zone {
-border: 1px dashed var(–border);
-border-radius: 12px;
-padding: 30px 20px;
-text-align: center;
-cursor: pointer;
-transition: all 0.2s;
-position: relative;
-background: var(–surface);
-}
-.upload-zone:hover { border-color: var(–gold-dim); background: var(–surface2); }
-.upload-zone.has-file { border-color: var(–gold); border-style: solid; }
-.upload-zone input[type=“file”] { display: none; }
-.upload-icon { font-size: 28px; margin-bottom: 8px; opacity: 0.5; }
-.upload-label { font-size: 13px; color: var(–text-dim); }
-.upload-label strong { color: var(–text); display: block; margin-bottom: 4px; font-size: 14px; }
-.upload-badge {
-display: inline-block;
-background: var(–gold);
-color: #000;
-font-size: 10px;
-font-weight: 500;
-padding: 3px 8px;
-border-radius: 20px;
-margin-top: 8px;
-letter-spacing: 1px;
-text-transform: uppercase;
-}
+  /* Upload zones */
+  .upload-zone {
+    border: 1px dashed var(--border);
+    border-radius: 12px;
+    padding: 30px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    background: var(--surface);
+  }
+  .upload-zone:hover { border-color: var(--gold-dim); background: var(--surface2); }
+  .upload-zone.has-file { border-color: var(--gold); border-style: solid; }
+  .upload-zone input[type="file"] { display: none; }
+  .upload-icon { font-size: 28px; margin-bottom: 8px; opacity: 0.5; }
+  .upload-label { font-size: 13px; color: var(--text-dim); }
+  .upload-label strong { color: var(--text); display: block; margin-bottom: 4px; font-size: 14px; }
+  .upload-badge {
+    display: inline-block;
+    background: var(--gold);
+    color: #000;
+    font-size: 10px;
+    font-weight: 500;
+    padding: 3px 8px;
+    border-radius: 20px;
+    margin-top: 8px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
 
-/* Board preview + marker */
-#boardPreviewWrap {
-display: none;
-margin-top: 14px;
-}
-.preview-hint {
-font-size: 11px;
-color: var(–gold);
-letter-spacing: 2px;
-text-transform: uppercase;
-text-align: center;
-margin-bottom: 8px;
-opacity: 0.9;
-}
-#boardPreview {
-width: 100%;
-border-radius: 10px;
-display: block;
-cursor: crosshair;
-border: 1px solid var(–border);
-position: relative;
-}
-.marker-dot {
-position: absolute;
-width: 28px;
-height: 28px;
-border-radius: 50%;
-border: 2px solid var(–gold);
-background: rgba(201,168,76,0.25);
-transform: translate(-50%, -50%);
-pointer-events: none;
-display: none;
-}
-.marker-dot::after {
-content: ‘’;
-position: absolute;
-top: 50%; left: 50%;
-transform: translate(-50%,-50%);
-width: 6px; height: 6px;
-background: var(–gold);
-border-radius: 50%;
-}
-#boardPreviewContainer {
-position: relative;
-display: inline-block;
-width: 100%;
-}
+  /* Board preview + marker */
+  #boardPreviewWrap {
+    display: none;
+    margin-top: 14px;
+  }
+  .preview-hint {
+    font-size: 11px;
+    color: var(--gold);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-align: center;
+    margin-bottom: 8px;
+    opacity: 0.9;
+  }
+  #boardPreview {
+    width: 100%;
+    border-radius: 10px;
+    display: block;
+    cursor: crosshair;
+    border: 1px solid var(--border);
+    position: relative;
+  }
+  .marker-dot {
+    position: absolute;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid var(--gold);
+    background: rgba(201,168,76,0.25);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    display: none;
+  }
+  .marker-dot::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+    width: 6px; height: 6px;
+    background: var(--gold);
+    border-radius: 50%;
+  }
+  #boardPreviewContainer {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+  }
 
-/* Style row */
-.style-row {
-display: grid;
-grid-template-columns: 1fr 1fr 1fr;
-gap: 10px;
-}
-.style-field label {
-display: block;
-font-size: 10px;
-color: var(–text-dim);
-letter-spacing: 2px;
-text-transform: uppercase;
-margin-bottom: 6px;
-}
-.style-field input[type=“text”],
-.style-field input[type=“number”],
-.style-field select {
-width: 100%;
-background: var(–surface);
-border: 1px solid var(–border);
-color: var(–text);
-padding: 10px 12px;
-border-radius: 8px;
-font-family: ‘DM Mono’, monospace;
-font-size: 14px;
-outline: none;
-transition: border-color 0.2s;
-}
-.style-field input:focus,
-.style-field select:focus { border-color: var(–gold-dim); }
-.style-field input[type=“color”] {
-width: 100%;
-height: 42px;
-background: var(–surface);
-border: 1px solid var(–border);
-border-radius: 8px;
-cursor: pointer;
-padding: 3px;
-}
-select option { background: #1a1a1e; }
+  /* Style row */
+  .style-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+  }
+  .style-field label {
+    display: block;
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .style-field input[type="text"],
+  .style-field input[type="number"],
+  .style-field select {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .style-field input:focus,
+  .style-field select:focus { border-color: var(--gold-dim); }
+  .style-field input[type="color"] {
+    width: 100%;
+    height: 42px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    padding: 3px;
+  }
+  select option { background: #1a1a1e; }
 
-/* Divider */
-.divider {
-border: none;
-border-top: 1px solid var(–border);
-margin: 32px 0;
-}
+  /* Divider */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 32px 0;
+  }
 
-/* Number input */
-#numberInput {
-width: 100%;
-background: var(–surface);
-border: 1px solid var(–border);
-color: var(–gold);
-padding: 18px 20px;
-border-radius: 12px;
-font-family: ‘Cormorant Garamond’, serif;
-font-size: 36px;
-font-weight: 600;
-text-align: center;
-outline: none;
-letter-spacing: 4px;
-transition: border-color 0.2s;
-}
-#numberInput:focus { border-color: var(–gold); }
-#numberInput::placeholder { color: var(–border); font-size: 24px; letter-spacing: 2px; }
+  /* Number input */
+  #numberInput {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--gold);
+    padding: 18px 20px;
+    border-radius: 12px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 36px;
+    font-weight: 600;
+    text-align: center;
+    outline: none;
+    letter-spacing: 4px;
+    transition: border-color 0.2s;
+  }
+  #numberInput:focus { border-color: var(--gold); }
+  #numberInput::placeholder { color: var(--border); font-size: 24px; letter-spacing: 2px; }
 
-/* Reveal style selector */
-.reveal-options {
-display: grid;
-grid-template-columns: repeat(3, 1fr);
-gap: 8px;
-margin-top: 10px;
-}
-.reveal-opt {
-background: var(–surface);
-border: 1px solid var(–border);
-color: var(–text-dim);
-border-radius: 8px;
-padding: 10px 6px;
-text-align: center;
-cursor: pointer;
-font-size: 11px;
-letter-spacing: 1px;
-text-transform: uppercase;
-transition: all 0.2s;
-}
-.reveal-opt.active { border-color: var(–gold); color: var(–gold); background: rgba(201,168,76,0.08); }
-.reveal-opt .opt-icon { font-size: 18px; display: block; margin-bottom: 4px; }
+  /* Reveal style selector */
+  .reveal-options {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .reveal-opt {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    border-radius: 8px;
+    padding: 10px 6px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: all 0.2s;
+  }
+  .reveal-opt.active { border-color: var(--gold); color: var(--gold); background: rgba(201,168,76,0.08); }
+  .reveal-opt .opt-icon { font-size: 18px; display: block; margin-bottom: 4px; }
 
-/* Launch button */
-#launchBtn {
-width: 100%;
-margin-top: 30px;
-padding: 20px;
-background: var(–gold);
-color: #000;
-border: none;
-border-radius: 12px;
-font-family: ‘Cormorant Garamond’, serif;
-font-size: 22px;
-font-weight: 700;
-letter-spacing: 4px;
-text-transform: uppercase;
-cursor: pointer;
-transition: all 0.2s;
-}
-#launchBtn:hover { background: #dbb85a; transform: translateY(-1px); }
-#launchBtn:disabled { background: var(–border); color: var(–text-dim); cursor: not-allowed; transform: none; }
+  /* Launch button */
+  #launchBtn {
+    width: 100%;
+    margin-top: 30px;
+    padding: 20px;
+    background: var(--gold);
+    color: #000;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  #launchBtn:hover { background: #dbb85a; transform: translateY(-1px); }
+  #launchBtn:disabled { background: var(--border); color: var(--text-dim); cursor: not-allowed; transform: none; }
 
-.req-note {
-font-size: 11px;
-color: var(–text-dim);
-text-align: center;
-margin-top: 12px;
-line-height: 1.6;
-}
-.req-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(–border); margin-right: 6px; vertical-align: middle; }
-.req-dot.ok { background: #2ecc71; }
+  .req-note {
+    font-size: 11px;
+    color: var(--text-dim);
+    text-align: center;
+    margin-top: 12px;
+    line-height: 1.6;
+  }
+  .req-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--border); margin-right: 6px; vertical-align: middle; }
+  .req-dot.ok { background: #2ecc71; }
 
-/* ── PERFORMANCE SCREEN ── */
-#performScreen {
-display: none;
-position: fixed;
-top: 0; left: 0; right: 0; bottom: 0;
-background: #000;
-z-index: 100;
-align-items: center;
-justify-content: center;
-}
+  /* ── PERFORMANCE SCREEN ── */
+  #performScreen {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: #000;
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
 
-#actVideo {
-width: 100%;
-height: 100%;
-object-fit: contain;
-display: none;
-}
+  #actVideo {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: none;
+  }
 
-#revealCanvas {
-width: 100%;
-height: 100%;
-object-fit: contain;
-display: none;
-}
+  #revealCanvas {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: none;
+  }
 
-/* Tap-to-start overlay */
-#tapOverlay {
-position: absolute;
-inset: 0;
-display: flex;
-flex-direction: column;
-align-items: center;
-justify-content: center;
-background: rgba(0,0,0,0.92);
-cursor: pointer;
-z-index: 10;
-}
-.tap-number {
-font-family: ‘Cormorant Garamond’, serif;
-font-size: clamp(72px, 20vw, 160px);
-font-weight: 600;
-color: var(–gold);
-line-height: 1;
-letter-spacing: 8px;
-text-shadow: 0 0 60px rgba(201,168,76,0.3);
-}
-.tap-hint {
-font-size: 12px;
-letter-spacing: 4px;
-text-transform: uppercase;
-color: var(–text-dim);
-margin-top: 24px;
-}
-.tap-subhint {
-font-size: 10px;
-letter-spacing: 3px;
-text-transform: uppercase;
-color: #333;
-margin-top: 10px;
-}
+  /* Tap-to-start overlay */
+  #tapOverlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.92);
+    cursor: pointer;
+    z-index: 10;
+  }
+  .tap-number {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(72px, 20vw, 160px);
+    font-weight: 600;
+    color: var(--gold);
+    line-height: 1;
+    letter-spacing: 8px;
+    text-shadow: 0 0 60px rgba(201,168,76,0.3);
+  }
+  .tap-hint {
+    font-size: 12px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-top: 24px;
+  }
+  .tap-subhint {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #333;
+    margin-top: 10px;
+  }
 
-/* Exit button */
-#exitBtn {
-position: absolute;
-top: 16px; right: 16px;
-background: rgba(0,0,0,0.6);
-border: 1px solid var(–border);
-color: var(–text-dim);
-padding: 8px 14px;
-border-radius: 8px;
-font-family: ‘DM Mono’, monospace;
-font-size: 11px;
-letter-spacing: 2px;
-cursor: pointer;
-z-index: 20;
-text-transform: uppercase;
-opacity: 0;
-transition: opacity 0.3s;
-}
-#exitBtn.visible { opacity: 1; }
+  /* Exit button */
+  #exitBtn {
+    position: absolute;
+    top: 16px; right: 16px;
+    background: rgba(0,0,0,0.6);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    z-index: 20;
+    text-transform: uppercase;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  #exitBtn.visible { opacity: 1; }
 
-/* Progress bar */
-#progressBar {
-position: absolute;
-bottom: 0; left: 0;
-height: 2px;
-background: var(–gold);
-width: 0%;
-transition: width 0.5s linear;
-z-index: 20;
-opacity: 0.5;
-}
+  /* Progress bar */
+  #progressBar {
+    position: absolute;
+    bottom: 0; left: 0;
+    height: 2px;
+    background: var(--gold);
+    width: 0%;
+    transition: width 0.5s linear;
+    z-index: 20;
+    opacity: 0.5;
+  }
 
-/* Transition flash */
-#flashOverlay {
-position: absolute;
-inset: 0;
-background: #fff;
-opacity: 0;
-pointer-events: none;
-z-index: 15;
-transition: opacity 0.08s;
-}
+  /* Transition flash */
+  #flashOverlay {
+    position: absolute;
+    inset: 0;
+    background: #fff;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 15;
+    transition: opacity 0.08s;
+  }
 </style>
-
 </head>
 <body>
 
 <!-- ═══════════════════════════════════════════
      SETUP SCREEN
 ═══════════════════════════════════════════ -->
-
 <div id="setupScreen">
 
   <div class="brand">
@@ -388,7 +385,6 @@ transition: opacity 0.08s;
   </div>
 
   <!-- STEP 1 — Performance video -->
-
   <div class="section">
     <div class="section-label">Step 1 — Performance Video</div>
     <div class="upload-zone" id="actZone" onclick="document.getElementById('actFile').click()">
@@ -403,7 +399,6 @@ transition: opacity 0.08s;
   </div>
 
   <!-- STEP 2 — Board video + position marker -->
-
   <div class="section">
     <div class="section-label">Step 2 — Board Reveal Video</div>
     <div class="upload-zone" id="boardZone" onclick="document.getElementById('boardFile').click()">
@@ -416,21 +411,17 @@ transition: opacity 0.08s;
       <div id="boardBadge" style="display:none" class="upload-badge">✓ Loaded — tap preview to mark position</div>
     </div>
 
-```
-<div id="boardPreviewWrap">
-  <div class="preview-hint">↓ Tap the board to mark where your number appears</div>
-  <div id="boardPreviewContainer">
-    <video id="boardPreview" muted playsinline loop></video>
-    <div class="marker-dot" id="markerDot"></div>
-  </div>
-  <div style="font-size:11px; color:var(--text-dim); margin-top:8px; text-align:center;" id="positionReadout">Position not set</div>
-</div>
-```
-
+    <div id="boardPreviewWrap">
+      <div class="preview-hint">↓ Tap the board to mark where your number appears</div>
+      <div id="boardPreviewContainer">
+        <video id="boardPreview" muted playsinline loop></video>
+        <div class="marker-dot" id="markerDot"></div>
+      </div>
+      <div style="font-size:11px; color:var(--text-dim); margin-top:8px; text-align:center;" id="positionReadout">Position not set</div>
+    </div>
   </div>
 
   <!-- STEP 3 — Number appearance style -->
-
   <div class="section">
     <div class="section-label">Step 3 — Number Style</div>
     <div class="style-row">
@@ -455,46 +446,42 @@ transition: opacity 0.08s;
       </div>
     </div>
 
-```
-<!-- Shadow / outline options -->
-<div class="style-row" style="margin-top:10px;">
-  <div class="style-field">
-    <label>Shadow</label>
-    <select id="numShadow">
-      <option value="none">None</option>
-      <option value="dark" selected>Dark drop</option>
-      <option value="glow">Glow</option>
-      <option value="outline">Outline</option>
-    </select>
-  </div>
-  <div class="style-field">
-    <label>Reveal Effect</label>
-    <select id="revealEffect">
-      <option value="instant">Instant</option>
-      <option value="fade" selected>Fade In</option>
-      <option value="scale">Scale Up</option>
-      <option value="glow">Glow Pulse</option>
-    </select>
-  </div>
-  <div class="style-field">
-    <label>Reveal At</label>
-    <select id="revealTiming">
-      <option value="0">Immediately</option>
-      <option value="0.5" selected>0.5s in</option>
-      <option value="1">1s in</option>
-      <option value="1.5">1.5s in</option>
-      <option value="2">2s in</option>
-    </select>
-  </div>
-</div>
-```
-
+    <!-- Shadow / outline options -->
+    <div class="style-row" style="margin-top:10px;">
+      <div class="style-field">
+        <label>Shadow</label>
+        <select id="numShadow">
+          <option value="none">None</option>
+          <option value="dark" selected>Dark drop</option>
+          <option value="glow">Glow</option>
+          <option value="outline">Outline</option>
+        </select>
+      </div>
+      <div class="style-field">
+        <label>Reveal Effect</label>
+        <select id="revealEffect">
+          <option value="instant">Instant</option>
+          <option value="fade" selected>Fade In</option>
+          <option value="scale">Scale Up</option>
+          <option value="glow">Glow Pulse</option>
+        </select>
+      </div>
+      <div class="style-field">
+        <label>Reveal At</label>
+        <select id="revealTiming">
+          <option value="0">Immediately</option>
+          <option value="0.5" selected>0.5s in</option>
+          <option value="1">1s in</option>
+          <option value="1.5">1.5s in</option>
+          <option value="2">2s in</option>
+        </select>
+      </div>
+    </div>
   </div>
 
   <hr class="divider">
 
   <!-- STEP 4 — The number -->
-
   <div class="section">
     <div class="section-label">Step 4 — Their Number</div>
     <input type="text" id="numberInput" placeholder="e.g.  47" maxlength="12" autocomplete="off" spellcheck="false">
@@ -502,7 +489,6 @@ transition: opacity 0.08s;
   </div>
 
   <!-- Status dots -->
-
   <div class="req-note">
     <span id="dot1" class="req-dot"></span> Act video &nbsp;·&nbsp;
     <span id="dot2" class="req-dot"></span> Board video &nbsp;·&nbsp;
@@ -522,14 +508,13 @@ transition: opacity 0.08s;
 
 </div>
 
+
 <!-- ═══════════════════════════════════════════
      PERFORMANCE SCREEN
 ═══════════════════════════════════════════ -->
-
 <div id="performScreen">
 
   <!-- Tap-to-start overlay -->
-
   <div id="tapOverlay" onclick="startAct()">
     <div class="tap-number" id="tapNumber">—</div>
     <div class="tap-hint">Tap anywhere to begin</div>
@@ -537,30 +522,25 @@ transition: opacity 0.08s;
   </div>
 
   <!-- Act video plays here -->
-
-<video id="actVideo" playsinline></video>
+  <video id="actVideo" playsinline></video>
 
   <!-- Canvas for composited reveal -->
-
-<canvas id="revealCanvas"></canvas>
+  <canvas id="revealCanvas"></canvas>
 
   <!-- Flash transition -->
-
   <div id="flashOverlay"></div>
 
   <!-- Progress bar -->
-
   <div id="progressBar"></div>
 
   <!-- Exit -->
-
-<button id="exitBtn" onclick="exitPerformance()">✕ Exit</button>
+  <button id="exitBtn" onclick="exitPerformance()">✕ Exit</button>
 
 </div>
 
 <!-- Hidden board video for compositing -->
-
 <video id="boardVideoEl" style="display:none" playsinline muted></video>
+
 
 <script>
 // ─────────────────────────────────────────
@@ -1049,6 +1029,5 @@ document.getElementById('performScreen').addEventListener('click', async () => {
   }
 }, { once: true });
 </script>
-
 </body>
 </html>
