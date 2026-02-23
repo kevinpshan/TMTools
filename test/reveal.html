@@ -279,17 +279,30 @@
   }
 
   #actVideo {
-    width: 100%;
-    height: 100%;
+    max-width: 100%;
+    max-height: 100dvh;
+    width: auto;
+    height: auto;
     object-fit: contain;
     display: none;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
   }
 
   #revealCanvas {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
+    max-width: 100%;
+    max-height: 100dvh;
+    width: auto;
+    height: auto;
     display: none;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
   }
 
   /* Tap-to-start overlay */
@@ -539,7 +552,7 @@
 </div>
 
 <!-- Hidden board video for compositing -->
-<video id="boardVideoEl" style="display:none" playsinline muted></video>
+<video id="boardVideoEl" style="display:none" playsinline></video>
 
 
 <script>
@@ -835,13 +848,7 @@ function handleActEnd() {
   // Hide act video
   actVideoEl.style.display = 'none';
 
-  // Setup canvas to match board video
-  boardVideoEl.onloadedmetadata = () => {
-    revealCanvas.width  = boardVideoEl.videoWidth  || 1280;
-    revealCanvas.height = boardVideoEl.videoHeight || 720;
-  };
-
-  // Show canvas
+  // Show canvas — size will be set once metadata is confirmed
   revealCanvas.style.display = 'block';
   document.getElementById('progressBar').style.width = '100%';
   document.getElementById('progressBar').style.opacity = '0';
@@ -851,17 +858,30 @@ function handleActEnd() {
   numberOpacity = 0;
   scaleVal = 0.6;
 
-  // Start board video
+  // Start board video — set canvas size from actual video dimensions
   boardVideoEl.currentTime = 0;
-  boardVideoEl.play();
-  boardVideoEl.loop = false;
-  boardVideoEl.onended = () => {
-    // Freeze on last frame (keep drawing)
-  };
 
-  // Start compositing loop
-  cancelAnimationFrame(animFrameId);
-  drawReveal();
+  function startCompositing() {
+    // Use real video dimensions so portrait/landscape both work perfectly
+    const vw = boardVideoEl.videoWidth;
+    const vh = boardVideoEl.videoHeight;
+    if (vw && vh) {
+      revealCanvas.width  = vw;
+      revealCanvas.height = vh;
+    }
+    boardVideoEl.play();
+    boardVideoEl.loop = false;
+    boardVideoEl.onended = () => { /* freeze on last frame — drawReveal keeps looping */ };
+    cancelAnimationFrame(animFrameId);
+    drawReveal();
+  }
+
+  // If metadata already loaded, go immediately; otherwise wait
+  if (boardVideoEl.readyState >= 1) {
+    startCompositing();
+  } else {
+    boardVideoEl.onloadedmetadata = startCompositing;
+  }
 }
 
 // ─────────────────────────────────────────
@@ -979,10 +999,17 @@ function exitPerformance() {
 // CANVAS RESIZE — keep it filling screen
 // ─────────────────────────────────────────
 function fitCanvas() {
-  // Canvas draws at native video resolution, CSS scales it
-  revealCanvas.style.width  = '100%';
-  revealCanvas.style.height = '100%';
-  revealCanvas.style.objectFit = 'contain';
+  // Let the canvas scale to fit the screen without stretching
+  // Works for both portrait (9:16) and landscape (16:9) videos
+  revealCanvas.style.maxWidth   = '100%';
+  revealCanvas.style.maxHeight  = '100dvh';
+  revealCanvas.style.width      = 'auto';
+  revealCanvas.style.height     = 'auto';
+  revealCanvas.style.display    = revealCanvas.style.display; // preserve current display value
+  revealCanvas.style.position   = 'absolute';
+  revealCanvas.style.top        = '50%';
+  revealCanvas.style.left       = '50%';
+  revealCanvas.style.transform  = 'translate(-50%, -50%)';
 }
 fitCanvas();
 window.addEventListener('resize', fitCanvas);
