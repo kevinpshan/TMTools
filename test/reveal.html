@@ -373,16 +373,114 @@
     opacity: 0.5;
   }
 
-  /* Transition flash */
+  /* Crossfade overlay — replaces hard flash */
   #flashOverlay {
     position: absolute;
     inset: 0;
-    background: #fff;
+    background: #000;
     opacity: 0;
     pointer-events: none;
     z-index: 15;
-    transition: opacity 0.08s;
+    transition: opacity 0.3s ease;
   }
+
+  /* ── PLAYER CONTROLS ── */
+  #playerControls {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    z-index: 25;
+    background: linear-gradient(transparent, rgba(0,0,0,0.75));
+    padding: 30px 20px 20px;
+    display: none;
+    flex-direction: column;
+    gap: 10px;
+    opacity: 0;
+    transition: opacity 0.25s;
+  }
+  #playerControls.visible { opacity: 1; }
+
+  .scrub-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  #scrubber {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 3px;
+    border-radius: 3px;
+    background: rgba(255,255,255,0.25);
+    outline: none;
+    cursor: pointer;
+    accent-color: var(--gold);
+  }
+  #scrubber::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--gold);
+    cursor: pointer;
+  }
+  .time-label {
+    font-size: 12px;
+    color: rgba(255,255,255,0.6);
+    font-family: 'DM Mono', monospace;
+    min-width: 44px;
+    text-align: right;
+  }
+  .ctrl-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+  }
+  .ctrl-btn {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 8px;
+    font-size: 22px;
+    opacity: 0.85;
+    transition: opacity 0.15s, transform 0.1s;
+    line-height: 1;
+  }
+  .ctrl-btn:hover { opacity: 1; transform: scale(1.1); }
+  .ctrl-btn.play-btn { font-size: 32px; }
+
+  /* Transition selector pill */
+  #transitionPill {
+    position: absolute;
+    top: 16px; left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.65);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 6px 14px;
+    display: none;
+    align-items: center;
+    gap: 8px;
+    z-index: 25;
+    backdrop-filter: blur(8px);
+    white-space: nowrap;
+  }
+  #transitionPill label {
+    font-size: 10px;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  #transitionSelect {
+    background: transparent;
+    border: none;
+    color: var(--gold);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    outline: none;
+    cursor: pointer;
+  }
+  #transitionSelect option { background: #111; }
 </style>
 </head>
 <body>
@@ -540,14 +638,34 @@
   <!-- Canvas for composited reveal -->
   <canvas id="revealCanvas"></canvas>
 
-  <!-- Flash transition -->
+  <!-- Crossfade overlay -->
   <div id="flashOverlay"></div>
 
-  <!-- Progress bar -->
-  <div id="progressBar"></div>
+  <!-- Transition style selector (top center) -->
+  <div id="transitionPill">
+    <label>Transition</label>
+    <select id="transitionSelect">
+      <option value="cut">Hard Cut</option>
+      <option value="fade" selected>Fade (0.3s)</option>
+      <option value="fade-slow">Fade (0.8s)</option>
+      <option value="fade-slow2">Fade (1.5s)</option>
+    </select>
+  </div>
 
-  <!-- Exit -->
-  <button id="exitBtn" onclick="exitPerformance()">✕ Exit</button>
+  <!-- Player Controls -->
+  <div id="playerControls">
+    <div class="scrub-row">
+      <span class="time-label" id="timeDisplay">0:00</span>
+      <input type="range" id="scrubber" min="0" max="100" value="0" step="0.1"
+             oninput="onScrub(this.value)" onmousedown="scrubbing=true" onmouseup="onScrubEnd()" ontouchend="onScrubEnd()">
+      <span class="time-label" id="durationDisplay">0:00</span>
+    </div>
+    <div class="ctrl-row">
+      <button class="ctrl-btn" onclick="restartPerformance()" title="Restart">↺</button>
+      <button class="ctrl-btn play-btn" id="playPauseBtn" onclick="togglePlayPause()">⏸</button>
+      <button class="ctrl-btn" onclick="exitPerformance()" title="Exit">✕</button>
+    </div>
+  </div>
 
 </div>
 
@@ -568,6 +686,15 @@ let revealStartTime = null;
 let numberOpacity = 0;
 let scaleVal = 1;
 let db = null;
+
+// Player state
+let currentPhase = 'act'; // 'act' | 'reveal'
+let isPaused = false;
+let scrubbing = false;
+let controlsTimeout = null;
+let totalDuration = 0;   // act duration + board duration
+let actDuration = 0;
+let boardDuration = 0;
 
 const actVideoEl   = document.getElementById('actVideo');
 const boardVideoEl = document.getElementById('boardVideoEl');
@@ -822,65 +949,110 @@ function launchPerformance() {
 function startAct() {
   document.getElementById('tapOverlay').style.display = 'none';
   actVideoEl.style.display = 'block';
+  currentPhase = 'act';
+  isPaused = false;
+  scrubbing = false;
+
+  // Capture durations once metadata ready
+  function onActMeta() {
+    actDuration = actVideoEl.duration || 0;
+    totalDuration = actDuration + boardDuration;
+    document.getElementById('durationDisplay').innerText = formatTime(totalDuration);
+    document.getElementById('scrubber').max = totalDuration;
+  }
+  if (actVideoEl.readyState >= 1) onActMeta();
+  else actVideoEl.onloadedmetadata = onActMeta;
+
+  boardVideoEl.onloadedmetadata = () => {
+    boardDuration = boardVideoEl.duration || 0;
+    totalDuration = actDuration + boardDuration;
+    document.getElementById('durationDisplay').innerText = formatTime(totalDuration);
+    document.getElementById('scrubber').max = totalDuration;
+  };
+  if (boardVideoEl.readyState >= 1) {
+    boardDuration = boardVideoEl.duration || 0;
+  }
+
   actVideoEl.play();
+  document.getElementById('playerControls').style.display = 'flex';
+  document.getElementById('transitionPill').style.display = 'flex';
+  document.getElementById('playPauseBtn').innerText = '⏸';
+  showControls();
 }
 
 // ─────────────────────────────────────────
 // PROGRESS BAR
 // ─────────────────────────────────────────
 function updateProgress() {
-  if (!actVideoEl.duration) return;
-  const pct = (actVideoEl.currentTime / actVideoEl.duration) * 100;
-  document.getElementById('progressBar').style.width = pct + '%';
+  if (scrubbing) return;
+  const current = currentPhase === 'act'
+    ? actVideoEl.currentTime
+    : actDuration + boardVideoEl.currentTime;
+  document.getElementById('scrubber').value = current;
+  document.getElementById('timeDisplay').innerText = formatTime(current);
+  if (totalDuration) {
+    document.getElementById('durationDisplay').innerText = formatTime(totalDuration);
+  }
+}
+
+function formatTime(s) {
+  if (!isFinite(s)) return '0:00';
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60).toString().padStart(2, '0');
+  return m + ':' + sec;
 }
 
 // ─────────────────────────────────────────
 // TRANSITION FROM ACT → REVEAL
 // ─────────────────────────────────────────
 function handleActEnd() {
-  const shadow = document.getElementById('numShadow').value;
-
-  // Flash frame
+  currentPhase = 'reveal';
+  const mode = document.getElementById('transitionSelect').value;
   const flash = document.getElementById('flashOverlay');
-  flash.style.opacity = '0.4';
-  setTimeout(() => flash.style.opacity = '0', 150);
 
-  // Hide act video
-  actVideoEl.style.display = 'none';
+  // Duration is determined — update scrubber max
+  totalDuration = actDuration + boardDuration;
 
-  // Show canvas — size will be set once metadata is confirmed
-  revealCanvas.style.display = 'block';
-  document.getElementById('progressBar').style.width = '100%';
-  document.getElementById('progressBar').style.opacity = '0';
+  function doReveal() {
+    actVideoEl.style.display = 'none';
+    revealCanvas.style.display = 'block';
+    fitCanvas();
+    revealStartTime = null;
+    numberOpacity = 0;
+    scaleVal = 0.6;
+    boardVideoEl.currentTime = 0;
 
-  // Reset reveal state
-  revealStartTime = null;
-  numberOpacity = 0;
-  scaleVal = 0.6;
-
-  // Start board video — set canvas size from actual video dimensions
-  boardVideoEl.currentTime = 0;
-
-  function startCompositing() {
-    // Use real video dimensions so portrait/landscape both work perfectly
-    const vw = boardVideoEl.videoWidth;
-    const vh = boardVideoEl.videoHeight;
-    if (vw && vh) {
-      revealCanvas.width  = vw;
-      revealCanvas.height = vh;
+    function startCompositing() {
+      const vw = boardVideoEl.videoWidth;
+      const vh = boardVideoEl.videoHeight;
+      if (vw && vh) {
+        revealCanvas.width  = vw;
+        revealCanvas.height = vh;
+        fitCanvas();
+      }
+      if (!isPaused) boardVideoEl.play();
+      boardVideoEl.loop = false;
+      boardVideoEl.onended = () => { /* freeze last frame */ };
+      cancelAnimationFrame(animFrameId);
+      drawReveal();
+      // Fade flash back out
+      flash.style.opacity = '0';
     }
-    boardVideoEl.play();
-    boardVideoEl.loop = false;
-    boardVideoEl.onended = () => { /* freeze on last frame — drawReveal keeps looping */ };
-    cancelAnimationFrame(animFrameId);
-    drawReveal();
+
+    if (boardVideoEl.readyState >= 1) startCompositing();
+    else boardVideoEl.onloadedmetadata = startCompositing;
   }
 
-  // If metadata already loaded, go immediately; otherwise wait
-  if (boardVideoEl.readyState >= 1) {
-    startCompositing();
+  if (mode === 'cut') {
+    doReveal();
   } else {
-    boardVideoEl.onloadedmetadata = startCompositing;
+    const dur = mode === 'fade' ? 300 : mode === 'fade-slow' ? 800 : 1500;
+    flash.style.transition = `opacity ${dur/2}ms ease`;
+    flash.style.opacity = '1';
+    setTimeout(() => {
+      doReveal();
+      flash.style.transition = `opacity ${dur/2}ms ease`;
+    }, dur / 2);
   }
 }
 
@@ -976,17 +1148,127 @@ function drawReveal(timestamp) {
 // ─────────────────────────────────────────
 // EXIT
 // ─────────────────────────────────────────
+// ─────────────────────────────────────────
+// PLAYER CONTROLS
+// ─────────────────────────────────────────
+function showControls() {
+  const ctrl = document.getElementById('playerControls');
+  ctrl.style.display = 'flex';
+  ctrl.classList.add('visible');
+  clearTimeout(controlsTimeout);
+  // Auto-hide after 3s unless paused
+  controlsTimeout = setTimeout(() => {
+    if (!isPaused) ctrl.classList.remove('visible');
+  }, 3000);
+}
+
+function togglePlayPause() {
+  isPaused = !isPaused;
+  const btn = document.getElementById('playPauseBtn');
+  if (isPaused) {
+    btn.innerText = '▶';
+    if (currentPhase === 'act') actVideoEl.pause();
+    else boardVideoEl.pause();
+  } else {
+    btn.innerText = '⏸';
+    if (currentPhase === 'act') actVideoEl.play();
+    else boardVideoEl.play();
+    showControls();
+  }
+}
+
+function restartPerformance() {
+  cancelAnimationFrame(animFrameId);
+  boardVideoEl.pause();
+  boardVideoEl.currentTime = 0;
+  actVideoEl.pause();
+  actVideoEl.currentTime = 0;
+  revealCanvas.style.display = 'none';
+  document.getElementById('flashOverlay').style.opacity = '0';
+  actVideoEl.style.display = 'block';
+  currentPhase = 'act';
+  isPaused = false;
+  revealStartTime = null;
+  numberOpacity = 0;
+  document.getElementById('playPauseBtn').innerText = '⏸';
+  document.getElementById('scrubber').value = 0;
+  document.getElementById('timeDisplay').innerText = '0:00';
+  actVideoEl.play();
+  showControls();
+}
+
+function onScrub(val) {
+  scrubbing = true;
+  const t = parseFloat(val);
+  document.getElementById('timeDisplay').innerText = formatTime(t);
+  // Visual feedback while dragging
+}
+
+function onScrubEnd() {
+  const t = parseFloat(document.getElementById('scrubber').value);
+  scrubbing = false;
+
+  if (t <= actDuration) {
+    // Scrubbing into act video
+    if (currentPhase === 'reveal') {
+      // Switch back to act video
+      cancelAnimationFrame(animFrameId);
+      boardVideoEl.pause();
+      revealCanvas.style.display = 'none';
+      actVideoEl.style.display = 'block';
+      currentPhase = 'act';
+      document.getElementById('flashOverlay').style.opacity = '0';
+    }
+    actVideoEl.currentTime = t;
+    if (!isPaused) actVideoEl.play();
+  } else {
+    // Scrubbing into reveal
+    const boardT = t - actDuration;
+    if (currentPhase === 'act') {
+      // Jump to reveal phase without transition
+      actVideoEl.pause();
+      actVideoEl.style.display = 'none';
+      revealCanvas.style.display = 'block';
+      fitCanvas();
+      currentPhase = 'reveal';
+      revealStartTime = null;
+      numberOpacity = 1; // Already revealed
+      scaleVal = 1;
+
+      function jumpToBoard() {
+        const vw = boardVideoEl.videoWidth;
+        const vh = boardVideoEl.videoHeight;
+        if (vw && vh) { revealCanvas.width = vw; revealCanvas.height = vh; fitCanvas(); }
+        boardVideoEl.currentTime = boardT;
+        if (!isPaused) boardVideoEl.play();
+        cancelAnimationFrame(animFrameId);
+        drawReveal();
+      }
+      if (boardVideoEl.readyState >= 1) jumpToBoard();
+      else boardVideoEl.onloadedmetadata = jumpToBoard;
+    } else {
+      boardVideoEl.currentTime = boardT;
+      if (!isPaused) boardVideoEl.play();
+    }
+  }
+  showControls();
+}
+
 function exitPerformance() {
   cancelAnimationFrame(animFrameId);
   actVideoEl.pause();
   boardVideoEl.pause();
   actVideoEl.style.display = 'none';
   revealCanvas.style.display = 'none';
-  document.getElementById('progressBar').style.width = '0%';
-  document.getElementById('progressBar').style.opacity = '0.5';
-  document.getElementById('tapOverlay').style.display = 'flex';
-  document.getElementById('exitBtn').classList.remove('visible');
   document.getElementById('flashOverlay').style.opacity = '0';
+  document.getElementById('tapOverlay').style.display = 'flex';
+  document.getElementById('playerControls').style.display = 'none';
+  document.getElementById('playerControls').classList.remove('visible');
+  document.getElementById('transitionPill').style.display = 'none';
+  document.getElementById('scrubber').value = 0;
+  document.getElementById('timeDisplay').innerText = '0:00';
+  currentPhase = 'act';
+  isPaused = false;
 
   const ps = document.getElementById('performScreen');
   ps.style.display = 'none';
@@ -1050,11 +1332,14 @@ document.addEventListener('DOMContentLoaded', initApp);
 
 // Prevent sleep on iOS/Android during performance
 let wakeLock = null;
-document.getElementById('performScreen').addEventListener('click', async () => {
+document.getElementById('performScreen').addEventListener('click', async (e) => {
+  // Don't trigger for button clicks inside controls
+  if (e.target.closest('#playerControls') || e.target.closest('#tapOverlay') || e.target.closest('#transitionPill')) return;
+  showControls();
   if ('wakeLock' in navigator && !wakeLock) {
-    try { wakeLock = await navigator.wakeLock.request('screen'); } catch(e) {}
+    try { wakeLock = await navigator.wakeLock.request('screen'); } catch(e2) {}
   }
-}, { once: true });
+});
 </script>
 </body>
 </html>
