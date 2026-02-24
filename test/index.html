@@ -410,8 +410,8 @@ function initApp() {
         const testId='c_test';
         const testSpeakers=['JANE DOE','JOHN SMITH','MARY JOHNSON','ROBERT BROWN','SUSAN DAVIS'];
         localStorage.setItem(pk(KEY_CLUBS), JSON.stringify([
-            {id:clubId, name:'My Toastmasters Club', syncKey:''},
-            {id:testId,  name:'TEST CLUB (Practice)', syncKey:''}
+            {id:clubId, name:'My Toastmasters Club', syncKey:'', practiceOnly:false},
+            {id:testId,  name:'TEST CLUB (Practice)', syncKey:'', practiceOnly:true}
         ]));
         localStorage.setItem(pk(KEY_ACTIVE_CLUB), clubId);
         localStorage.setItem(prefix+'club_'+testId+'_speakers', JSON.stringify(testSpeakers));
@@ -420,7 +420,7 @@ function initApp() {
     loadClubData(); updateClubUI();
     document.getElementById('mdToggle').checked = (localStorage.getItem(pk(KEY_MD))==='true');
     document.getElementById('openaiKey').value = localStorage.getItem(pk(KEY_AI_KEY))||'';
-    document.getElementById('versionLabel').innerText = 'Version 3.1.2'+(isTest?' (TEST)':'');
+    document.getElementById('versionLabel').innerText = 'Version 3.1.3'+(isTest?' (TEST)':'');
     refreshRoster(); nextWod();
     // Auto-pull roster & fillers silently on startup
     autoSyncDown();
@@ -459,7 +459,7 @@ async function autoSyncDown() {
 
 async function autoSyncUp() {
     const club = getActiveClub();
-    if (!club || !club.syncKey) return;
+    if (!club || !club.syncKey || club.practiceOnly) return;
     try {
         const apiKey = localStorage.getItem(pk(KEY_AI_KEY)) || '';
         await db.collection('clubs').doc(club.syncKey).update({
@@ -562,7 +562,7 @@ function setSyncStatus(clubId,msg) { const el=document.getElementById('syncStatu
 /* ============ FIREBASE — WRITE SESSION ============ */
 async function writeSession(sessionData) {
     const club=getActiveClub();
-    if(!club||!club.syncKey) return;
+    if(!club||!club.syncKey||club.practiceOnly) return;
     try {
         await db.collection('clubs').doc(club.syncKey).collection('sessions').add({
             ...sessionData,
@@ -599,7 +599,9 @@ function renderClubManager() {
                 <button class="manager-btn manager-edit-btn" onclick="askEditClub('${c.id}')">✎</button>
                 ${clubs.length>1?`<button class="manager-btn manager-del-btn" onclick="askDeleteClub('${c.id}')">✕</button>`:''}
             </div>
-            ${hasSyncKey?`
+            ${c.practiceOnly ? `
+                <div style="padding:10px 18px 14px;"><div style="background:#F9F9FB;border:1px solid var(--border);border-radius:10px;padding:12px 16px;text-align:center;font-size:14px;color:#8E8E93;font-weight:600;">⚗ Practice club — local only, no cloud sync</div></div>
+            ` : hasSyncKey?`
                 <div class="sync-code-box">
                     <div>
                         <div class="sync-code-label">Sync Code</div>
@@ -620,7 +622,28 @@ function renderClubManager() {
         </div>`;
     }).join('');
 }
-function askAddClub() { openModal("New Club",`<input type="text" id="newClubName" placeholder="Club name" style="text-transform:none;">`,()=>{ const name=document.getElementById('newClubName').value.trim(); if(!name)return; const clubId='c'+Date.now(); clubs.push({id:clubId,name,syncKey:''}); localStorage.setItem(pk(KEY_CLUBS),JSON.stringify(clubs)); localStorage.setItem(prefix+'club_'+clubId+'_fillers',JSON.stringify([...DEFAULT_FILLERS])); renderClubManager(); }); }
+function askAddClub() {
+    openModal("New Club",
+        `<div style="margin-bottom:12px;"><input type="text" id="newClubName" placeholder="Club name" style="text-transform:none;"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;background:#F9F9FB;border-radius:12px;padding:14px 16px;border:1px solid var(--border);">
+            <div>
+                <div style="font-size:16px;font-weight:700;">Practice Only</div>
+                <div style="font-size:13px;color:var(--subtext);margin-top:2px;">Local only, no cloud sync</div>
+            </div>
+            <label class="switch"><input type="checkbox" id="newClubPractice"><span class="slider"></span></label>
+        </div>`,
+        ()=>{
+            const name=document.getElementById('newClubName').value.trim();
+            if(!name)return;
+            const practiceOnly=document.getElementById('newClubPractice').checked;
+            const clubId='c'+Date.now();
+            clubs.push({id:clubId,name,syncKey:'',practiceOnly});
+            localStorage.setItem(pk(KEY_CLUBS),JSON.stringify(clubs));
+            localStorage.setItem(prefix+'club_'+clubId+'_fillers',JSON.stringify([...DEFAULT_FILLERS]));
+            renderClubManager();
+        }
+    );
+}
 function askEditClub(id) { const club=clubs.find(c=>c.id===id);if(!club)return; openModal("Rename Club",`<input type="text" id="editClubName" value="${club.name}" style="text-transform:none;">`,()=>{ const name=document.getElementById('editClubName').value.trim(); if(!name)return; club.name=name; localStorage.setItem(pk(KEY_CLUBS),JSON.stringify(clubs)); updateClubUI();renderClubManager(); }); }
 function askDeleteClub(id) { const club=clubs.find(c=>c.id===id);if(!club)return; openModal("Delete Club?",`Remove "${club.name}" and all its local data?`,()=>{ ['logs','speakers','fillers','wod_full','custom_limits','transcripts'].forEach(k=>localStorage.removeItem(prefix+'club_'+id+'_'+k)); clubs=clubs.filter(c=>c.id!==id); localStorage.setItem(pk(KEY_CLUBS),JSON.stringify(clubs)); if(activeClubId===id&&clubs.length>0)switchClub(clubs[0].id); renderClubManager(); }); }
 
