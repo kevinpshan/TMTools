@@ -1161,11 +1161,29 @@ function openTranscript(i){
 function shareTranscript(){
     const tr=JSON.parse(localStorage.getItem(clubKey('transcripts'))||'[]');const t=tr[activeTranscriptIndex];if(!t)return;
     const md=localStorage.getItem(pk(KEY_MD))==='true';
-    let text=`${t.speaker} — ${t.role}\n${t.date}\n\n`;
-    if(t.fillerPct!==undefined)text+=`Filler Score: ${t.fillerPct}% (${t.fillerScore})\n${t.totalFillers} fillers of ${t.totalWords} words\n`;
-    text+=`\n${t.fillerSummary}\n\n--- Transcript ---\n${t.plainText}`;
-    if(navigator.share)navigator.share({title:`${t.speaker} Transcript`,text});
-    else navigator.clipboard.writeText(text).then(()=>openModal("Copied","Transcript copied to clipboard.",()=>{}));
+    // Derive annotated text from highlightedHTML: fillers become *word*, WOD becomes [word]
+    function annotateHTML(html){
+        return html
+            .replace(/<span class="highlight-filler">([^<]*)<\/span>/gi,'*$1*')
+            .replace(/<span class="highlight-wod">([^<]*)<\/span>/gi,'[$1]')
+            .replace(/<[^>]+>/g,'')
+            .replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&nbsp;/g,' ')
+            .trim();
+    }
+    const annotated=t.highlightedHTML?annotateHTML(t.highlightedHTML):t.plainText;
+    let text=md?`# ${t.speaker} \u2014 ${t.role}\n_${t.date}_\n\n`:`${t.speaker} \u2014 ${t.role}\n${t.date}\n\n`;
+    if(t.fillerPct!==undefined){text+=md?`**Filler Score:** ${t.fillerPct}% (${t.fillerScore}) \u00b7 ${t.totalFillers} fillers of ${t.totalWords} words\n`:`Filler Score: ${t.fillerPct}% (${t.fillerScore})\n${t.totalFillers} fillers of ${t.totalWords} words\n`;}
+    text+=md?`\n**Filler Summary:** ${t.fillerSummary}\n\n---\n\n${annotated}`:`\nFiller Summary: ${t.fillerSummary}\n\n--- Transcript ---\n${annotated}`;
+    // * = filler word, [word] = Word of the Day usage
+    async function doShare(){
+        if(navigator.share){
+            try{await navigator.share({title:`${t.speaker} Transcript`,text});return;}
+            catch(e){if(e.name==='AbortError')return;}
+        }
+        try{await navigator.clipboard.writeText(text);openModal("Copied","Transcript copied to clipboard.",()=>{});}
+        catch(e){openModal("Error","Could not share or copy transcript.",()=>{});}
+    }
+    doShare();
 }
 </script>
 
