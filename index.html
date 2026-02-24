@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Meeting Tools v2.10.7</title>
+    <title>Meeting Tools v2.11.2</title>
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -251,7 +251,7 @@
         </div>
     </div>
 
-    <!-- ===================== TRANSCRIPT LIST SCREEN (NEW v2.10.7) ===================== -->
+    <!-- ===================== TRANSCRIPT LIST SCREEN (NEW v2.11.2) ===================== -->
     <div id="transcriptList" class="screen">
         <div class="header"><h1>Transcripts</h1><div class="subtitle">Saved this meeting</div></div>
         <div class="container">
@@ -260,7 +260,7 @@
         <div class="button-row"><button class="footer-btn secondary-btn" onclick="showScreen('menu')">Back</button></div>
     </div>
 
-    <!-- ===================== TRANSCRIPT VIEW SCREEN (NEW v2.10.7) ===================== -->
+    <!-- ===================== TRANSCRIPT VIEW SCREEN (NEW v2.11.2) ===================== -->
     <div id="transcriptView" class="screen">
         <div class="header">
             <h1 id="transcriptViewName">Name</h1>
@@ -291,6 +291,8 @@
         let audioChunks = [];
         let transcriptResult = "";
         let transcriptCounts = {};
+        let recordingStartTime = 0;
+        let speechDuration = 0;
 
         const WOD_LIBRARY = ["Eloquent", "Pernicious", "Resilience", "Sagacious", "Ubiquitous", "Meticulous", "Pragmatic", "Ineffable", "Luminous", "Tenacious", "Altruistic", "Candor", "Enigma", "Fastidious", "Gregarious", "Inundated", "Magnanimous", "Nefarious", "Obsequious", "Parsimonious", "Abundant", "Benevolent", "Clarity", "Diligence", "Exuberant", "Fortitude", "Gratitude", "Harmony", "Insight", "Jubilant", "Kindle", "Legacy", "Munificent", "Novel", "Opulent", "Pensive", "Quaint", "Ruminate", "Serene", "Thrive", "Urbane", "Vivid", "Wander", "Zeal", "Acumen", "Boisterous", "Cerebral", "Deferential", "Ephemeral", "Frugal", "Acquiesce", "Alacrity", "Ameliorate", "Anachronism", "Anomaly", "Antipathy", "Archaic", "Assiduous", "Atrophy", "Auspicious", "Austere", "Belligerent", "Banal", "Benevolent", "Boisterous", "Brusque", "Cajole", "Callous", "Candor", "Capricious", "Castigate", "Caustic", "Censure", "Cerebral", "Churlish", "Circumspect", "Clandestine", "Coalesce", "Cogent", "Collusion", "Complacent", "Conciliatory", "Concise", "Condone", "Conspicuous", "Conundrum", "Copious", "Cordial", "Corroborate", "Cryptic", "Culpable", "Cursory", "Dearth", "Debacle", "Debilitate", "Decorum", "Deference", "Deleterious", "Demagogue", "Demure", "Denigrate", "Depravity", "Deride", "Despot", "Destitute", "Diatribe", "Didactic", "Diffident", "Dilatory", "Diligence", "Disparate", "Disseminate", "Dissonance", "Divergent", "Dogmatic", "Dormant", "Duplicity", "Ebullient", "Eclectic", "Edify", "Efface", "Efficacious", "Effrontery", "Egregious", "Elated", "Elegy", "Elicit", "Elucidate", "Elusive", "Emaciated", "Embellish", "Emulate", "Enervate", "Engender", "Enigma", "Enmity", "Ennui", "Ephemeral", "Epitome", "Equanimity", "Equivocal", "Eradicate", "Erudite", "Esoteric", "Espouse", "Ethereal", "Euphoric", "Evanescent", "Exacerbate", "Exalt", "Exasperate", "Execrable", "Exemplary", "Exhort", "Exigent", "Exonerate", "Exorbitant", "Expedient", "Expedite", "Expunge", "Extant", "Extol", "Extraneous", "Extricate", "Exult", "Fabricate", "Facade", "Facetious", "Facilitate", "Fallacious", "Fastidious", "Fathom", "Fatuous", "Feasible", "Felicitous", "Fervent", "Fetter", "Fickle", "Fidelity", "Figurative", "Flabbergasted", "Flagrant", "Flamboyant", "Flaunt", "Fledgling", "Flout", "Fluctuate", "Foil", "Forage", "Forbearance", "Forestall", "Forlorn", "Forsake", "Fortitude", "Fortuitous", "Foster", "Fractious", "Fraught", "Frugal", "Furtive", "Futile", "Garrulous", "Genial", "Germane", "Gesticulate", "Glib", "Gluttony", "Goad", "Gourmet", "Grandiloquent", "Grandiose", "Gratitous", "Gregarious", "Guile", "Gullible", "Hackneyed", "Hallowed", "Hapless", "Harangue", "Harass", "Harbinger", "Hardy", "Haughty", "Hedonist", "Heinous", "Hermetic", "Heterogeneous", "Hiatus", "Hierarchy", "Hidebound", "Hilarity", "Histrionic", "Holistic", "Homage", "Hubris", "Humanitarian", "Hypocrisy", "Hypothetical", "Iconoclast", "Idiosyncratic", "Ignominious", "Immutable", "Impassive", "Impeccable", "Impecunious", "Imperative", "Imperceptible", "Imperious", "Impertinent", "Impervious", "Impetuous", "Impinge", "Implacable", "Implausible", "Implicit", "Implore", "Impose", "Impromptu", "Imprudent", "Impudence", "Impugn", "Impunity", "Inadvertent", "Inane", "Inarticulate", "Inaugurate", "Incapacitate", "Incendiary", "Incessant", "Inchoate", "Incisive", "Incite", "Inclination", "Incognito", "Incoherent", "Incongruous", "Incorrigible", "Incredulous", "Inculcate", "Incumbent", "Incursion", "Indefatigable", "Indict", "Indigenous", "Indigent", "Indignant", "Indomitable", "Indubitable", "Induce", "Indulgent", "Ineffable", "Inept", "Inert", "Inevitable", "Inexorable", "Infamy", "Infuriate", "Ingenious", "Ingenuous", "Ingratiate", "Inherent", "Inhibit", "Inimical", "Iniquity", "Initiate", "Innate", "Innocuous", "Innovate", "Innuendo", "Inordinate", "Insatiable", "Inscrutable", "Insidious", "Insinuate", "Insipid", "Insolent", "Instigate", "Insular", "Intangible", "Integrity", "Intelligible", "Intercede", "Interminable", "Intermittent", "Intractable", "Intransigent", "Intrepid", "Intrinsic", "Inundate", "Inure", "Invective", "Inveterate", "Invidious", "Invincible", "Inviolable", "Irascible", "Iridescent", "Irrevocable", "Iteration", "Itinerant", "Jaded", "Jargon", "Jettison", "Jocular", "Jovial", "Judicious", "Juxtaposition", "Kindle", "Knotty", "Labyrinth", "Laceration", "Lachrymose", "Laconic", "Lament", "Lampoon", "Languid", "Larceny", "Largess", "Lassitude", "Latent", "Laudatory", "Lavish", "Legacy", "Legerdemain", "Lenient", "Lethargic", "Levity", "Liability", "Licentious", "Lithe", "Litigate", "Lofty", "Logistics", "Loquacious", "Lucid", "Lucrative", "Ludicrous", "Lugubrious", "Luminescent", "Lurid", "Lush", "Machination", "Magnanimous", "Malediction", "Malevolent", "Malleable", "Mandate", "Manifest", "Manifold", "Maverick", "Mawkish", "Maxim", "Meager", "Mediate", "Melancholy", "Meliorate", "Mellifluous", "Mendacious", "Mercurial", "Meritorious", "Metaphor", "Meticulous", "Mettle", "Misanthrope", "Mitigate", "Modicum", "Modulate", "Mollify", "Momentous", "Monotony", "Morose", "Multifarious", "Munificent", "Mutability", "Myriad", "Nadir", "Narrative", "Nascent", "Nebulous", "Nefarious", "Negligence", "Neophyte", "Nexus", "Nocturnal", "Nomadic", "Nominal", "Nonchalant", "Nondescript", "Notoriety", "Novice", "Noxious", "Nuance", "Nurture", "Obdurate", "Obfuscate", "Objective", "Oblivious", "Obscure", "Obsequious", "Obsolete", "Obstinate", "Obstreperous", "Obtrusive", "Obtuse", "Obviate", "Odious", "Officious", "Ominous", "Omnipotent", "Omniscient", "Opaque", "Opulent", "Oration", "Ornate", "Orthodox", "Oscillate", "Ossify", "Ostensible", "Ostentatious", "Ostracism", "Pacific", "Palatable", "Palette", "Palliate", "Pallid", "Panacea", "Paradigm", "Paradox", "Paragon", "Paramount", "Pariah", "Parity", "Parody", "Parsimony", "Partisan", "Pastoral", "Pathos", "Paucity", "Peccadillo", "Peculiar", "Pedantic", "Pedestrian", "Pejorative", "Penchant", "Penitent", "Pensive", "Penurious", "Perceptive", "Perdition", "Perfunctory", "Peripheral", "Pernicious", "Perpetual", "Perplexity", "Perspicacity", "Pertinent", "Perturb", "Pervasive", "Petulant", "Philanthropic", "Phlegmatic", "Pinnacle", "Pious", "Pithy", "Placate", "Placid", "Platitude", "Plausible", "Plethora", "Pliable", "Poignant", "Polemic", "Portent", "Postulate", "Potent", "Pragmatic", "Precarious", "Precedent", "Precept", "Precipice", "Preclude", "Precocious", "Precursor", "Predatory", "Predilection", "Preeminent", "Preempt", "Prepossessing", "Presage", "Prescience", "Presumptuous", "Pretext", "Prevalent", "Prevaricate", "Pristine", "Probity", "Proclivity", "Procure", "Prodigious", "Profane", "Profligate", "Profuse", "Prolific", "Promulgate", "Propensity", "Propitious", "Propriety", "Prosaic", "Proscribe", "Prosperity", "Protagonist", "Protean", "Prowess", "Prudence", "Prurient", "Puerile", "Pugnacious", "Pulchritude", "Punctilious", "Pungent", "Punitive", "Putrid", "Quaint", "Quandary", "Quell", "Querulous", "Quiescent", "Quintessential", "Quixotic", "Quotidian", "Radiant", "Rancor", "Rapport", "Ratify", "Raucous", "Raze", "Rebuke", "Recalcitrant", "Recant", "Recapitulate", "Reciprocal", "Recluse", "Recondite", "Rectitude", "Redoubtable", "Refract", "Refurbish", "Refute", "Regurgitate", "Reiterate", "Rejoinder", "Relentless", "Relevant", "Remiss", "Remit", "Remnant", "Renovate", "Renounce", "Repentant", "Replenish", "Replete", "Reprehensible", "Reprieve", "Reproach", "Reprobate", "Reprove", "Repudiate", "Repulse", "Rescind", "Resilient", "Resolute", "Resonance", "Respite", "Resplendent", "Restive", "Retract", "Retribution", "Revel", "Revere", "Revoke", "Rhapsodize", "Rhetoric", "Rife", "Rigor", "Ruminate", "Ruse", "Rustic", "Sacrosanct", "Sagacious", "Salient", "Salutation", "Sanctimonious", "Sanguine", "Satiate", "Scanty", "Scrupulous", "Scurrilous", "Sedate", "Sedentary", "Sedulous", "Seminal", "Sensual", "Serendipity", "Serene", "Servile", "Sinuous", "Sobriety", "Solace", "Solicitous", "Solvent", "Somnolent", "Sophomoric", "Soporific", "Specious", "Speculative", "Spurious", "Squalid", "Stagnate", "Staid", "Steadfast", "Stifle", "Stigma", "Stoic", "Stolid", "Strenuous", "Strident", "Stupefy", "Subjugate", "Sublime", "Submissive", "Subsequent", "Subservient", "Subside", "Substantiate", "Subterfuge", "Subtle", "Subversive", "Succinct", "Succumb", "Sullen", "Sumptuous", "Supercilious", "Superficial", "Superfluous", "Surfeit", "Surmise", "Surreptitious", "Surrogate", "Susceptible", "Sycophant", "Symbiotic", "Tacit", "Taciturn", "Tangential", "Tangible", "Tantamount", "Tedious", "Temerity", "Temperance", "Tenable", "Tenacious", "Tenuous", "Tepid", "Terse", "Theocracy", "Timorous", "Tirade", "Toady", "Tome", "Torpid", "Torrid", "Tortuous", "Tractable", "Tranquil", "Transgress", "Transient", "Translucent", "Transmute", "Traverse", "Treachery", "Tremulous", "Trenchant", "Trepidation", "Trite", "Truculent", "Truncate", "Turgid", "Turpitude", "Ubiquitous", "Umbrage", "Uncanny", "Unctuous", "Undulate", "Upbraid", "Usurp", "Utilitarian", "Utopia", "Vacillate", "Vacuous", "Valiant", "Valid", "Vanquish", "Vapid", "Variegated", "Vehement", "Veneer", "Venerable", "Venerate", "Veracity", "Verbose", "Verdant", "Verge", "Verify", "Veritable", "Vernacular", "Versatile", "Vestige", "Vex", "Vicarious", "Vicissitude", "Vigilant", "Vignette", "Vilify", "Vindicate", "Vindictive", "Virtuoso", "Virulent", "Viscous", "Visionary", "Vital", "Vituperate", "Vivacious", "Vivid", "Vociferous", "Volatility", "Volition", "Voluble", "Voracious", "Vulnerable", "Wane", "Wanderlust", "Warrant", "Wary", "Waver", "Whet", "Whimsical", "Wily", "Winsome", "Wistful", "Wizened", "Wrath", "Yoke", "Zeal", "Zealot", "Zenith", "Zephyr"
         ];
@@ -301,7 +303,7 @@
             document.getElementById('mdToggle').checked = (mdSaved === 'true');
             document.getElementById('openaiKey').value = localStorage.getItem(KEY_AI_KEY) || "";
             const vLabel = document.getElementById('versionLabel');
-            vLabel.innerText = "Version 2.10.7" + (window.location.pathname.toLowerCase().includes('/test/') ? " (TEST)" : "");
+            vLabel.innerText = "Version 2.11.2" + (window.location.pathname.toLowerCase().includes('/test/') ? " (TEST)" : "");
             refreshRoster();
             nextWod();
         }
@@ -501,6 +503,7 @@
                 mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunks.push(e.data); };
                 mediaRecorder.onstop = sendToWhisper;
                 mediaRecorder.start();
+                recordingStartTime = Date.now();
                 const status = document.getElementById('transcriptionStatus');
                 status.innerText = "● RECORDING LIVE...";
                 status.style.color = "var(--red)";
@@ -515,6 +518,7 @@
         }
 
         function stopTranscriptionRecording() {
+            speechDuration = Math.round((Date.now() - recordingStartTime) / 1000);
             if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
             if (recordingStream) { recordingStream.getTracks().forEach(t => t.stop()); recordingStream = null; }
             const status = document.getElementById('transcriptionStatus');
@@ -602,8 +606,36 @@
             document.getElementById('transcriptionContent').innerHTML = highlighted;
 
             const foundFillers = Object.keys(transcriptCounts);
+            const totalFillers = Object.values(transcriptCounts).reduce((a, b) => a + b, 0);
+            const totalWords = rawText.trim().split(/\s+/).filter(w => w.length > 0).length;
+            const fillerPct = totalWords > 0 ? ((totalFillers / totalWords) * 100).toFixed(1) : 0;
+            const durationMins = speechDuration > 0 ? (speechDuration / 60).toFixed(1) : null;
+            const fillersPerMin = durationMins > 0 ? (totalFillers / durationMins).toFixed(1) : null;
 
-            let html = `<div style="font-weight:800; font-size:13px; color:#8E8E93; text-transform:uppercase; letter-spacing:1px; padding:12px 0 8px;">Fillers Detected</div>`;
+            // Score: green < 5%, yellow 5-10%, red > 10%
+            let scoreColor, scoreLabel, scoreBg;
+            if (fillerPct < 5) {
+                scoreColor = 'var(--green)'; scoreLabel = 'EXCELLENT'; scoreBg = '#F0FFF4';
+            } else if (fillerPct <= 10) {
+                scoreColor = '#CC8800'; scoreLabel = 'GOOD'; scoreBg = '#FFFBEA';
+            } else {
+                scoreColor = 'var(--red)'; scoreLabel = 'NEEDS WORK'; scoreBg = '#FFF0EE';
+            }
+
+            let html = '';
+
+            // Score card
+            html += `<div style="background:${scoreBg}; border:2px solid ${scoreColor}; border-radius:16px; padding:16px 20px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <div style="font-size:13px; font-weight:800; color:#8E8E93; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Filler Score</div>
+                    <div style="font-size:28px; font-weight:900; color:${scoreColor};">${fillerPct}%</div>
+                    <div style="font-size:13px; color:${scoreColor}; font-weight:700;">${totalFillers} filler${totalFillers !== 1 ? 's' : ''} of ${totalWords} words</div>
+                    ${durationMins ? `<div style="font-size:12px; color:#8E8E93; margin-top:3px;">Speech: ${durationMins} min &nbsp;·&nbsp; Rate: ${fillersPerMin} fillers/min</div>` : ''}
+                </div>
+                <div style="font-size:15px; font-weight:900; color:${scoreColor}; text-align:right; letter-spacing:1px;">${scoreLabel}</div>
+            </div>`;
+
+            html += `<div style="font-weight:800; font-size:13px; color:#8E8E93; text-transform:uppercase; letter-spacing:1px; padding:8px 0 8px;">Fillers Detected</div>`;
             html += `<div style="background:var(--card); border-radius:16px; border:1px solid var(--border); overflow:hidden; margin-bottom:10px;">`;
             if (foundFillers.length === 0) {
                 html += `<div style="padding:20px; text-align:center; color:#8E8E93; font-style:italic; font-size:16px;">No filler words detected</div>`;
@@ -640,6 +672,12 @@
             // --- Save transcript for sharing ---
             const savedTranscripts = JSON.parse(localStorage.getItem(KEY_TRANSCRIPTS) || '[]');
             const highlightedHTML = document.getElementById('transcriptionContent').innerHTML;
+            const totalFillersMerge = Object.values(transcriptCounts).reduce((a, b) => a + b, 0);
+            const totalWordsMerge = transcriptResult.trim().split(/\s+/).filter(w => w.length > 0).length;
+            const fillerPctMerge = totalWordsMerge > 0 ? ((totalFillersMerge / totalWordsMerge) * 100).toFixed(1) : '0.0';
+            const durationMinsMerge = speechDuration > 0 ? (speechDuration / 60).toFixed(1) : null;
+            const fillersPerMinMerge = durationMinsMerge > 0 ? (totalFillersMerge / durationMinsMerge).toFixed(1) : null;
+            let scoreLabel = fillerPctMerge < 5 ? 'EXCELLENT' : fillerPctMerge <= 10 ? 'GOOD' : 'NEEDS WORK';
             const fillerSummary = Object.keys(transcriptCounts).length > 0
                 ? Object.entries(transcriptCounts).map(([w, c]) => `${w}: ${c}`).join(', ')
                 : '0 Fillers';
@@ -649,7 +687,13 @@
                 date: new Date().toLocaleString(),
                 highlightedHTML,
                 fillerSummary,
-                plainText: transcriptResult
+                plainText: transcriptResult,
+                fillerPct: fillerPctMerge,
+                fillerScore: scoreLabel,
+                totalWords: totalWordsMerge,
+                totalFillers: totalFillersMerge,
+                fillersPerMin: fillersPerMinMerge,
+                durationMins: durationMinsMerge
             });
             localStorage.setItem(KEY_TRANSCRIPTS, JSON.stringify(savedTranscripts));
             // ------------------------------------
@@ -666,7 +710,7 @@
         }
 
         /* ============================================================
-           NEW: TRANSCRIPT LIST & VIEW FUNCTIONS (v2.10.7)
+           NEW: TRANSCRIPT LIST & VIEW FUNCTIONS (v2.11.2)
         ============================================================ */
 
         let activeTranscriptIndex = -1;
@@ -697,10 +741,28 @@
             activeTranscriptIndex = i;
             document.getElementById('transcriptViewName').innerText = t.speaker;
             document.getElementById('transcriptViewRole').innerText = t.role + ' · ' + t.date;
-            document.getElementById('transcriptViewSummary').innerHTML = `
-                <div style="font-size:12px; font-weight:800; color:#8E8E93; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">Filler Summary</div>
-                <div style="font-size:16px; font-family:monospace; color:var(--text);">${t.fillerSummary}</div>
-            `;
+
+            // Build score card if stats available
+            let summaryHTML = '';
+            if (t.fillerPct !== undefined) {
+                let scoreColor, scoreBg;
+                if (t.fillerPct < 5) { scoreColor = 'var(--green)'; scoreBg = '#F0FFF4'; }
+                else if (t.fillerPct <= 10) { scoreColor = '#CC8800'; scoreBg = '#FFFBEA'; }
+                else { scoreColor = 'var(--red)'; scoreBg = '#FFF0EE'; }
+                summaryHTML += `<div style="background:${scoreBg}; border:2px solid ${scoreColor}; border-radius:12px; padding:14px 18px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <div style="font-size:12px; font-weight:800; color:#8E8E93; text-transform:uppercase; letter-spacing:1px; margin-bottom:2px;">Filler Score</div>
+                        <div style="font-size:26px; font-weight:900; color:${scoreColor};">${t.fillerPct}%</div>
+                        <div style="font-size:13px; color:${scoreColor}; font-weight:700;">${t.totalFillers} fillers of ${t.totalWords} words</div>
+                        ${t.durationMins ? `<div style="font-size:12px; color:#8E8E93; margin-top:3px;">Speech: ${t.durationMins} min &nbsp;·&nbsp; Rate: ${t.fillersPerMin} fillers/min</div>` : ''}
+                    </div>
+                    <div style="font-size:14px; font-weight:900; color:${scoreColor}; letter-spacing:1px;">${t.fillerScore}</div>
+                </div>`;
+            }
+            summaryHTML += `<div style="font-size:12px; font-weight:800; color:#8E8E93; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Filler Summary</div>
+                <div style="font-size:15px; font-family:monospace; color:var(--text);">${t.fillerSummary}</div>`;
+
+            document.getElementById('transcriptViewSummary').innerHTML = summaryHTML;
             document.getElementById('transcriptViewText').innerHTML = t.highlightedHTML;
             showScreen('transcriptView');
         }
@@ -711,19 +773,22 @@
             const t = transcripts[activeTranscriptIndex];
             if (!t) return;
             const isMd = localStorage.getItem(KEY_MD) === 'true';
+            const scoreLine = t.fillerPct !== undefined
+                ? `Filler Score: ${t.fillerPct}% (${t.fillerScore}) — ${t.totalFillers} fillers of ${t.totalWords} words${t.durationMins ? ' · Speech: ' + t.durationMins + ' min · Rate: ' + t.fillersPerMin + ' fillers/min' : ''}`
+                : '';
             let body;
             if (isMd) {
-                // Full markdown: header, filler summary as blockquote, fillers as **BOLD**
                 const mdText = t.plainText.replace(new RegExp('\\b(' + fillerList.filter(f => f !== 'WORD OF DAY').join('|') + ')\\b', 'gi'), (m) => '**' + m.toUpperCase() + '**');
                 body = '# ' + t.speaker + ' — Transcript\n' +
                        '**' + t.role + '** · ' + t.date + '\n\n' +
+                       (scoreLine ? '> ' + scoreLine + '\n\n' : '') +
                        '> **Filler Summary:** ' + t.fillerSummary + '\n\n' +
                        '---\n\n' + mdText;
             } else {
-                // Plain text with ** around fillers only
                 const markedText = t.plainText.replace(new RegExp('\\b(' + fillerList.filter(f => f !== 'WORD OF DAY').join('|') + ')\\b', 'gi'), (m) => '**' + m.toUpperCase() + '**');
                 body = 'Transcript — ' + t.speaker + ' (' + t.role + ')\n' +
                        t.date + '\n\n' +
+                       (scoreLine ? scoreLine + '\n' : '') +
                        'Filler Summary: ' + t.fillerSummary + '\n\n' +
                        markedText;
             }
