@@ -252,7 +252,7 @@
         <div class="main-menu-card settings-card" onclick="showScreen('clubManager')"><div class="card-content"><h3>Clubs</h3><p id="settingsClubName">Manage your clubs</p></div><div class="icon" style="font-size:30px;">🏛</div></div>
         <div class="main-menu-card settings-card" onclick="showScreen('fillerManager')"><div class="card-content"><h3>Filler Words</h3><p>Add, edit, delete</p></div><div class="icon" style="font-size:30px;">💬</div></div>
         <div class="main-menu-card settings-card" style="cursor:default;"><div class="card-content"><h3>Markdown Export</h3><p>Enable Slack/Email tables</p></div><label class="switch"><input type="checkbox" id="mdToggle" onchange="saveSettings()"><span class="slider"></span></label></div>
-        <div class="main-menu-card settings-card" style="cursor:default;flex-direction:column;align-items:flex-start;"><div class="card-content"><h3>ChatGPT API Key</h3><p>OpenAI sk-... key</p></div><input type="password" id="openaiKey" placeholder="Paste Key Here" onchange="saveSettings()" style="margin-top:12px;font-size:16px;"></div>
+        <div class="main-menu-card settings-card" style="cursor:default;flex-direction:column;align-items:flex-start;"><div class="card-content"><h3>ChatGPT API Key</h3><p id="apiKeySubtext">Shared with club via sync</p></div><input type="password" id="openaiKey" placeholder="Paste Key Here" onchange="saveSettings()" style="margin-top:12px;font-size:16px;"></div>
         <div class="main-menu-card settings-card" onclick="exportData()"><div class="card-content"><h3>Backup Data</h3><p>Export JSON</p></div><div class="icon">⤓</div></div>
         <div class="main-menu-card settings-card" onclick="document.getElementById('importFile').click()"><div class="card-content"><h3>Restore Data</h3><p>Import JSON</p></div><div class="icon">⤒</div></div>
         <div class="main-menu-card settings-card" onclick="askClearLogs()" style="background:#FFF5F5;border:2px solid var(--red);"><div class="card-content"><h3 style="color:var(--red);">Clear Meeting Data</h3><p>Reset logs, WOD, transcripts</p></div><div class="icon">⚠</div></div>
@@ -407,13 +407,20 @@ function initApp() {
     migrateIfNeeded();
     if (!localStorage.getItem(pk(KEY_CLUBS))) {
         const clubId='c'+Date.now();
-        localStorage.setItem(pk(KEY_CLUBS), JSON.stringify([{id:clubId,name:'My Toastmasters Club',syncKey:''}]));
+        const testId='c_test';
+        const testSpeakers=['JANE DOE','JOHN SMITH','MARY JOHNSON','ROBERT BROWN','SUSAN DAVIS'];
+        localStorage.setItem(pk(KEY_CLUBS), JSON.stringify([
+            {id:clubId, name:'My Toastmasters Club', syncKey:''},
+            {id:testId,  name:'TEST CLUB (Practice)', syncKey:''}
+        ]));
         localStorage.setItem(pk(KEY_ACTIVE_CLUB), clubId);
+        localStorage.setItem(prefix+'club_'+testId+'_speakers', JSON.stringify(testSpeakers));
+        localStorage.setItem(prefix+'club_'+testId+'_fillers',  JSON.stringify([...DEFAULT_FILLERS]));
     }
     loadClubData(); updateClubUI();
     document.getElementById('mdToggle').checked = (localStorage.getItem(pk(KEY_MD))==='true');
     document.getElementById('openaiKey').value = localStorage.getItem(pk(KEY_AI_KEY))||'';
-    document.getElementById('versionLabel').innerText = 'Version 3.1.1'+(isTest?' (TEST)':'');
+    document.getElementById('versionLabel').innerText = 'Version 3.1.2'+(isTest?' (TEST)':'');
     refreshRoster(); nextWod();
     // Auto-pull roster & fillers silently on startup
     autoSyncDown();
@@ -436,6 +443,12 @@ async function autoSyncDown() {
             fillerList = data.fillers;
             localStorage.setItem(clubKey('fillers'), JSON.stringify(data.fillers));
         }
+        // API key: cloud wins — lets officer set it once for everyone
+        if (data.apiKey) {
+            localStorage.setItem(pk(KEY_AI_KEY), data.apiKey);
+            const el = document.getElementById('openaiKey');
+            if (el) { el.value = data.apiKey; el.placeholder = 'Shared by club ☁'; }
+        }
         refreshRoster();
         updateClubUI();
     } catch(e) {
@@ -448,9 +461,11 @@ async function autoSyncUp() {
     const club = getActiveClub();
     if (!club || !club.syncKey) return;
     try {
+        const apiKey = localStorage.getItem(pk(KEY_AI_KEY)) || '';
         await db.collection('clubs').doc(club.syncKey).update({
             speakers: allSpeakers,
             fillers: fillerList,
+            apiKey: apiKey,
             lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
         });
     } catch(e) {
@@ -474,8 +489,9 @@ async function enableSync(clubId) {
     try {
         const spk=clubId===activeClubId?allSpeakers:JSON.parse(localStorage.getItem(prefix+'club_'+clubId+'_speakers')||'[]');
         const fil=clubId===activeClubId?fillerList:JSON.parse(localStorage.getItem(prefix+'club_'+clubId+'_fillers')||JSON.stringify(DEFAULT_FILLERS));
+        const apiKey = localStorage.getItem(pk(KEY_AI_KEY)) || '';
         await db.collection('clubs').doc(code).set({
-            name:club.name, speakers:spk, fillers:fil,
+            name:club.name, speakers:spk, fillers:fil, apiKey:apiKey,
             createdAt:firebase.firestore.FieldValue.serverTimestamp(),
             lastUpdated:firebase.firestore.FieldValue.serverTimestamp()
         });
@@ -502,10 +518,11 @@ function askJoinByCode() {
             localStorage.setItem(pk(KEY_CLUBS),JSON.stringify(clubs));
             if(data.speakers) localStorage.setItem(prefix+'club_'+clubId+'_speakers',JSON.stringify(data.speakers));
             if(data.fillers) localStorage.setItem(prefix+'club_'+clubId+'_fillers',JSON.stringify(data.fillers));
+            if(data.apiKey) localStorage.setItem(pk(KEY_AI_KEY), data.apiKey);
             activeClubId=clubId;
             localStorage.setItem(pk(KEY_ACTIVE_CLUB),clubId);
             loadClubData(); updateClubUI(); renderClubManager();
-            openModal("Joined!",`Welcome to ${data.name}. Roster and filler words synced.`,()=>{});
+            openModal("Joined!",`Welcome to ${data.name}. Roster, filler words, and AI key synced.`,()=>{});
         } catch(e) {
             openModal("Connection Error","Could not connect to cloud. Check your internet and try again.",()=>{});
         }
@@ -724,7 +741,7 @@ async function fetchWordDetails(word) {
 }
 
 /* ============ SETTINGS ============ */
-function saveSettings(){localStorage.setItem(pk(KEY_MD),document.getElementById('mdToggle').checked);localStorage.setItem(pk(KEY_AI_KEY),document.getElementById('openaiKey').value.trim());}
+function saveSettings(){localStorage.setItem(pk(KEY_MD),document.getElementById('mdToggle').checked);const key=document.getElementById('openaiKey').value.trim();localStorage.setItem(pk(KEY_AI_KEY),key);autoSyncUp();}
 
 /* ============ ROSTER ============ */
 function refreshRoster(){const area=document.getElementById('speakerArea');if(!area)return;if(!allSpeakers.length){area.innerHTML=`<div style="padding:20px;opacity:0.3;text-align:center;">Empty Roster</div>`;return;}area.innerHTML=allSpeakers.map(n=>`<div style="padding:14px 18px;border-bottom:1px solid var(--bg);display:flex;justify-content:space-between;align-items:center;"><div style="font-size:22px;flex:1;color:var(--accent);font-weight:600;text-transform:uppercase;cursor:pointer;" onclick="selectSpeaker('${n}')">${n}</div><div style="padding:5px 12px;color:var(--red);font-weight:800;font-size:22px;cursor:pointer;" onclick="askDeleteSpeaker('${n}')">✕</div></div>`).join('');}
