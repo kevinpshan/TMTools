@@ -413,8 +413,50 @@ function initApp() {
     loadClubData(); updateClubUI();
     document.getElementById('mdToggle').checked = (localStorage.getItem(pk(KEY_MD))==='true');
     document.getElementById('openaiKey').value = localStorage.getItem(pk(KEY_AI_KEY))||'';
-    document.getElementById('versionLabel').innerText = 'Version 3.1.0'+(isTest?' (TEST)':'');
+    document.getElementById('versionLabel').innerText = 'Version 3.1.1'+(isTest?' (TEST)':'');
     refreshRoster(); nextWod();
+    // Auto-pull roster & fillers silently on startup
+    autoSyncDown();
+}
+
+/* ============ FIREBASE — AUTO SYNC ============ */
+async function autoSyncDown() {
+    const club = getActiveClub();
+    if (!club || !club.syncKey) return;
+    try {
+        const doc = await db.collection('clubs').doc(club.syncKey).get();
+        if (!doc.exists) return;
+        const data = doc.data();
+        // Merge roster: union of local + cloud, sorted
+        const merged = [...new Set([...allSpeakers, ...(data.speakers||[])])].sort();
+        allSpeakers = merged;
+        localStorage.setItem(clubKey('speakers'), JSON.stringify(merged));
+        // Fillers: cloud wins (shared config)
+        if (data.fillers && data.fillers.length > 0) {
+            fillerList = data.fillers;
+            localStorage.setItem(clubKey('fillers'), JSON.stringify(data.fillers));
+        }
+        refreshRoster();
+        updateClubUI();
+    } catch(e) {
+        // Silent fail — offline or unreachable, local data still works
+        console.log('Auto-sync skipped:', e.message);
+    }
+}
+
+async function autoSyncUp() {
+    const club = getActiveClub();
+    if (!club || !club.syncKey) return;
+    try {
+        await db.collection('clubs').doc(club.syncKey).update({
+            speakers: allSpeakers,
+            fillers: fillerList,
+            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+        });
+    } catch(e) {
+        // Silent fail — don't interrupt the user's workflow
+        console.log('Auto-push skipped:', e.message);
+    }
 }
 
 /* ============ FIREBASE — SYNC CODE ============ */
@@ -522,7 +564,7 @@ function showClubSwitcher() {
     document.getElementById('clubSwitcherOverlay').style.display='flex';
 }
 function closeClubSwitcher(event) { if(!event||event.target===document.getElementById('clubSwitcherOverlay')) document.getElementById('clubSwitcherOverlay').style.display='none'; }
-function switchClub(id) { if(id===activeClubId){closeClubSwitcher();return;} activeClubId=id; localStorage.setItem(pk(KEY_ACTIVE_CLUB),id); loadClubData(); updateClubUI(); closeClubSwitcher(); showScreen('menu'); }
+function switchClub(id) { if(id===activeClubId){closeClubSwitcher();return;} activeClubId=id; localStorage.setItem(pk(KEY_ACTIVE_CLUB),id); loadClubData(); updateClubUI(); closeClubSwitcher(); showScreen('menu'); autoSyncDown(); }
 
 /* ============ CLUB MANAGER ============ */
 function renderClubManager() {
@@ -578,9 +620,9 @@ function renderFillerManager() {
             <button class="manager-btn manager-del-btn" onclick="askDeleteFiller('${f}')">✕</button>
         </div>`).join('');
 }
-function askAddFiller() { openModal("Add Filler Word",`<input type="text" id="newFiller" placeholder="e.g. BASICALLY" style="text-transform:uppercase;">`,()=>{ const word=document.getElementById('newFiller').value.trim().toUpperCase(); if(!word||fillerList.includes(word))return; fillerList.push(word); localStorage.setItem(clubKey('fillers'),JSON.stringify(fillerList)); renderFillerManager(); }); }
-function askEditFiller(oldWord) { openModal("Edit Filler Word",`<input type="text" id="editFiller" value="${oldWord}" style="text-transform:uppercase;">`,()=>{ const newWord=document.getElementById('editFiller').value.trim().toUpperCase(); if(!newWord||newWord===oldWord)return; fillerList=fillerList.map(f=>f===oldWord?newWord:f); localStorage.setItem(clubKey('fillers'),JSON.stringify(fillerList)); renderFillerManager(); }); }
-function askDeleteFiller(word) { openModal("Delete Filler?",`Remove "${word}" from this club's list?`,()=>{ fillerList=fillerList.filter(f=>f!==word); localStorage.setItem(clubKey('fillers'),JSON.stringify(fillerList)); renderFillerManager(); }); }
+function askAddFiller() { openModal("Add Filler Word",`<input type="text" id="newFiller" placeholder="e.g. BASICALLY" style="text-transform:uppercase;">`,()=>{ const word=document.getElementById('newFiller').value.trim().toUpperCase(); if(!word||fillerList.includes(word))return; fillerList.push(word); localStorage.setItem(clubKey('fillers'),JSON.stringify(fillerList)); autoSyncUp(); renderFillerManager(); }); }
+function askEditFiller(oldWord) { openModal("Edit Filler Word",`<input type="text" id="editFiller" value="${oldWord}" style="text-transform:uppercase;">`,()=>{ const newWord=document.getElementById('editFiller').value.trim().toUpperCase(); if(!newWord||newWord===oldWord)return; fillerList=fillerList.map(f=>f===oldWord?newWord:f); localStorage.setItem(clubKey('fillers'),JSON.stringify(fillerList)); autoSyncUp(); renderFillerManager(); }); }
+function askDeleteFiller(word) { openModal("Delete Filler?",`Remove "${word}" from this club's list?`,()=>{ fillerList=fillerList.filter(f=>f!==word); localStorage.setItem(clubKey('fillers'),JSON.stringify(fillerList)); autoSyncUp(); renderFillerManager(); }); }
 
 /* ============ PROGRESS ============ */
 async function loadProgress() {
@@ -686,11 +728,11 @@ function saveSettings(){localStorage.setItem(pk(KEY_MD),document.getElementById(
 
 /* ============ ROSTER ============ */
 function refreshRoster(){const area=document.getElementById('speakerArea');if(!area)return;if(!allSpeakers.length){area.innerHTML=`<div style="padding:20px;opacity:0.3;text-align:center;">Empty Roster</div>`;return;}area.innerHTML=allSpeakers.map(n=>`<div style="padding:14px 18px;border-bottom:1px solid var(--bg);display:flex;justify-content:space-between;align-items:center;"><div style="font-size:22px;flex:1;color:var(--accent);font-weight:600;text-transform:uppercase;cursor:pointer;" onclick="selectSpeaker('${n}')">${n}</div><div style="padding:5px 12px;color:var(--red);font-weight:800;font-size:22px;cursor:pointer;" onclick="askDeleteSpeaker('${n}')">✕</div></div>`).join('');}
-function saveSpeaker(){const n=document.getElementById('name').value.trim().toUpperCase();if(n&&!allSpeakers.includes(n)){allSpeakers.push(n);allSpeakers.sort();localStorage.setItem(clubKey('speakers'),JSON.stringify(allSpeakers));}refreshRoster();}
+function saveSpeaker(){const n=document.getElementById('name').value.trim().toUpperCase();if(n&&!allSpeakers.includes(n)){allSpeakers.push(n);allSpeakers.sort();localStorage.setItem(clubKey('speakers'),JSON.stringify(allSpeakers));autoSyncUp();}refreshRoster();}
 function selectSpeaker(n){document.getElementById('name').value=n;}
 function handleNameInput(el){el.value=el.value.toUpperCase();renderSpeakerListFiltered(allSpeakers.filter(s=>s.includes(el.value)));}
 function renderSpeakerListFiltered(f){const area=document.getElementById('speakerArea');area.innerHTML=f.map(n=>`<div style="padding:14px 18px;border-bottom:1px solid var(--bg);display:flex;justify-content:space-between;align-items:center;"><div style="font-size:22px;flex:1;color:var(--accent);font-weight:600;text-transform:uppercase;cursor:pointer;" onclick="selectSpeaker('${n}')">${n}</div><div style="padding:5px 12px;color:var(--red);font-weight:800;font-size:22px;cursor:pointer;" onclick="askDeleteSpeaker('${n}')">✕</div></div>`).join('');}
-function askDeleteSpeaker(n){openModal("Delete?",`Remove ${n}?`,()=>{allSpeakers=allSpeakers.filter(s=>s!==n);localStorage.setItem(clubKey('speakers'),JSON.stringify(allSpeakers));refreshRoster();});}
+function askDeleteSpeaker(n){openModal("Delete?",`Remove ${n}?`,()=>{allSpeakers=allSpeakers.filter(s=>s!==n);localStorage.setItem(clubKey('speakers'),JSON.stringify(allSpeakers));autoSyncUp();refreshRoster();});}
 
 /* ============ NAVIGATION ============ */
 function showScreen(id){
