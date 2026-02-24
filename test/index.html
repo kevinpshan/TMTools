@@ -461,6 +461,8 @@ function initApp() {
         localStorage.setItem(pk(KEY_ACTIVE_CLUB), testId);
         localStorage.setItem(prefix+'club_'+testId+'_speakers', JSON.stringify(testSpeakers));
         localStorage.setItem(prefix+'club_'+testId+'_fillers',  JSON.stringify([...DEFAULT_FILLERS]));
+        // Load the seeded data into globals before showing welcome screen
+        loadClubData(); updateClubUI();
         // Show welcome screen instead of main menu
         document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
         document.getElementById('welcome').classList.add('active');
