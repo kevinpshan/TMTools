@@ -837,8 +837,12 @@ async function openSpeakerProgress(encodedName) {
     showScreen('speakerProgress');
     const club=getActiveClub(); if(!club||!club.syncKey)return;
     try {
-        const snap=await db.collection('clubs').doc(club.syncKey).collection('sessions').where('speaker','==',name).orderBy('createdAt','asc').get();
-        const sessions=snap.docs.map(d=>d.data());
+        const snap=await db.collection('clubs').doc(club.syncKey).collection('sessions').where('speaker','==',name).get();
+        const sessions=snap.docs.map(d=>d.data()).sort((a,b)=>{
+            const ta=a.createdAt?.toMillis?a.createdAt.toMillis():(a.createdAt||0);
+            const tb=b.createdAt?.toMillis?b.createdAt.toMillis():(b.createdAt||0);
+            return ta-tb;
+        });
         document.getElementById('speakerProgressMeta').innerText=`${sessions.length} session${sessions.length!==1?'s':''}`;
         const cs=sessions.filter(s=>s.type==='counter'&&s.fillerPct!==undefined);
         let summaryHTML='';
