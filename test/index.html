@@ -342,6 +342,40 @@
     </div>
 </div>
 
+<!-- WELCOME SCREEN -->
+
+<div id="welcome" class="screen">
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px 25px;text-align:center;">
+        <div style="font-size:64px;margin-bottom:10px;">⏱</div>
+        <h1 style="font-size:38px;font-weight:900;margin:0 0 8px;">Meeting Tools</h1>
+        <div style="font-size:18px;color:var(--subtext);margin-bottom:40px;font-weight:500;">Toastmasters Timer &amp; Ah-Counter</div>
+        <div style="width:100%;max-width:500px;display:flex;flex-direction:column;gap:14px;">
+            <div style="background:var(--accent);border-radius:18px;padding:24px 20px;cursor:pointer;color:white;text-align:left;display:flex;justify-content:space-between;align-items:center;" onclick="showWelcomeJoin()">
+                <div>
+                    <div style="font-size:20px;font-weight:800;">Join Existing Club</div>
+                    <div style="font-size:15px;opacity:0.85;margin-top:4px;">Enter a sync code from your club officer</div>
+                </div>
+                <div style="font-size:30px;">☁</div>
+            </div>
+            <div style="background:var(--card);border-radius:18px;padding:24px 20px;cursor:pointer;border:2px solid var(--border);text-align:left;display:flex;justify-content:space-between;align-items:center;" onclick="showWelcomeCreate()">
+                <div>
+                    <div style="font-size:20px;font-weight:800;">Create New Club</div>
+                    <div style="font-size:15px;color:var(--subtext);margin-top:4px;">Set up Meeting Tools for your club</div>
+                </div>
+                <div style="font-size:30px;">➕</div>
+            </div>
+            <div style="background:#FFF9E6;border-radius:18px;padding:24px 20px;cursor:pointer;border:2px solid var(--gold);text-align:left;display:flex;justify-content:space-between;align-items:center;" onclick="showWelcomePractice()">
+                <div>
+                    <div style="font-size:20px;font-weight:800;color:var(--gold);">Just Exploring</div>
+                    <div style="font-size:15px;color:var(--subtext);margin-top:4px;">Try the app with sample data</div>
+                </div>
+                <div style="font-size:30px;">⚗</div>
+            </div>
+        </div>
+    </div>
+    <div style="padding:20px;text-align:center;opacity:0.4;font-size:13px;">Meeting Tools v3.1.5 · Southern Dutchess Toastmasters</div>
+</div>
+
 <script>
 /* ============ FIREBASE INIT ============ */
 const firebaseConfig = {
@@ -375,11 +409,23 @@ const WOD_LIBRARY=["Eloquent","Pernicious","Resilience","Sagacious","Ubiquitous"
 
 /* ============ MIGRATION v2 → v3 ============ */
 function migrateIfNeeded() {
+    // Only migrate if v2 data exists — not a fresh install
     if (localStorage.getItem(pk(KEY_CLUBS))) return;
+    const hasV2Data = localStorage.getItem(prefix+'sdtm_club_name') ||
+                      localStorage.getItem(prefix+'sdtm_speakers') ||
+                      localStorage.getItem(prefix+'sdtm_logs');
+    if (!hasV2Data) return; // Genuine new install — welcome screen handles setup
     const oldName = localStorage.getItem(prefix+'sdtm_club_name') || 'My Toastmasters Club';
     const clubId = 'c'+Date.now();
-    localStorage.setItem(pk(KEY_CLUBS), JSON.stringify([{id:clubId,name:oldName,syncKey:''}]));
+    const testId = 'c_test';
+    const testSpeakers = ['JANE DOE','JOHN SMITH','MARY JOHNSON','ROBERT BROWN','SUSAN DAVIS'];
+    localStorage.setItem(pk(KEY_CLUBS), JSON.stringify([
+        {id:clubId, name:oldName, syncKey:'', practiceOnly:false},
+        {id:testId,  name:'TEST CLUB (Practice)', syncKey:'', practiceOnly:true}
+    ]));
     localStorage.setItem(pk(KEY_ACTIVE_CLUB), clubId);
+    localStorage.setItem(prefix+'club_'+testId+'_speakers', JSON.stringify(testSpeakers));
+    localStorage.setItem(prefix+'club_'+testId+'_fillers',  JSON.stringify([...DEFAULT_FILLERS]));
     ['logs','speakers','fillers','wod_full','custom_limits','transcripts'].forEach(k=>{
         const v=localStorage.getItem(prefix+'sdtm_'+k);
         if(v!==null) localStorage.setItem(prefix+'club_'+clubId+'_'+k, v);
@@ -406,24 +452,99 @@ function updateClubUI() {
 function initApp() {
     migrateIfNeeded();
     if (!localStorage.getItem(pk(KEY_CLUBS))) {
-        const clubId='c'+Date.now();
+        // Genuine fresh install — seed TEST CLUB and show welcome screen
         const testId='c_test';
         const testSpeakers=['JANE DOE','JOHN SMITH','MARY JOHNSON','ROBERT BROWN','SUSAN DAVIS'];
         localStorage.setItem(pk(KEY_CLUBS), JSON.stringify([
-            {id:clubId, name:'My Toastmasters Club', syncKey:'', practiceOnly:false},
-            {id:testId,  name:'TEST CLUB (Practice)', syncKey:'', practiceOnly:true}
+            {id:testId, name:'TEST CLUB (Practice)', syncKey:'', practiceOnly:true}
         ]));
-        localStorage.setItem(pk(KEY_ACTIVE_CLUB), clubId);
+        localStorage.setItem(pk(KEY_ACTIVE_CLUB), testId);
         localStorage.setItem(prefix+'club_'+testId+'_speakers', JSON.stringify(testSpeakers));
         localStorage.setItem(prefix+'club_'+testId+'_fillers',  JSON.stringify([...DEFAULT_FILLERS]));
+        // Show welcome screen instead of main menu
+        document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+        document.getElementById('welcome').classList.add('active');
+        document.getElementById('mdToggle').checked = false;
+        document.getElementById('openaiKey').value = '';
+        document.getElementById('versionLabel').innerText = 'Version 3.1.5'+(isTest?' (TEST)':'');
+        return;
     }
     loadClubData(); updateClubUI();
     document.getElementById('mdToggle').checked = (localStorage.getItem(pk(KEY_MD))==='true');
     document.getElementById('openaiKey').value = localStorage.getItem(pk(KEY_AI_KEY))||'';
-    document.getElementById('versionLabel').innerText = 'Version 3.1.4'+(isTest?' (TEST)':'');
+    document.getElementById('versionLabel').innerText = 'Version 3.1.5'+(isTest?' (TEST)':'');
     refreshRoster(); nextWod();
-    // Auto-pull roster & fillers silently on startup
     autoSyncDown();
+}
+
+/* ============ WELCOME SCREEN ============ */
+function showWelcomeJoin() {
+    openModal("Join Club by Code",
+        `<div style="font-size:16px;color:var(--subtext);margin-bottom:12px;">Ask your club officer for the sync code.</div>
+        <input type="text" id="joinCode" placeholder="XXXX-XXXX" style="text-transform:uppercase;letter-spacing:2px;text-align:center;" maxlength="9">`,
+        async ()=>{
+            const code=document.getElementById('joinCode').value.trim().toUpperCase();
+            if(code.length<8){openModal("Invalid Code","Please enter a valid 8-character sync code.",()=>{});return;}
+            try {
+                const doc=await db.collection('clubs').doc(code).get();
+                if(!doc.exists){openModal("Not Found","No club found with that code. Please check and try again.",()=>{});return;}
+                const data=doc.data();
+                const clubId='c'+Date.now();
+                clubs=JSON.parse(localStorage.getItem(pk(KEY_CLUBS))||'[]');
+                clubs.push({id:clubId,name:data.name,syncKey:code,practiceOnly:false});
+                localStorage.setItem(pk(KEY_CLUBS),JSON.stringify(clubs));
+                localStorage.setItem(pk(KEY_ACTIVE_CLUB),clubId);
+                if(data.speakers) localStorage.setItem(prefix+'club_'+clubId+'_speakers',JSON.stringify(data.speakers));
+                if(data.fillers)   localStorage.setItem(prefix+'club_'+clubId+'_fillers',JSON.stringify(data.fillers));
+                if(data.apiKey)    localStorage.setItem(pk(KEY_AI_KEY),data.apiKey);
+                loadClubData(); updateClubUI();
+                document.getElementById('openaiKey').value = data.apiKey||'';
+                refreshRoster(); nextWod(); autoSyncDown();
+                showScreen('menu');
+            } catch(e) {
+                openModal("Connection Error","Could not connect. Check your internet and try again.",()=>{});
+            }
+        }
+    );
+}
+
+function showWelcomeCreate() {
+    openModal("Create New Club",
+        `<div style="margin-bottom:12px;"><input type="text" id="newClubName" placeholder="e.g. Southern Dutchess Toastmasters" style="text-transform:none;"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;background:#F9F9FB;border-radius:12px;padding:14px 16px;border:1px solid var(--border);">
+            <div>
+                <div style="font-size:16px;font-weight:700;">Practice Only</div>
+                <div style="font-size:13px;color:var(--subtext);margin-top:2px;">Local only, no cloud sync</div>
+            </div>
+            <label class="switch"><input type="checkbox" id="newClubPractice"><span class="slider"></span></label>
+        </div>`,
+        ()=>{
+            const name=document.getElementById('newClubName').value.trim();
+            if(!name){openModal("Name Required","Please enter a club name.",()=>{});return;}
+            const practiceOnly=document.getElementById('newClubPractice').checked;
+            const clubId='c'+Date.now();
+            clubs=JSON.parse(localStorage.getItem(pk(KEY_CLUBS))||'[]');
+            clubs.push({id:clubId,name,syncKey:'',practiceOnly});
+            localStorage.setItem(pk(KEY_CLUBS),JSON.stringify(clubs));
+            localStorage.setItem(pk(KEY_ACTIVE_CLUB),clubId);
+            localStorage.setItem(prefix+'club_'+clubId+'_fillers',JSON.stringify([...DEFAULT_FILLERS]));
+            loadClubData(); updateClubUI();
+            refreshRoster(); nextWod();
+            showScreen('menu');
+        }
+    );
+}
+
+function showWelcomePractice() {
+    // Switch active club to TEST CLUB and go straight to menu
+    const testClub=clubs.find(c=>c.practiceOnly);
+    if(testClub){
+        activeClubId=testClub.id;
+        localStorage.setItem(pk(KEY_ACTIVE_CLUB),testClub.id);
+        loadClubData(); updateClubUI();
+    }
+    refreshRoster(); nextWod();
+    showScreen('menu');
 }
 
 /* ============ FIREBASE — AUTO SYNC ============ */
