@@ -40,7 +40,7 @@
 ```
     <div class="card">
         <h1>Technical Reference</h1>
-        <p class="subtitle">Meeting Tools v3.1.5 &nbsp;·&nbsp; Developer contract for <code>index.html</code> &nbsp;·&nbsp; Southern Dutchess Toastmasters</p>
+        <p class="subtitle">Meeting Tools v3.2.2 &nbsp;·&nbsp; Developer contract for <code>index.html</code> &nbsp;·&nbsp; Southern Dutchess Toastmasters</p>
     </div>
 
     <div class="toc">
@@ -172,6 +172,8 @@ durationMins: string</pre>
             <tr><td><code>KEY_ACTIVE_CLUB</code></td><td><code>prod_active_club</code></td><td>Active club ID string</td></tr>
             <tr><td><code>KEY_MD</code></td><td><code>prod_md_toggle</code></td><td>Boolean string for markdown export</td></tr>
             <tr><td><code>KEY_AI_KEY</code></td><td><code>prod_openai_key</code></td><td>OpenAI API key string</td></tr>
+            <tr><td><code>KEY_DEVICE_NAME</code></td><td><code>prod_device_name</code></td><td>Full name of this device's user for session audit trail</td></tr>
+            <tr><td><code>KEY_LAST_SESSION</code></td><td><code>prod_last_session_ts</code></td><td>Alias — actual storage is club-scoped (see below)</td></tr>
         </table>
 
         <h3>Club-Scoped Keys</h3>
@@ -184,6 +186,7 @@ durationMins: string</pre>
             <tr><td><code>wod_full</code></td><td><code>prod_club_c123_wod_full</code></td><td>Object <code>{word, definition, example}</code></td></tr>
             <tr><td><code>custom_limits</code></td><td><code>prod_club_c123_custom_limits</code></td><td>Object <code>{g, cy, r}</code> in minutes</td></tr>
             <tr><td><code>transcripts</code></td><td><code>prod_club_c123_transcripts</code></td><td>JSON array of transcript objects</td></tr>
+            <tr><td><code>last_session_ts</code></td><td><code>prod_club_c123_last_session_ts</code></td><td>Unix timestamp (ms) of last committed session — used for stale data banner</td></tr>
         </table>
 
         <h3>Legacy v2 Keys (migration source only)</h3>
@@ -226,6 +229,7 @@ durationMins: string</pre>
             <tr><td><code>recordingStartTime</code></td><td>number</td><td>Timestamp when recording started</td></tr>
             <tr><td><code>speechDuration</code></td><td>number</td><td>Seconds of recorded speech</td></tr>
             <tr><td><code>activeTranscriptIndex</code></td><td>number</td><td>Index of transcript currently open in viewer</td></tr>
+            <tr><td><code>sessionFromTranscript</code></td><td>boolean</td><td>Flag set true by mergeTranscriptToCounter() to prevent saveCounterSession() from writing a duplicate session</td></tr>
         </table>
     </div>
 
@@ -272,7 +276,7 @@ durationMins: string</pre>
             <tr><td><code>renderClubManager()</code></td><td>Builds club manager list with sync controls for each club.</td></tr>
             <tr><td><code>askAddClub()</code></td><td>Modal to create a new club with name and Practice Only toggle.</td></tr>
             <tr><td><code>askEditClub(id)</code></td><td>Modal to rename a club.</td></tr>
-            <tr><td><code>askDeleteClub(id)</code></td><td>Modal to delete a club and all its local data.</td></tr>
+            <tr><td><code>askDeleteClub(id)</code></td><td>Modal to delete a club and all its local data. Blocks deletion of the currently active club with an error modal.</td></tr>
         </table>
 
         <h3>Firebase Sync</h3>
@@ -309,7 +313,7 @@ durationMins: string</pre>
         <h3>Progress</h3>
         <table>
             <tr><th>Function</th><th>What it does</th></tr>
-            <tr><td><code>loadProgress()</code></td><td>Fetches last 500 sessions from Firestore, groups by speaker, renders list with rates and trends.</td></tr>
+            <tr><td><code>loadProgress()</code></td><td>Fetches last 500 sessions from Firestore, groups by speaker, filters to current roster members only, renders list with rates and trends.</td></tr>
             <tr><td><code>openSpeakerProgress(encodedName)</code></td><td>Fetches all sessions for a speaker, renders summary stats and session-by-session history.</td></tr>
         </table>
 
@@ -332,6 +336,7 @@ durationMins: string</pre>
             <tr><td><code>handleNameInput(el)</code></td><td>Uppercases input, filters roster live as user types.</td></tr>
             <tr><td><code>renderSpeakerListFiltered(f)</code></td><td>Renders a filtered subset of the roster.</td></tr>
             <tr><td><code>askDeleteSpeaker(n)</code></td><td>Modal to confirm deletion. Auto-pushes to cloud on confirm.</td></tr>
+            <tr><td><code>clearNameInput()</code></td><td>Clears the name input field and resets roster to full list. Called by the inline ✕ clear button.</td></tr>
         </table>
 
         <h3>Navigation &amp; Setup</h3>
@@ -356,13 +361,15 @@ durationMins: string</pre>
             <tr><td><code>saveCounterSession()</code></td><td>Saves/merges tally to club logs. Calls writeSession() for cloud history.</td></tr>
             <tr><td><code>parseTallyString(s)</code></td><td>Deserializes log string back to object.</td></tr>
             <tr><td><code>serializeTally(o)</code></td><td>Serializes tally object to log string.</td></tr>
+            <tr><td><code>addFillerOnTheFly()</code></td><td>Opens modal to add a new filler during a live session. Starts count at 1. Toggle saves permanently to club list (default on).</td></tr>
         </table>
 
         <h3>Timer</h3>
         <table>
             <tr><th>Function</th><th>What it does</th></tr>
             <tr><td><code>startTimer()</code></td><td>Starts interval, updates display, changes body background on thresholds.</td></tr>
-            <tr><td><code>togglePause()</code></td><td>Pauses/resumes the timer interval.</td></tr>
+            <tr><td><code>togglePause()</code></td><td>Pauses/resumes the timer interval. Button label toggles PAUSE ↔ RESUME. Resume uses inline interval to preserve exact elapsed time.</td></tr>
+            <tr><td><code>resetTimer()</code></td><td>Stops interval, resets elapsed to 0, resets display and background, restarts clock.</td></tr>
             <tr><td><code>commitAndExit()</code></td><td>Saves result to logs, calls writeSession(), resets background, returns to menu.</td></tr>
         </table>
 
@@ -403,7 +410,9 @@ durationMins: string</pre>
             <tr><td><code>saveSettings()</code></td><td>Saves markdown toggle and API key. Calls autoSyncUp().</td></tr>
             <tr><td><code>exportData()</code></td><td>Downloads JSON backup of active club's speakers, fillers, name, and API key.</td></tr>
             <tr><td><code>handleImportFile(i)</code></td><td>Reads JSON backup, restores speakers/fillers/apiKey, reloads page.</td></tr>
-            <tr><td><code>askClearLogs()</code></td><td>Modal to confirm reset of club logs, WOD, and transcripts.</td></tr>
+            <tr><td><code>askClearLogs()</code></td><td>Modal to confirm reset of club logs, WOD, transcripts, and last_session_ts.</td></tr>
+            <tr><td><code>checkStaleBanner()</code></td><td>Reads last_session_ts — shows yellow stale data banner if data is 3+ hours old and logs exist. Called on menu show and initApp.</td></tr>
+            <tr><td><code>toggleSyncCodeVisibility(clubId, syncKey)</code></td><td>Toggles sync code display between masked (••••-••••) and revealed in Club Manager.</td></tr>
             <tr><td><code>openModal(t, b, c, cancelLabel, confirmLabel)</code></td><td>Core modal. cancelLabel and confirmLabel are optional — default to "Cancel" / "OK".</td></tr>
         </table>
     </div>
@@ -519,8 +528,9 @@ durationMins: string
         </ul>
     </div>
 
-    <div class="footer">Meeting Tools v3.1.5 &nbsp;·&nbsp; Technical Reference &nbsp;·&nbsp; Southern Dutchess Toastmasters</div>
+    <div class="footer">Meeting Tools v3.2.2 &nbsp;·&nbsp; Technical Reference &nbsp;·&nbsp; Southern Dutchess Toastmasters</div>
 </div>
+```
 
 </body>
 </html>

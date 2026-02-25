@@ -45,14 +45,148 @@
     <p class="header-sub">Meeting Tools &nbsp;·&nbsp; Southern Dutchess Toastmasters &nbsp;·&nbsp; All releases from v2.8 onward</p>
 </div>
 
+<!-- ============ v3.2.2 ============ -->
+<div class="release">
+    <div class="release-header">
+        <div>
+            <div class="version-num">v3.2.2</div>
+            <div class="release-date">Current</div>
+        </div>
+        <span class="release-tag tag-current">Current</span>
+        <span class="release-tag tag-fix">Fix</span>
+        <span class="release-tag tag-feature">Feature</span>
+    </div>
+    <div class="release-body">
+        <div class="change-group">
+            <div class="change-group-label">New — Timer</div>
+            <ul>
+                <li>Added <strong>Reset</strong> button to timer screen — resets clock to 00:00 and immediately restarts for the same speaker (3-button layout: Reset | Pause | Commit &amp; Exit)</li>
+                <li>Fixed Pause/Resume — second tap now resumes from exact elapsed time instead of resetting. Button label toggles PAUSE ↔ RESUME</li>
+            </ul>
+        </div>
+        <div class="change-group">
+            <div class="change-group-label">New — Ah-Counter</div>
+            <ul>
+                <li>Add filler word on the fly during a live session — tap <strong>+ ADD WORD</strong> card at the end of the tally grid. Word starts at count 1. Toggle to save permanently to club list (on by default, auto-syncs to cloud)</li>
+                <li>Name input now has an inline <strong>✕ clear button</strong> — appears when field has content, clears field and resets roster list</li>
+            </ul>
+        </div>
+        <div class="change-group">
+            <div class="change-group-label">New — Club Management</div>
+            <ul>
+                <li>Sync code now masked as ••••-•••• by default in Club Manager — tap 👁 to reveal</li>
+                <li>Attempting to delete the currently active club now shows a clear error modal instead of silently allowing it</li>
+            </ul>
+        </div>
+        <div class="change-group">
+            <div class="change-group-label">New — Stale Data Warning</div>
+            <ul>
+                <li>If meeting data from 3 or more hours ago is still present when the app is opened, a yellow warning banner appears on the menu screen with an inline Clear button — designed for back-to-back meeting days</li>
+            </ul>
+        </div>
+        <div class="change-group">
+            <div class="change-group-label">New — Progress Screen</div>
+            <ul>
+                <li>Progress list now filters to current roster members only — deleted members' cloud history is preserved but hidden</li>
+                <li>Manual counter sessions (no transcription) now show filler count and per-word breakdown in speaker detail instead of appearing as blank rows</li>
+            </ul>
+        </div>
+        <div class="change-group">
+            <div class="change-group-label">Fixed — Welcome &amp; Club Flow</div>
+            <ul>
+                <li>Create Club: blank name validation now re-opens the create modal so the user stays in the flow</li>
+                <li>Join Club: API key field now updates immediately in Settings after joining</li>
+                <li>WOD search field no longer pre-populates with club name on first visit</li>
+                <li>Timer display no longer briefly shows stale time from previous session on new start</li>
+                <li>Full name validation modal now reads "JOHN SMITH" instead of developer's name</li>
+            </ul>
+        </div>
+        <div class="change-group">
+            <div class="change-group-label">Documentation</div>
+            <ul>
+                <li>Manual, Technical Reference, Test Plan, and Changelog all updated for v3.2.2</li>
+                <li>Test plan expanded with 10 new test cases (TM-09, CM-06, CM-07, AC-07–09, PR-05–06, DM-04–06)</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- ============ v3.1.9 ============ -->
+<div class="release">
+    <div class="release-header">
+        <div>
+            <div class="version-num">v3.1.9</div>
+            <div class="release-date">February 2026</div>
+        </div>
+        <span class="release-tag tag-fix">Fix</span>
+    </div>
+    <div class="release-body">
+        <div class="change-group">
+            <div class="change-group-label">Fixed — Bug Batch</div>
+            <ul>
+                <li>WS-03: API key field in Settings now updates live after joining a club via sync code</li>
+                <li>WS-05: Blank name in Create Club flow now re-prompts instead of silently closing the modal</li>
+                <li>WOD search field clears when navigating to WOD screen</li>
+                <li>Timer display resets to 00:00 before showing timer screen (no stale time flash)</li>
+                <li>Full name validation placeholder changed from developer name to "JOHN SMITH"</li>
+                <li>Transcript share: fillers marked **bold** in markdown mode, *italic* in plain mode</li>
+                <li>Cannot delete active club — error modal instead of silent deletion</li>
+                <li>Manual counter sessions show filler count in Progress detail instead of blank row</li>
+                <li>Name input clear button fully functional (clearNameInput function was missing from JS)</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- ============ v3.1.6 ============ -->
+<div class="release">
+    <div class="release-header">
+        <div>
+            <div class="version-num">v3.1.6</div>
+            <div class="release-date">February 2026</div>
+        </div>
+        <span class="release-tag tag-feature">Feature</span>
+        <span class="release-tag tag-fix">Fix</span>
+    </div>
+    <div class="release-body">
+        <div class="change-group">
+            <div class="change-group-label">New — Device Name &amp; Session Audit</div>
+            <ul>
+                <li>First-time users prompted for their full name (first + last required) — stored as device identity</li>
+                <li>Every committed session now records <code>recordedBy</code> field in Firestore</li>
+                <li>Speaker Progress detail shows "recorded by [name]" on each session row</li>
+            </ul>
+        </div>
+        <div class="change-group">
+            <div class="change-group-label">New — Session Delete</div>
+            <ul>
+                <li>Sessions in Speaker Progress detail now have a ✕ delete button</li>
+                <li>Delete removes the Firestore document and the DOM row — no page reload required</li>
+            </ul>
+        </div>
+        <div class="change-group">
+            <div class="change-group-label">Fixed — Transcript Share</div>
+            <ul>
+                <li>Share button now handles AbortError (user dismissed share sheet) gracefully — no silent failure</li>
+                <li>Shared transcript now includes filler highlights instead of raw plain text</li>
+            </ul>
+        </div>
+        <div class="change-group">
+            <div class="change-group-label">Fixed — Duplicate Session</div>
+            <ul>
+                <li>Transcription flow no longer writes two Firestore sessions — <code>sessionFromTranscript</code> flag prevents double-write when user taps Save Results after Merge to Counter</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
 <!-- ============ v3.1.5 ============ -->
 <div class="release">
     <div class="release-header">
         <div>
             <div class="version-num">v3.1.5</div>
-            <div class="release-date">Current test version</div>
+            <div class="release-date">February 2026</div>
         </div>
-        <span class="release-tag tag-current">Current</span>
         <span class="release-tag tag-feature">Feature</span>
     </div>
     <div class="release-body">
@@ -333,6 +467,7 @@
 </div>
 
 <div class="footer">Meeting Tools &nbsp;·&nbsp; Changelog &nbsp;·&nbsp; Southern Dutchess Toastmasters</div>
+```
 
 </div>
 </body>
