@@ -1223,24 +1223,21 @@ function switchReportTab(tab) {
 
 async function loadCloudReport() {
     const el = document.getElementById('reportCloudLog');
+    const statusEl = document.getElementById('reportCloudStatus');
     const club = getActiveClub();
 
     if(!club || !club.syncKey || club.practiceOnly) {
-        el.innerText = 'Cloud sync is not enabled for this club.
-Enable it in Settings > Clubs to use Cloud Report.';
+        el.innerText = 'Cloud sync is not enabled for this club.\nEnable it in Settings > Clubs to use Cloud Report.';
         return;
     }
 
-    const statusEl = document.getElementById('reportCloudStatus');
-    if(statusEl) statusEl.innerText = 'Loading…';
-    el.innerText = 'Loading from cloud…';
+    if(statusEl) statusEl.innerText = 'Loading\u2026';
+    el.innerText = 'Loading from cloud\u2026';
 
     try {
-        // Build today date range
         const todayStart = new Date(); todayStart.setHours(0,0,0,0);
         const todayEnd   = new Date(); todayEnd.setHours(23,59,59,999);
 
-        // Fetch todays sessions and club doc (WOD) in parallel
         const [snap, clubDoc] = await Promise.all([
             db.collection('clubs').doc(club.syncKey)
               .collection('sessions')
@@ -1252,75 +1249,51 @@ Enable it in Settings > Clubs to use Cloud Report.';
         ]);
 
         const clubData = clubDoc.data() || {};
-        const wod = clubData.wod || null;
-        const wodDate = clubData.wodDate || null;
-        const isToday = wodDate === new Date().toDateString();
-        const md = localStorage.getItem(pk(KEY_MD)) === 'true';
+        const wod      = clubData.wod    || null;
+        const wodDate  = clubData.wodDate || null;
+        const isToday  = wodDate === new Date().toDateString();
+        const md       = localStorage.getItem(pk(KEY_MD)) === 'true';
 
-        let out = md ? '# Cloud Meeting Report
-' : 'Cloud Meeting Report
-' + '='.repeat(22) + '
-';
-        out += 'Date: ' + new Date().toLocaleDateString() + '
-';
-        out += 'Club: ' + (club.name || club.syncKey) + '
-
-';
+        let out = md ? '# Cloud Meeting Report\n' : 'Cloud Meeting Report\n' + '='.repeat(22) + '\n';
+        out += 'Date: ' + new Date().toLocaleDateString() + '\n';
+        out += 'Club: ' + (club.name || club.syncKey) + '\n\n';
 
         if(wod && isToday) {
             out += md
-                ? '## WOD: ' + wod.word.toUpperCase() + '
-> ' + wod.definition + '
-
-'
-                : 'WOD: ' + wod.word.toUpperCase() + '
-Def: ' + wod.definition + '
-' + '-'.repeat(25) + '
-
-';
+                ? '## WOD: ' + wod.word.toUpperCase() + '\n> ' + wod.definition + '\n\n'
+                : 'WOD: ' + wod.word.toUpperCase() + '\nDef: ' + wod.definition + '\n' + '-'.repeat(25) + '\n\n';
         }
 
         if(snap.empty) {
-            out += 'No sessions recorded today via cloud.
-
-';
-            out += 'Sessions appear here when members use cloud-synced devices.';
+            out += 'No sessions recorded today via cloud.\n\nSessions appear here when members use cloud-synced devices.';
             el.innerText = out;
+            if(statusEl) statusEl.innerText = '0 sessions \u00b7 loaded ' + new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
             return;
         }
 
         const sessions = snap.docs.map(d => d.data());
 
         if(md) {
-            out += '| Name | Role | Result | By |
-| :--- | :--- | :--- | :--- |
-';
+            out += '| Name | Role | Result | By |\n| :--- | :--- | :--- | :--- |\n';
             sessions.forEach(s => {
                 const result = s.type === 'timer' ? (s.result || '--') : (s.totalFillers != null ? s.totalFillers + ' fillers' : '--');
-                out += '| ' + (s.speaker||'?') + ' | ' + (s.role||'?') + ' | ' + result + ' | ' + (s.recordedBy||'?') + ' |
-';
+                out += '| ' + (s.speaker||'?') + ' | ' + (s.role||'?') + ' | ' + result + ' | ' + (s.recordedBy||'?') + ' |\n';
             });
         } else {
-            out += 'NAME             | ROLE             | RESULT           | BY
-';
-            out += '-'.repeat(16) + '|' + '-'.repeat(18) + '|' + '-'.repeat(18) + '|' + '-'.repeat(16) + '
-';
+            out += 'NAME             | ROLE             | RESULT           | BY\n';
+            out += '-'.repeat(16) + '|' + '-'.repeat(18) + '|' + '-'.repeat(18) + '|' + '-'.repeat(16) + '\n';
             sessions.forEach(s => {
                 const result = s.type === 'timer' ? (s.result || '--') : (s.totalFillers != null ? s.totalFillers + ' fillers' : '--');
-                out += (s.speaker||'?').padEnd(16) + ' | ' + (s.role||'?').padEnd(16) + ' | ' + result.padEnd(16) + ' | ' + (s.recordedBy||'?') + '
-';
+                out += (s.speaker||'?').padEnd(16) + ' | ' + (s.role||'?').padEnd(16) + ' | ' + result.padEnd(16) + ' | ' + (s.recordedBy||'?') + '\n';
             });
         }
 
-        // Update status line with count and load time
-        const statusEl = document.getElementById('reportCloudStatus');
-        if(statusEl) statusEl.innerText = sessions.length + ' session' + (sessions.length !== 1 ? 's' : '') + ' · loaded ' + new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
-
         el.innerText = out;
+        if(statusEl) statusEl.innerText = sessions.length + ' session' + (sessions.length !== 1 ? 's' : '') + ' \u00b7 loaded ' + new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
 
     } catch(e) {
-        el.innerText = 'Error loading cloud report:
-' + e.message;
+        el.innerText = 'Error loading cloud report:\n' + e.message;
+        if(statusEl) statusEl.innerText = 'Error';
         console.warn('Cloud report error:', e);
     }
 }
