@@ -207,7 +207,10 @@
     <div class="header"><h1 id="setupHeader">Setup</h1></div>
     <div class="container">
         <div style="display:flex;gap:10px;flex-shrink:0;align-items:center;">
-            <input type="text" id="name" placeholder="FIRST LAST (e.g. JOHN SMITH)" style="flex:1;" oninput="handleNameInput(this)">
+            <div style="flex:1;position:relative;">
+                <input type="text" id="name" placeholder="FIRST LAST (e.g. JOHN SMITH)" style="width:100%;padding-right:40px;" oninput="handleNameInput(this)">
+                <button onclick="clearNameInput()" id="nameClearBtn" style="display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);background:#C7C7CC;border:none;border-radius:50%;width:22px;height:22px;color:white;font-size:14px;font-weight:700;cursor:pointer;line-height:1;padding:0;">✕</button>
+            </div>
             <button class="footer-btn" style="flex:0;padding:15px 25px;font-size:18px;height:54px;display:flex;align-items:center;" onclick="saveSpeaker()">Add</button>
         </div>
         <div id="speakerArea" style="background:var(--card);border-radius:16px;padding:2px;flex:1;overflow-y:auto;border:1px solid var(--border);min-height:120px;margin-bottom:10px;"></div>
@@ -233,7 +236,7 @@
 <div id="timerDisplay" class="screen">
     <div id="spkName" style="font-size:30px;color:#666;margin-top:20px;text-align:center;text-transform:uppercase;font-weight:700;"></div>
     <div id="timer" style="font-size:clamp(100px,30vw,400px);font-weight:200;text-align:center;margin:auto 0;font-variant-numeric:tabular-nums;color:#000;">00:00</div>
-    <div class="button-row"><button id="pauseResumeBtn" class="footer-btn secondary-btn" onclick="togglePause()">PAUSE</button><button class="footer-btn" style="background:var(--green);" onclick="commitAndExit()">COMMIT &amp; EXIT</button></div>
+    <div class="button-row"><button class="footer-btn secondary-btn" onclick="resetTimer()">RESET</button><button id="pauseResumeBtn" class="footer-btn secondary-btn" onclick="togglePause()">PAUSE</button><button class="footer-btn" style="background:var(--green);" onclick="commitAndExit()">COMMIT &amp; EXIT</button></div>
 </div>
 
 <!-- REPORT -->
@@ -755,9 +758,9 @@ function renderClubManager() {
                 <div class="sync-code-box">
                     <div>
                         <div class="sync-code-label">Sync Code</div>
-                        <div class="sync-code-text">${c.syncKey}</div>
+                        <div class="sync-code-text" id="syncCodeDisplay_${c.id}">••••-••••</div>
                     </div>
-                    <button onclick="navigator.clipboard.writeText('${c.syncKey}').then(()=>openModal('Copied','Code copied to clipboard.',()=>{}))" style="background:var(--accent);color:white;border:none;border-radius:8px;padding:10px 14px;font-size:14px;font-weight:700;cursor:pointer;">Copy</button>
+                    <div style="display:flex;gap:8px;"><button onclick="toggleSyncCodeVisibility('${c.id}','${c.syncKey}')" id="syncCodeEye_${c.id}" style="background:#F2F2F7;color:#8E8E93;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:16px;cursor:pointer;">👁</button><button onclick="navigator.clipboard.writeText('${c.syncKey}').then(()=>openModal('Copied','Code copied to clipboard.',()=>{}))" style="background:var(--accent);color:white;border:none;border-radius:8px;padding:10px 14px;font-size:14px;font-weight:700;cursor:pointer;">Copy</button></div>
                 </div>
                 <div class="sync-btn-row">
                     <button class="sync-btn sync-btn-up" onclick="syncUp('${c.id}')">↑ Push to Cloud</button>
@@ -771,6 +774,18 @@ function renderClubManager() {
             `}
         </div>`;
     }).join('');
+}
+function toggleSyncCodeVisibility(clubId, syncKey) {
+    const display=document.getElementById('syncCodeDisplay_'+clubId);
+    const btn=document.getElementById('syncCodeEye_'+clubId);
+    if(!display)return;
+    if(display.innerText.includes('•')){
+        display.innerText=syncKey;
+        if(btn)btn.style.background='#E8F2FF';
+    } else {
+        display.innerText='••••-••••';
+        if(btn)btn.style.background='#F2F2F7';
+    }
 }
 function askAddClub() {
     openModal("New Club",
@@ -1036,7 +1051,24 @@ function serializeTally(o){let r=[];for(let w in o)if(o[w]>0)r.push(`${w}: ${o[w
 
 /* ============ TIMER ============ */
 function startTimer(){elapsed=0;start=Date.now();iv=setInterval(()=>{elapsed=Math.floor((Date.now()-start)/1000);let m=Math.floor(elapsed/60).toString().padStart(2,'0'),s=(elapsed%60).toString().padStart(2,'0');document.getElementById('timer').innerText=`${m}:${s}`;if(elapsed>=lims.r)document.body.style.background='var(--red)';else if(elapsed>=lims.y)document.body.style.background='var(--yellow)';else if(elapsed>=lims.g)document.body.style.background='var(--green)';},1000);}
-function togglePause(){if(iv){clearInterval(iv);iv=null;}else{start=Date.now()-(elapsed*1000);startTimer();}}
+function togglePause(){
+    const btn=document.getElementById('pauseResumeBtn');
+    if(iv){
+        clearInterval(iv);iv=null;
+        if(btn)btn.innerText='RESUME';
+    } else {
+        start=Date.now()-(elapsed*1000);
+        iv=setInterval(()=>{elapsed=Math.floor((Date.now()-start)/1000);let m=Math.floor(elapsed/60).toString().padStart(2,'0'),s=(elapsed%60).toString().padStart(2,'0');document.getElementById('timer').innerText=`${m}:${s}`;if(elapsed>=lims.r)document.body.style.background='var(--red)';else if(elapsed>=lims.y)document.body.style.background='var(--yellow)';else if(elapsed>=lims.g)document.body.style.background='var(--green)';},1000);
+        if(btn)btn.innerText='PAUSE';
+    }
+}
+function resetTimer(){
+    clearInterval(iv);iv=null;elapsed=0;
+    document.getElementById('timer').innerText='00:00';
+    document.body.style.background='var(--bg)';
+    const btn=document.getElementById('pauseResumeBtn');if(btn)btn.innerText='PAUSE';
+    startTimer();
+}
 function commitAndExit(){
     clearInterval(iv);const timeStr=document.getElementById('timer').innerText;
     if(elapsed>0){
