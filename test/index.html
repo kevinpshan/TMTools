@@ -161,6 +161,10 @@
         <div id="tabTimer" class="tab active" onclick="switchMode('timer')">Timer</div>
         <div id="tabCounter" class="tab" onclick="switchMode('counter')">Ah-Counter</div>
     </div>
+    <div id="staleDataBanner" style="display:none;margin:0 20px 10px;background:#FFF9E6;border:2px solid var(--gold);border-radius:14px;padding:14px 16px;display:none;flex-direction:row;justify-content:space-between;align-items:center;gap:12px;">
+        <div style="font-size:14px;font-weight:700;color:var(--gold);flex:1;" id="staleDataMsg">⚠ Old meeting data detected.</div>
+        <button onclick="askClearLogs()" style="background:var(--gold);color:white;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:800;cursor:pointer;flex-shrink:0;">Clear</button>
+    </div>
     <div id="timerMode" class="container" style="flex:0 0 auto;">
         <div class="main-menu-card" onclick="showScreen('setup')"><div class="card-content"><h3>New Timer</h3><p>Select speaker &amp; start</p></div><div class="icon">⊕</div></div>
         <div class="main-menu-card" onclick="showScreen('report')"><div class="card-content"><h3>Meeting Report</h3><p>View recorded times</p></div><div class="icon">☰</div></div>
@@ -395,7 +399,7 @@ const db = firebase.firestore();
 /* ============ KEY ARCHITECTURE v3.1.0 ============ */
 const isTest = window.location.pathname.toLowerCase().includes('/test/');
 const prefix = isTest ? 'test_' : 'prod_';
-const KEY_CLUBS='clubs',KEY_ACTIVE_CLUB='active_club',KEY_MD='md_toggle',KEY_AI_KEY='openai_key',KEY_DEVICE_NAME='device_name';
+const KEY_CLUBS='clubs',KEY_ACTIVE_CLUB='active_club',KEY_MD='md_toggle',KEY_AI_KEY='openai_key',KEY_DEVICE_NAME='device_name',KEY_LAST_SESSION='last_session_ts';
 const pk = k => prefix + k;
 const DEFAULT_FILLERS = ["AH","UH","UM","ER","SO","LIKE","YOU KNOW","WORD OF DAY"];
 
@@ -480,6 +484,7 @@ function initApp() {
     document.getElementById('versionLabel').innerText = 'Version 3.1.5'+(isTest?' (TEST)':'');
     refreshRoster(); nextWod();
     autoSyncDown();
+    checkStaleBanner();
 }
 
 /* ============ WELCOME SCREEN ============ */
@@ -689,6 +694,7 @@ function setSyncStatus(clubId,msg) { const el=document.getElementById('syncStatu
 
 /* ============ FIREBASE — WRITE SESSION ============ */
 async function writeSession(sessionData) {
+    localStorage.setItem(clubKey('last_session_ts'), Date.now().toString());
     const club=getActiveClub();
     if(!club||!club.syncKey||club.practiceOnly) return;
     try {
@@ -846,13 +852,16 @@ async function loadProgress() {
         if(snap.empty){area.innerHTML=`<div style="padding:30px;text-align:center;opacity:0.4;font-size:17px;font-style:italic;">No sessions recorded yet.<br>Sessions are saved automatically when you commit results.</div>`;return;}
         const speakerMap={};
         snap.forEach(doc=>{const s=doc.data();if(!speakerMap[s.speaker])speakerMap[s.speaker]=[];speakerMap[s.speaker].push(s);});
-        const rows=Object.entries(speakerMap).map(([name,sessions])=>{
+        // Filter to only show speakers currently in the active club roster
+        const rosterSet=new Set(allSpeakers.map(s=>s.toUpperCase()));
+        const rows=Object.entries(speakerMap).filter(([name])=>rosterSet.has(name.toUpperCase())).map(([name,sessions])=>{
             const cs=sessions.filter(s=>s.type==='counter'&&s.fillerPct!==undefined);
             const latestRate=cs.length>0?parseFloat(cs[0].fillerPct):null;
             let trend='';
             if(cs.length>=2){const first=parseFloat(cs[cs.length-1].fillerPct);const last=parseFloat(cs[0].fillerPct);if(last<first-0.5)trend='<span style="color:var(--green)">↑ Improving</span>';else if(last>first+0.5)trend='<span style="color:var(--red)">↓ Worsening</span>';else trend='<span style="color:#8E8E93">→ Steady</span>';}
             return {name,sessions,latestRate,trend};
         });
+        if(!rows.length){area.innerHTML=`<div style="padding:30px;text-align:center;opacity:0.4;font-size:17px;font-style:italic;">No sessions for current roster members.<br>Deleted members' history is preserved but hidden.</div>`;return;}
         area.innerHTML=rows.map(r=>`
             <div class="progress-speaker-row" onclick="openSpeakerProgress('${encodeURIComponent(r.name)}')">
                 <div style="flex:1;">
@@ -1014,6 +1023,7 @@ function showScreen(id){
     document.getElementById(id).classList.add('active');
     if(id==='setup'){selectedTypeLabel='';renderSetupGrid();refreshRoster();recordingEnabled=false;const rt=document.getElementById('recordToggle');if(rt)rt.checked=false;const rr=document.getElementById('recordToggleRow');if(rr)rr.style.display=currentMode==='counter'?'flex':'none';const nb=document.getElementById('nameClearBtn');if(nb)nb.style.display='none';}
     if(id==='report')loadReport();
+    if(id==='menu')checkStaleBanner();
     if(id==='transcriptList')loadTranscriptList();
     if(id==='wod'){const wi=document.getElementById('wodManualInput');if(wi)wi.value='';}
     if(id==='fillerManager')renderFillerManager();
@@ -1040,10 +1050,43 @@ function selectWod(){if(!activeWodData)return;const wu=activeWodData.word.toUppe
 
 /* ============ TALLY ============ */
 function initTally(){currentTally={};fillerList.forEach(f=>currentTally[f]=0);renderTally();}
-function renderTally(){const area=document.getElementById('tallyArea');const wod=JSON.parse(localStorage.getItem(clubKey('wod_full')));const activeWod=wod?wod.word.toUpperCase():null;const sorted=[...fillerList].sort((a,b)=>a===activeWod?-1:b===activeWod?1:a.localeCompare(b));area.innerHTML=sorted.map(f=>{const isWod=(f===activeWod);return `<div class="tally-card ${isWod?'wod-active':''}" onclick="incTally('${f}')"><div class="tally-del" onclick="delFiller(event,'${f}')">✕</div>${isWod?'<div class="wod-mini-label">WORD OF DAY</div>':''}<div class="count" id="ct-${f}">${currentTally[f]}</div><div class="label">${f}</div><div class="tally-minus" onclick="decTally(event,'${f}')">−</div></div>`;}).join('');}
+function renderTally(){
+    const area=document.getElementById('tallyArea');
+    const wod=JSON.parse(localStorage.getItem(clubKey('wod_full')));
+    const activeWod=wod?wod.word.toUpperCase():null;
+    const sorted=[...fillerList].sort((a,b)=>a===activeWod?-1:b===activeWod?1:a.localeCompare(b));
+    area.innerHTML=sorted.map(f=>{
+        const isWod=(f===activeWod);
+        return `<div class="tally-card ${isWod?'wod-active':''}" onclick="incTally('${f}')"><div class="tally-del" onclick="delFiller(event,'${f}')">✕</div>${isWod?'<div class="wod-mini-label">WORD OF DAY</div>':''}<div class="count" id="ct-${f}">${currentTally[f]}</div><div class="label">${f}</div><div class="tally-minus" onclick="decTally(event,'${f}')">−</div></div>`;
+    }).join('')
+    + `<div class="tally-card" onclick="addFillerOnTheFly()" style="border:2px dashed var(--border);background:#F9F9FB;"><div style="font-size:36px;color:#C7C7CC;font-weight:300;line-height:1;">+</div><div class="label" style="color:#8E8E93;font-size:13px;">ADD WORD</div></div>`;
+}
 function incTally(f){currentTally[f]++;document.getElementById(`ct-${f}`).innerText=currentTally[f];}
 function decTally(e,f){e.stopPropagation();if(currentTally[f]>0)currentTally[f]--;document.getElementById(`ct-${f}`).innerText=currentTally[f];}
 function delFiller(e,f){e.stopPropagation();openModal("Delete?",`Remove "${f}"?`,()=>{fillerList=fillerList.filter(w=>w!==f);localStorage.setItem(clubKey('fillers'),JSON.stringify(fillerList));renderTally();});}
+
+function addFillerOnTheFly(){
+    openModal(
+        "Add Filler Word",
+        `<div style="font-size:15px;color:var(--subtext);margin-bottom:12px;">Word will be counted as 1 and added to your club list.</div>
+        <input type="text" id="flyFillerInput" placeholder="e.g. BASICALLY" style="text-transform:uppercase;margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;background:#F9F9FB;border-radius:12px;padding:12px 16px;border:1px solid var(--border);">
+            <div style="font-size:15px;font-weight:700;">Save to club list permanently</div>
+            <label class="switch"><input type="checkbox" id="flyFillerSave" checked><span class="slider"></span></label>
+        </div>`,
+        ()=>{
+            const word=document.getElementById('flyFillerInput').value.trim().toUpperCase();
+            if(!word)return;
+            const saveToClub=document.getElementById('flyFillerSave').checked;
+            if(!fillerList.includes(word)){
+                fillerList.push(word);
+                if(saveToClub){localStorage.setItem(clubKey('fillers'),JSON.stringify(fillerList));autoSyncUp();}
+            }
+            currentTally[word]=(currentTally[word]||0)+1;
+            renderTally();
+        }
+    );
+}
 
 function saveCounterSession(){
     let logs=JSON.parse(localStorage.getItem(clubKey('logs'))||'[]');
@@ -1054,6 +1097,7 @@ function saveCounterSession(){
     if(idx!==-1){let m=parseTallyString(logs[idx].split(' :: ')[1]);for(let w in currentTally)if(currentTally[w]>0)m[w]=(m[w]||0)+currentTally[w];logs[idx]=hdr+serializeTally(m);}
     else logs.push(hdr+serializeTally(currentTally));
     localStorage.setItem(clubKey('logs'),JSON.stringify(logs));
+    localStorage.setItem(clubKey('last_session_ts'), Date.now().toString());
     if(!sessionFromTranscript)writeSession({speaker:currentSpeaker,role:selectedTypeLabel,date:new Date().toLocaleString(),type:'counter',fillerDetail,totalFillers});
     sessionFromTranscript=false;
     openModal("Saved","Counts saved.",()=>{showScreen('menu');});
@@ -1096,7 +1140,23 @@ function commitAndExit(){
 function loadReport(){const logs=JSON.parse(localStorage.getItem(clubKey('logs'))||'[]');const wod=JSON.parse(localStorage.getItem(clubKey('wod_full')));let d=`Report\nDate: ${new Date().toLocaleDateString()}\n\n`;if(wod)d+=`WOD: ${wod.word.toUpperCase()}\nDef: ${wod.definition}\nUsage: "${wod.example}"\n${'-'.repeat(25)}\n\n`;if(logs.length>0){d+=`NAME             | ROLE             | RESULT\n${'-'.repeat(16)}|${'-'.repeat(18)}|${'-'.repeat(20)}\n`;logs.forEach(l=>{const p=l.split(' | ');const s=p[1].split(' :: ');d+=`${p[0].padEnd(16)} | ${s[0].padEnd(16)} | ${s[1]}\n`;});}else d+='No data recorded.';document.getElementById('reportLog').innerText=d;}
 function exportData(){const ac=getActiveClub();const d={clubName:ac?ac.name:'',speakers:allSpeakers,fillers:fillerList,openai:localStorage.getItem(pk(KEY_AI_KEY))||''};const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(d)],{type:'application/json'}));a.download='meeting-backup.json';a.click();}
 function handleImportFile(i){const r=new FileReader();r.onload=(e)=>{const d=JSON.parse(e.target.result);if(d.speakers){allSpeakers=d.speakers;localStorage.setItem(clubKey('speakers'),JSON.stringify(allSpeakers));}if(d.fillers){fillerList=d.fillers;localStorage.setItem(clubKey('fillers'),JSON.stringify(fillerList));}if(d.openai)localStorage.setItem(pk(KEY_AI_KEY),d.openai);location.reload();};r.readAsText(i.files[0]);}
-function askClearLogs(){openModal("Clear?","Reset logs, WOD, and transcripts for this club?",()=>{localStorage.removeItem(clubKey('logs'));localStorage.removeItem(clubKey('wod_full'));localStorage.removeItem(clubKey('transcripts'));location.reload();});}
+function askClearLogs(){openModal("Clear?","Reset logs, WOD, and transcripts for this club?",()=>{localStorage.removeItem(clubKey('logs'));localStorage.removeItem(clubKey('wod_full'));localStorage.removeItem(clubKey('transcripts'));localStorage.removeItem(clubKey('last_session_ts'));location.reload();});}
+function checkStaleBanner(){
+    const banner=document.getElementById('staleDataBanner');
+    if(!banner)return;
+    const ts=parseInt(localStorage.getItem(clubKey('last_session_ts'))||'0');
+    const logs=JSON.parse(localStorage.getItem(clubKey('logs'))||'[]');
+    if(!ts||!logs.length){banner.style.display='none';return;}
+    const ageHours=(Date.now()-ts)/(1000*60*60);
+    if(ageHours>=3){
+        const hoursAgo=Math.floor(ageHours);
+        const msg=document.getElementById('staleDataMsg');
+        if(msg)msg.innerText=`⚠ Meeting data from ${hoursAgo}h ago still saved. Clear before your next meeting?`;
+        banner.style.display='flex';
+    } else {
+        banner.style.display='none';
+    }
+}
 function openModal(t,b,c,cancelLabel,confirmLabel){
     document.getElementById('modalTitle').innerText=t;
     document.getElementById('modalBody').innerHTML=b;
