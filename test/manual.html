@@ -86,7 +86,7 @@
         <a href="index.html" class="btn-back">← App</a>
         <div style="text-align:center;">
             <div class="header-title">Manual</div>
-            <div class="header-version">v3.1.5 · Southern Dutchess Toastmasters</div>
+            <div class="header-version">v3.2.2 · Southern Dutchess Toastmasters</div>
         </div>
         <div style="width:40px;"></div>
     </div>
@@ -147,7 +147,8 @@
             <tr><td>Custom</td><td colspan="3">Set your own Green / Yellow / Red in minutes</td></tr>
         </table>
         <ul>
-            <li><strong>Pause / Resume</strong> — freezes and resumes without losing elapsed time.</li>
+            <li><strong>Reset</strong> — stops and restarts the clock from zero for the same speaker.</li>
+            <li><strong>Pause / Resume</strong> — freezes and resumes without losing elapsed time. Button label toggles between PAUSE and RESUME.</li>
             <li><strong>Commit &amp; Exit</strong> — saves to the meeting report and returns to menu.</li>
         </ul>
 
@@ -162,6 +163,8 @@
             <li>Tap red <strong>✕</strong> (bottom left) to remove a filler from this session.</li>
             <li>If you save the same speaker twice in one meeting, counts are <strong>merged</strong> automatically.</li>
         </ul>
+        <h3>Adding a Word On The Fly</h3>
+        <p>During a live tracking session, tap the <strong>+ ADD WORD</strong> card at the end of the tally grid to add a filler word you just heard. The word is immediately counted as 1. A toggle lets you save it permanently to the club list (on by default).</p>
         <h3>Full Name Tip</h3>
         <p>Use full names (First Last) when adding speakers — this ensures accurate tracking when multiple members share a first name.</p>
 
@@ -199,6 +202,8 @@
         <ul>
             <li>Each speaker shows their latest filler rate, trend (↑ ↓ →), and session count.</li>
             <li>Tap any speaker for full history — Latest, Average, Best, and session-by-session log.</li>
+            <li>Only current roster members appear. Deleted members' history is preserved in the cloud but hidden from the list.</li>
+            <li>Each session shows who recorded it and when. Tap <strong>✕</strong> to delete a session that was entered in error.</li>
         </ul>
 
         <h2 id="settings-member">8. Settings</h2>
@@ -208,6 +213,7 @@
             <li><strong>Backup Data</strong> — downloads a JSON file as an emergency restore.</li>
             <li><strong>Restore Data</strong> — imports a previously exported backup.</li>
             <li><strong>Clear Meeting Data</strong> — resets logs, transcripts, and WOD. Does not delete roster or filler words.</li>
+            <li><strong>Stale Data Warning</strong> — if you open the app and meeting data from 3 or more hours ago is still present, a yellow banner appears on the menu screen reminding you to clear before starting a new meeting.</li>
         </ul>
 
     </div><!-- end members panel -->
@@ -239,7 +245,7 @@
             <li>Share this code with your members — they use it on the welcome screen or via Settings → Clubs → Join by Code.</li>
         </ol>
         <div class="alert">
-            <strong>Keep the code safe.</strong> Anyone with the code can join your club and read your roster. Share it only with your club members. If you ever need to revoke access, contact your developer to regenerate the code.
+            <strong>Keep the code safe.</strong> Anyone with the code can join your club and read your roster. Share it only with your club members. The sync code is masked by default in Club Manager — tap the 👁 icon to reveal it when needed.
         </div>
         <h3>What Syncs Automatically</h3>
         <ul>
@@ -313,7 +319,7 @@
             <a href="test-plan.html" class="resource-card">
                 <div class="rc-icon">✅</div>
                 <div class="rc-title">Test Plan</div>
-                <div class="rc-desc">55 test cases across 14 sections. Use before every release to production.</div>
+                <div class="rc-desc">60+ test cases across 14 sections. Use before every release to production.</div>
             </a>
             <a href="changelog.html" class="resource-card">
                 <div class="rc-icon">📋</div>
@@ -332,7 +338,7 @@
 </div><!-- end content -->
 
 <div class="page-footer">
-    Meeting Tools v3.1.5 &nbsp;·&nbsp; Southern Dutchess Toastmasters
+    Meeting Tools v3.2.2 &nbsp;·&nbsp; Southern Dutchess Toastmasters
 </div>
 
 <script>
@@ -352,6 +358,7 @@
         document.querySelectorAll('.tab')[1].classList.add('active');
     }
 </script>
+```
 
 </body>
 </html>

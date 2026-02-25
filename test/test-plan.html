@@ -53,7 +53,7 @@
 ```
 <div class="header-card">
     <h1>Test Plan</h1>
-    <p class="subtitle">Meeting Tools v3.1.5 &nbsp;·&nbsp; Southern Dutchess Toastmasters &nbsp;·&nbsp; Test environment: <code>/test/index.html</code></p>
+    <p class="subtitle">Meeting Tools v3.2.2 &nbsp;·&nbsp; Southern Dutchess Toastmasters &nbsp;·&nbsp; Test environment: <code>/test/index.html</code></p>
 </div>
 
 <div class="toc">
@@ -198,7 +198,7 @@
             <td class="test-id">CM-03</td>
             <td><span class="priority p-high">High</span></td>
             <td>Delete a club<br><ol class="steps"><li>Settings → Clubs</li><li>Tap delete on a non-active club</li><li>Confirm</li></ol></td>
-            <td class="expected">Club removed from list. Its local data cleared. Cannot delete the active club.</td>
+            <td class="expected">Club removed from list. Its local data cleared.</td>
         </tr>
         <tr>
             <td><span class="pass-box"></span></td>
@@ -213,6 +213,20 @@
             <td><span class="priority p-high">High</span></td>
             <td>Data isolation between clubs<br><ol class="steps"><li>Switch to Club A, add speaker "ALICE"</li><li>Switch to Club B</li><li>Go to Setup, check roster</li></ol></td>
             <td class="expected">Club B roster does not contain ALICE. Each club's roster is fully separate.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">CM-06</td>
+            <td><span class="priority p-high">High</span></td>
+            <td>Cannot delete active club<br><ol class="steps"><li>Settings → Clubs</li><li>Tap delete (✕) on the currently active club</li></ol></td>
+            <td class="expected">Error modal: "Switch to a different club before deleting this one." Club is not deleted.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">CM-07</td>
+            <td><span class="priority p-medium">Medium</span></td>
+            <td>Sync code masked by default<br><ol class="steps"><li>Settings → Clubs</li><li>Check sync code display for a synced club</li><li>Tap 👁 icon</li></ol></td>
+            <td class="expected">Sync code shows as ••••-•••• by default. Tap 👁 reveals full code. Tap again to re-mask.</td>
         </tr>
     </table>
 </div>
@@ -340,7 +354,7 @@
             <td class="test-id">TM-02</td>
             <td><span class="priority p-high">High</span></td>
             <td>Pause and resume<br><ol class="steps"><li>Start any timer</li><li>At ~15 seconds tap PAUSE</li><li>Wait 5 seconds</li><li>Tap RESUME</li></ol></td>
-            <td class="expected">Timer freezes exactly at pause point. Resumes from same elapsed time. Background holds color state.</td>
+            <td class="expected">Timer freezes exactly at pause point. Button label changes to RESUME. Tap again — resumes from exact same elapsed time. Button returns to PAUSE. Background holds color state.</td>
         </tr>
         <tr>
             <td><span class="pass-box"></span></td>
@@ -383,6 +397,13 @@
             <td><span class="priority p-high">High</span></td>
             <td>Validation — no name or role<br><ol class="steps"><li>Setup screen with empty name</li><li>Tap START</li></ol></td>
             <td class="expected">Error modal: "Enter Name &amp; Role."</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">TM-09</td>
+            <td><span class="priority p-high">High</span></td>
+            <td>Reset button<br><ol class="steps"><li>Start a timer, let it run to ~30 seconds</li><li>Tap RESET</li></ol></td>
+            <td class="expected">Clock resets to 00:00. Background returns to default. Timer immediately restarts from zero for the same speaker.</td>
         </tr>
     </table>
 </div>
@@ -435,6 +456,27 @@
             <td><span class="priority p-medium">Medium</span></td>
             <td>Full name warning<br><ol class="steps"><li>Setup screen, type "Kevin" (single name)</li><li>Tap Add</li></ol></td>
             <td class="expected">Warning modal asking to confirm single name or go back to add last name.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">AC-07</td>
+            <td><span class="priority p-high">High</span></td>
+            <td>Add filler word on the fly<br><ol class="steps"><li>Start a live counter session</li><li>Tap the + ADD WORD card at the end of the grid</li><li>Enter "BASICALLY", leave "Save to club list" toggled on</li><li>Tap OK</li></ol></td>
+            <td class="expected">BASICALLY card appears in grid with count of 1. Word added to club filler list permanently and auto-pushed to cloud.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">AC-08</td>
+            <td><span class="priority p-medium">Medium</span></td>
+            <td>Add filler on the fly — don't save permanently<br><ol class="steps"><li>Start a live counter session</li><li>Tap + ADD WORD</li><li>Enter word, toggle "Save to club list" OFF</li><li>Tap OK</li></ol></td>
+            <td class="expected">Word appears in current session grid at count 1. Not added to club filler list — will not appear in next session.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">AC-09</td>
+            <td><span class="priority p-medium">Medium</span></td>
+            <td>Name input clear button<br><ol class="steps"><li>Setup screen</li><li>Type any text in the name field</li><li>Tap the ✕ button inside the field</li></ol></td>
+            <td class="expected">Field clears. Clear button disappears. Full roster list resets.</td>
         </tr>
     </table>
 </div>
@@ -571,6 +613,20 @@
             <td>Trend indicator accuracy<br><ol class="steps"><li>Speaker with improving sessions (lower filler % over time)</li><li>Check trend indicator</li></ol></td>
             <td class="expected">↑ Improving shown in green. ↓ Worsening in red. → Steady in grey.</td>
         </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">PR-05</td>
+            <td><span class="priority p-high">High</span></td>
+            <td>Progress filters to current roster<br><ol class="steps"><li>Ensure a session exists for a speaker</li><li>Delete that speaker from the roster</li><li>Open Progress screen</li></ol></td>
+            <td class="expected">Deleted speaker no longer appears in Progress list. Their Firestore history is preserved but hidden.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">PR-06</td>
+            <td><span class="priority p-medium">Medium</span></td>
+            <td>Manual counter sessions in progress detail<br><ol class="steps"><li>Save a counter session manually (no transcription)</li><li>Open that speaker's detail in Progress</li></ol></td>
+            <td class="expected">Session appears in detail list showing "X fillers (manual)" with per-word breakdown. Not counted in filler % average.</td>
+        </tr>
     </table>
 </div>
 
@@ -646,6 +702,27 @@
             <td><span class="priority p-critical">Critical</span></td>
             <td>Clear Meeting Data<br><ol class="steps"><li>Have logs, transcripts, and WOD set</li><li>Settings → Clear Meeting Data → confirm</li></ol></td>
             <td class="expected">Logs cleared. WOD cleared. Transcripts cleared. Roster and filler words unchanged.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">DM-04</td>
+            <td><span class="priority p-high">High</span></td>
+            <td>Stale data banner appears<br><ol class="steps"><li>Commit a session</li><li>Manually set <code>last_session_ts</code> in DevTools to 4 hours ago</li><li>Navigate to menu</li></ol></td>
+            <td class="expected">Yellow banner appears below tabs: "Meeting data from 4h ago still saved. Clear before your next meeting?" with inline Clear button.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">DM-05</td>
+            <td><span class="priority p-medium">Medium</span></td>
+            <td>Stale banner not shown for recent data<br><ol class="steps"><li>Commit a session</li><li>Return to menu immediately</li></ol></td>
+            <td class="expected">No banner shown — data is less than 3 hours old.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">DM-06</td>
+            <td><span class="priority p-medium">Medium</span></td>
+            <td>Stale banner Clear button works<br><ol class="steps"><li>Trigger stale banner (see DM-04)</li><li>Tap Clear in the banner</li><li>Confirm</li></ol></td>
+            <td class="expected">Meeting data cleared. Banner disappears. Roster and fillers unchanged.</td>
         </tr>
         <tr>
             <td><span class="pass-box"></span></td>
@@ -756,7 +833,7 @@
             <td class="test-id">PW-04</td>
             <td><span class="priority p-medium">Medium</span></td>
             <td>Version label displays correctly<br><ol class="steps"><li>Check bottom of main menu</li></ol></td>
-            <td class="expected">Shows "Version 3.1.5 (TEST)" at /test/ or "Version 3.1.5" at root.</td>
+            <td class="expected">Shows "Version 3.2.2 (TEST)" at /test/ or "Version 3.2.2" at root.</td>
         </tr>
         <tr>
             <td><span class="pass-box"></span></td>
@@ -768,7 +845,8 @@
     </table>
 </div>
 
-<div class="footer">Meeting Tools v3.1.5 &nbsp;·&nbsp; Test Plan &nbsp;·&nbsp; Southern Dutchess Toastmasters</div>
+<div class="footer">Meeting Tools v3.2.2 &nbsp;·&nbsp; Test Plan &nbsp;·&nbsp; Southern Dutchess Toastmasters</div>
+```
 
 </div>
 </body>
