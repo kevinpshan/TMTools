@@ -424,7 +424,7 @@ function clubKey(s) { return prefix+'club_'+activeClubId+'_'+s; }
 function getActiveClub() { return clubs.find(c=>c.id===activeClubId); }
 
 let currentMode='timer', currentSpeaker='', currentTally={}, iv, start, elapsed=0, lims={g:0,y:0,r:0}, selectedTypeLabel='';
-let fillerList=[], allSpeakers=[], recordingEnabled=false, sessionFromTranscript=false;
+let fillerList=[], allSpeakers=[], recordingEnabled=false, sessionFromTranscript=false, counterStartTime=0;
 let mediaRecorder=null, recordingStream=null, audioChunks=[], transcriptResult='', transcriptCounts={};
 let recordingStartTime=0, speechDuration=0, activeTranscriptIndex=-1;
 
@@ -932,7 +932,7 @@ async function openSpeakerProgress(encodedName) {
         const syncKey=club.syncKey;
         document.getElementById('speakerProgressSessions').innerHTML=reversed.map(s=>{
             let statsLine='';
-            if(s.type==='counter'){if(s.fillerPct!==undefined){const c=parseFloat(s.fillerPct)<5?'var(--green)':parseFloat(s.fillerPct)<=10?'#CC8800':'var(--red)';statsLine=`<span style="color:${c};font-weight:800;">${s.fillerPct}%</span> · ${s.totalFillers} filler${s.totalFillers!==1?'s':''} of ${s.totalWords} words${s.fillersPerMin?' · '+s.fillersPerMin+'/min':''}`;}else if(s.totalFillers!==undefined){const details=s.fillerDetail?Object.entries(s.fillerDetail).map(([w,c])=>`${w}:${c}`).join(', '):'';statsLine=`<span style="color:#8E8E93;font-weight:800;">${s.totalFillers} filler${s.totalFillers!==1?'s':''} (manual)</span>${details?' · <span style="font-size:12px;color:#8E8E93;">'+details+'</span>':''}`;}}else if(s.type==='timer'){statsLine=`Timer · ${s.result||''}`;}
+            if(s.type==='counter'){if(s.fillerPct!==undefined){const c=parseFloat(s.fillerPct)<5?'var(--green)':parseFloat(s.fillerPct)<=10?'#CC8800':'var(--red)';statsLine=`<span style="color:${c};font-weight:800;">${s.fillerPct}%</span> · ${s.totalFillers} filler${s.totalFillers!==1?'s':''} of ${s.totalWords} words${s.fillersPerMin?' · '+s.fillersPerMin+'/min':''}`;}else if(s.totalFillers!==undefined){const details=s.fillerDetail?Object.entries(s.fillerDetail).map(([w,c])=>`${w}:${c}`).join(', '):'';statsLine=`<span style="color:#8E8E93;font-weight:800;">${s.totalFillers} filler${s.totalFillers!==1?'s':''} <span style="font-size:11px;">(counted, no score)</span></span>${details?' · <span style="font-size:12px;color:#8E8E93;">'+details+'</span>':''}`;}}else if(s.type==='timer'){statsLine=`Timer · ${s.result||''}`;}
             const recordedBy=s.recordedBy?`<span style="color:#8E8E93;">recorded by ${s.recordedBy}</span>`:'';
             return `<div class="session-row" style="position:relative;">
                 <div style="display:flex;justify-content:space-between;align-items:flex-start;">
@@ -1079,7 +1079,7 @@ function selectWod(){
 }
 
 /* ============ TALLY ============ */
-function initTally(){currentTally={};fillerList.forEach(f=>currentTally[f]=0);renderTally();}
+function initTally(){currentTally={};fillerList.forEach(f=>currentTally[f]=0);counterStartTime=Date.now();renderTally();}
 function renderTally(){
     const area=document.getElementById('tallyArea');
     const wod=JSON.parse(localStorage.getItem(clubKey('wod_full')));
@@ -1128,9 +1128,49 @@ function saveCounterSession(){
     else logs.push(hdr+serializeTally(currentTally));
     localStorage.setItem(clubKey('logs'),JSON.stringify(logs));
     localStorage.setItem(clubKey('last_session_ts'), Date.now().toString());
-    if(!sessionFromTranscript)writeSession({speaker:currentSpeaker,role:selectedTypeLabel,date:new Date().toLocaleString(),type:'counter',fillerDetail,totalFillers});
-    sessionFromTranscript=false;
-    openModal("Saved","Counts saved.",()=>{showScreen('menu');});
+
+    // ── Scoring (manual path) ─────────────────────────────────────────────
+    const durationSeconds = sessionFromTranscript ? 0 : Math.round((Date.now() - counterStartTime) / 1000);
+    const MINIMUM_SCORING_SECONDS = 15;
+    let scoreData = {};
+    let scoreCardHTML = '';
+
+    if(!sessionFromTranscript && durationSeconds >= MINIMUM_SCORING_SECONDS) {
+        const durationMins  = (durationSeconds / 60).toFixed(1);
+        const totalWords    = Math.round(130 * durationSeconds / 60);
+        const fillerPct     = totalWords > 0 ? ((totalFillers / totalWords) * 100).toFixed(1) : '0.0';
+        const fillerScore   = parseFloat(fillerPct) < 5 ? 'EXCELLENT' : parseFloat(fillerPct) <= 10 ? 'GOOD' : 'NEEDS WORK';
+        const fillersPerMin = (totalFillers / (durationSeconds / 60)).toFixed(1);
+
+        scoreData = {fillerPct, fillerScore, totalWords, fillersPerMin, durationMins};
+
+        // Build score card HTML for the modal (same style as transcript view)
+        const sc = parseFloat(fillerPct) < 5 ? 'var(--green)' : parseFloat(fillerPct) <= 10 ? '#CC8800' : 'var(--red)';
+        const sb = parseFloat(fillerPct) < 5 ? '#F0FFF4' : parseFloat(fillerPct) <= 10 ? '#FFFBEA' : '#FFF0EE';
+        scoreCardHTML = `
+            <div style="background:${sb};border:2px solid ${sc};border-radius:12px;padding:14px 18px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                    <div style="font-size:11px;font-weight:800;color:#8E8E93;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;">Filler Score (estimated)</div>
+                    <div style="font-size:30px;font-weight:900;color:${sc};">${fillerPct}%</div>
+                    <div style="font-size:13px;color:${sc};font-weight:700;">${totalFillers} fillers · ~${totalWords} words</div>
+                    <div style="font-size:12px;color:#8E8E93;margin-top:3px;">Duration: ${durationMins} min · Rate: ${fillersPerMin}/min</div>
+                </div>
+                <div style="font-size:14px;font-weight:900;color:${sc};letter-spacing:1px;">${fillerScore}</div>
+            </div>
+            <div style="font-size:12px;color:#8E8E93;text-align:center;font-style:italic;margin-bottom:4px;">Word count estimated at 130 wpm</div>`;
+    }
+
+    if(!sessionFromTranscript) {
+        writeSession({
+            speaker:currentSpeaker, role:selectedTypeLabel,
+            date:new Date().toLocaleString(), type:'counter',
+            fillerDetail, totalFillers,
+            ...scoreData
+        });
+    }
+    sessionFromTranscript = false;
+
+    openModal("Results", scoreCardHTML || 'Counts saved.', () => { showScreen('menu'); }, 'Cancel', 'Done');
 }
 function parseTallyString(s){let o={};if(s==="0 Fillers")return o;s.split(', ').forEach(p=>{const[w,c]=p.split(': ');o[w]=parseInt(c);});return o;}
 function serializeTally(o){let r=[];for(let w in o)if(o[w]>0)r.push(`${w}: ${o[w]}`);return r.length>0?r.join(', '):"0 Fillers";}
