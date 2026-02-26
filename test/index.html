@@ -698,11 +698,16 @@ function askJoinByCode() {
             localStorage.setItem(pk(KEY_CLUBS),JSON.stringify(clubs));
             if(data.speakers) localStorage.setItem(prefix+'club_'+clubId+'_speakers',JSON.stringify(data.speakers));
             if(data.fillers) localStorage.setItem(prefix+'club_'+clubId+'_fillers',JSON.stringify(data.fillers));
-            if(data.apiKey) localStorage.setItem(pk(KEY_AI_KEY), data.apiKey);
+            if(data.apiKey) {
+                localStorage.setItem(pk(KEY_AI_KEY), data.apiKey);
+                const el=document.getElementById('openaiKey');
+                if(el){ el.value=data.apiKey; el.placeholder='Shared by club ☁'; }
+            }
             activeClubId=clubId;
             localStorage.setItem(pk(KEY_ACTIVE_CLUB),clubId);
             loadClubData(); updateClubUI(); renderClubManager();
-            openModal("Joined!",`Welcome to ${data.name}. Roster, filler words, and AI key synced.`,()=>{});
+            const keyMsg = data.apiKey ? ' Roster, filler words, and AI key synced.' : ' Roster and filler words synced. No AI key found in cloud.';
+            openModal("Joined!",`Welcome to ${data.name}.${keyMsg}`,()=>{});
         } catch(e) {
             openModal("Connection Error","Could not connect to cloud. Check your internet and try again.",()=>{});
         }
@@ -736,6 +741,7 @@ async function syncDown(clubId) {
         if(clubId===activeClubId){allSpeakers=merged;fillerList=data.fillers||fillerList;}
         setSyncStatus(clubId,'Pulled '+new Date().toLocaleTimeString());
         if(clubId===activeClubId) refreshRoster();
+        openModal("Pulled from Cloud", `Roster and filler words updated.${data.apiKey ? ' AI key synced.' : ' No AI key found in cloud — check with your club officer.'}`, ()=>{});
     } catch(e) { setSyncStatus(clubId,'Pull failed — check connection'); }
 }
 
