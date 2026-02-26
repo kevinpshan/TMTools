@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Meeting Tools v3.1.0</title>
+    <title>Meeting Tools v3.2.3</title>
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -246,7 +246,24 @@
 
 <div id="report" class="screen">
     <div class="header"><h1 id="reportPageTitle">Report</h1></div>
-    <div class="container"><div id="reportLog" style="background:var(--card);border-radius:18px;padding:20px;flex:1;overflow-y:auto;font-family:monospace;font-size:17px;border:1px solid var(--border);color:#000;white-space:pre-wrap;"></div></div>
+    <div class="tab-container" style="margin:0 20px 10px;">
+        <div id="reportTabLocal" class="tab active" onclick="switchReportTab('local')">This Device</div>
+        <div id="reportTabCloud" class="tab" onclick="switchReportTab('cloud')">&#9729; Cloud</div>
+    </div>
+    <div class="container">
+        <!-- LOCAL PANEL -->
+        <div id="reportLocalPanel" style="display:flex;flex-direction:column;flex:1;min-height:0;">
+            <div id="reportLog" style="background:var(--card);border-radius:18px;padding:20px;flex:1;overflow-y:auto;font-family:monospace;font-size:17px;border:1px solid var(--border);color:#000;white-space:pre-wrap;"></div>
+        </div>
+        <!-- CLOUD PANEL -->
+        <div id="reportCloudPanel" style="display:none;flex-direction:column;flex:1;min-height:0;gap:8px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
+                <div id="reportCloudStatus" style="font-size:13px;color:#8E8E93;font-weight:600;">All devices &middot; Today</div>
+                <button onclick="loadCloudReport()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:13px;font-weight:700;color:var(--accent);cursor:pointer;">&#8635; Refresh</button>
+            </div>
+            <div id="reportCloudLog" style="background:var(--card);border-radius:18px;padding:20px;flex:1;overflow-y:auto;font-family:monospace;font-size:17px;border:1px solid var(--border);color:#000;white-space:pre-wrap;"></div>
+        </div>
+    </div>
     <div class="button-row"><button class="footer-btn secondary-btn" onclick="copyReport()">Copy</button><button class="footer-btn secondary-btn" onclick="shareReport()">Share</button><button class="footer-btn" onclick="showScreen('menu')">Done</button></div>
 </div>
 
@@ -379,7 +396,7 @@
             </div>
         </div>
     </div>
-    <div style="padding:20px;text-align:center;opacity:0.4;font-size:13px;">Meeting Tools v3.1.5 · Southern Dutchess Toastmasters</div>
+    <div style="padding:20px;text-align:center;opacity:0.4;font-size:13px;">Meeting Tools v3.2.3 · Southern Dutchess Toastmasters</div>
 </div>
 
 <script>
@@ -407,7 +424,7 @@ function clubKey(s) { return prefix+'club_'+activeClubId+'_'+s; }
 function getActiveClub() { return clubs.find(c=>c.id===activeClubId); }
 
 let currentMode='timer', currentSpeaker='', currentTally={}, iv, start, elapsed=0, lims={g:0,y:0,r:0}, selectedTypeLabel='';
-let fillerList=[], allSpeakers=[], recordingEnabled=false, sessionFromTranscript=false;
+let fillerList=[], allSpeakers=[], recordingEnabled=false, sessionFromTranscript=false, counterStartTime=0;
 let mediaRecorder=null, recordingStream=null, audioChunks=[], transcriptResult='', transcriptCounts={};
 let recordingStartTime=0, speechDuration=0, activeTranscriptIndex=-1;
 
@@ -474,13 +491,13 @@ function initApp() {
         document.getElementById('welcome').classList.add('active');
         document.getElementById('mdToggle').checked = false;
         document.getElementById('openaiKey').value = '';
-        document.getElementById('versionLabel').innerText = 'Version 3.2.2'+(isTest?' (TEST)':'');
+        document.getElementById('versionLabel').innerText = 'Version 3.2.3'+(isTest?' (TEST)':'');
         return;
     }
     loadClubData(); updateClubUI();
     document.getElementById('mdToggle').checked = (localStorage.getItem(pk(KEY_MD))==='true');
     document.getElementById('openaiKey').value = localStorage.getItem(pk(KEY_AI_KEY))||'';
-    document.getElementById('versionLabel').innerText = 'Version 3.2.2'+(isTest?' (TEST)':'');
+    document.getElementById('versionLabel').innerText = 'Version 3.2.3'+(isTest?' (TEST)':'');
     refreshRoster(); nextWod();
     autoSyncDown();
     checkStaleBanner();
@@ -900,7 +917,7 @@ async function openSpeakerProgress(encodedName) {
             const best=Math.min(...rates).toFixed(1);
             const latest=rates[rates.length-1].toFixed(1);
             let trendText='',trendColor='#8E8E93';
-            if(cs.length>=2){const fh=rates.slice(0,Math.floor(rates.length/2));const sh=rates.slice(Math.floor(rates.length/2));const fa=fh.reduce((a,b)=>a+b,0)/fh.length;const sa=sh.reduce((a,b)=>a+b,0)/sh.length;if(sa<fa-0.5){trendText='↑ Improving';trendColor='var(--green)';}else if(sa>fa+0.5){trendText='↓ Worsening';trendColor='var(--red)';}else{trendText='→ Steady';trendColor='#8E8E93';}}
+            if(cs.length>=2){const oldestRate=rates[0];const newestRate=rates[rates.length-1];if(newestRate<oldestRate-0.5){trendText='↑ Improving';trendColor='var(--green)';}else if(newestRate>oldestRate+0.5){trendText='↓ Worsening';trendColor='var(--red)';}else{trendText='→ Steady';trendColor='#8E8E93';}}
             const lc=parseFloat(latest)<5?'var(--green)':parseFloat(latest)<=10?'#CC8800':'var(--red)';
             summaryHTML=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;">
                 <div style="text-align:center;"><div style="font-size:11px;font-weight:800;color:#8E8E93;text-transform:uppercase;letter-spacing:1px;">Latest</div><div style="font-size:28px;font-weight:900;color:${lc};">${latest}%</div></div>
@@ -915,7 +932,7 @@ async function openSpeakerProgress(encodedName) {
         const syncKey=club.syncKey;
         document.getElementById('speakerProgressSessions').innerHTML=reversed.map(s=>{
             let statsLine='';
-            if(s.type==='counter'){if(s.fillerPct!==undefined){const c=parseFloat(s.fillerPct)<5?'var(--green)':parseFloat(s.fillerPct)<=10?'#CC8800':'var(--red)';statsLine=`<span style="color:${c};font-weight:800;">${s.fillerPct}%</span> · ${s.totalFillers} filler${s.totalFillers!==1?'s':''} of ${s.totalWords} words${s.fillersPerMin?' · '+s.fillersPerMin+'/min':''}`;}else if(s.totalFillers!==undefined){const details=s.fillerDetail?Object.entries(s.fillerDetail).map(([w,c])=>`${w}:${c}`).join(', '):'';statsLine=`<span style="color:#8E8E93;font-weight:800;">${s.totalFillers} filler${s.totalFillers!==1?'s':''} (manual)</span>${details?' · <span style="font-size:12px;color:#8E8E93;">'+details+'</span>':''}`;}}else if(s.type==='timer'){statsLine=`Timer · ${s.result||''}`;}
+            if(s.type==='counter'){if(s.fillerPct!==undefined){const c=parseFloat(s.fillerPct)<5?'var(--green)':parseFloat(s.fillerPct)<=10?'#CC8800':'var(--red)';statsLine=`<span style="color:${c};font-weight:800;">${s.fillerPct}%</span> · ${s.totalFillers} filler${s.totalFillers!==1?'s':''} of ${s.totalWords} words${s.fillersPerMin?' · '+s.fillersPerMin+'/min':''}`;}else if(s.totalFillers!==undefined){const details=s.fillerDetail?Object.entries(s.fillerDetail).map(([w,c])=>`${w}:${c}`).join(', '):'';statsLine=`<span style="color:#8E8E93;font-weight:800;">${s.totalFillers} filler${s.totalFillers!==1?'s':''} <span style="font-size:11px;">(counted, no score)</span></span>${details?' · <span style="font-size:12px;color:#8E8E93;">'+details+'</span>':''}`;}}else if(s.type==='timer'){statsLine=`Timer · ${s.result||''}`;}
             const recordedBy=s.recordedBy?`<span style="color:#8E8E93;">recorded by ${s.recordedBy}</span>`:'';
             return `<div class="session-row" style="position:relative;">
                 <div style="display:flex;justify-content:space-between;align-items:flex-start;">
@@ -1021,7 +1038,7 @@ function showScreen(id){
     document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
     document.getElementById(id).classList.add('active');
     if(id==='setup'){selectedTypeLabel='';renderSetupGrid();refreshRoster();recordingEnabled=false;const rt=document.getElementById('recordToggle');if(rt)rt.checked=false;const rr=document.getElementById('recordToggleRow');if(rr)rr.style.display=currentMode==='counter'?'flex':'none';const nb=document.getElementById('nameClearBtn');if(nb)nb.style.display='none';}
-    if(id==='report')loadReport();
+    if(id==='report'){switchReportTab('local');loadReport();}
     if(id==='menu')checkStaleBanner();
     if(id==='transcriptList')loadTranscriptList();
     if(id==='wod'){const wi=document.getElementById('wodManualInput');if(wi)wi.value='';}
@@ -1045,10 +1062,24 @@ function renderSetupGrid(){
 function selectRole(el,g,y,r,label){document.querySelectorAll('.role-card').forEach(c=>c.classList.remove('selected'));el.classList.add('selected');selectedTypeLabel=label;lims={g,y,r};}
 
 /* ============ WOD SELECT ============ */
-function selectWod(){if(!activeWodData)return;const wu=activeWodData.word.toUpperCase();localStorage.setItem(clubKey('wod_full'),JSON.stringify(activeWodData));fillerList=fillerList.filter(f=>f!=='WORD OF DAY');if(!fillerList.includes(wu)){fillerList.push(wu);localStorage.setItem(clubKey('fillers'),JSON.stringify(fillerList));}openModal("WOD Selected",`${wu} is active.`,()=>{showScreen('menu');});}
+function selectWod(){
+    if(!activeWodData)return;
+    const wu=activeWodData.word.toUpperCase();
+    localStorage.setItem(clubKey('wod_full'),JSON.stringify(activeWodData));
+    fillerList=fillerList.filter(f=>f!=='WORD OF DAY');
+    if(!fillerList.includes(wu)){fillerList.push(wu);localStorage.setItem(clubKey('fillers'),JSON.stringify(fillerList));}
+    const club=getActiveClub();
+    if(club&&club.syncKey&&!club.practiceOnly){
+        db.collection('clubs').doc(club.syncKey).update({
+            wod:{word:activeWodData.word,definition:activeWodData.definition,example:activeWodData.example},
+            wodDate:new Date().toDateString()
+        }).catch(e=>console.warn('WOD cloud write failed:',e.message));
+    }
+    openModal("WOD Selected",`${wu} is active.`,()=>{showScreen('menu');});
+}
 
 /* ============ TALLY ============ */
-function initTally(){currentTally={};fillerList.forEach(f=>currentTally[f]=0);renderTally();}
+function initTally(){currentTally={};fillerList.forEach(f=>currentTally[f]=0);counterStartTime=Date.now();renderTally();}
 function renderTally(){
     const area=document.getElementById('tallyArea');
     const wod=JSON.parse(localStorage.getItem(clubKey('wod_full')));
@@ -1097,9 +1128,49 @@ function saveCounterSession(){
     else logs.push(hdr+serializeTally(currentTally));
     localStorage.setItem(clubKey('logs'),JSON.stringify(logs));
     localStorage.setItem(clubKey('last_session_ts'), Date.now().toString());
-    if(!sessionFromTranscript)writeSession({speaker:currentSpeaker,role:selectedTypeLabel,date:new Date().toLocaleString(),type:'counter',fillerDetail,totalFillers});
-    sessionFromTranscript=false;
-    openModal("Saved","Counts saved.",()=>{showScreen('menu');});
+
+    // ── Scoring (manual path) ─────────────────────────────────────────────
+    const durationSeconds = sessionFromTranscript ? 0 : Math.round((Date.now() - counterStartTime) / 1000);
+    const MINIMUM_SCORING_SECONDS = 15;
+    let scoreData = {};
+    let scoreCardHTML = '';
+
+    if(!sessionFromTranscript && durationSeconds >= MINIMUM_SCORING_SECONDS) {
+        const durationMins  = (durationSeconds / 60).toFixed(1);
+        const totalWords    = Math.round(130 * durationSeconds / 60);
+        const fillerPct     = totalWords > 0 ? ((totalFillers / totalWords) * 100).toFixed(1) : '0.0';
+        const fillerScore   = parseFloat(fillerPct) < 5 ? 'EXCELLENT' : parseFloat(fillerPct) <= 10 ? 'GOOD' : 'NEEDS WORK';
+        const fillersPerMin = (totalFillers / (durationSeconds / 60)).toFixed(1);
+
+        scoreData = {fillerPct, fillerScore, totalWords, fillersPerMin, durationMins};
+
+        // Build score card HTML for the modal (same style as transcript view)
+        const sc = parseFloat(fillerPct) < 5 ? 'var(--green)' : parseFloat(fillerPct) <= 10 ? '#CC8800' : 'var(--red)';
+        const sb = parseFloat(fillerPct) < 5 ? '#F0FFF4' : parseFloat(fillerPct) <= 10 ? '#FFFBEA' : '#FFF0EE';
+        scoreCardHTML = `
+            <div style="background:${sb};border:2px solid ${sc};border-radius:12px;padding:14px 18px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                    <div style="font-size:11px;font-weight:800;color:#8E8E93;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;">Filler Score (estimated)</div>
+                    <div style="font-size:30px;font-weight:900;color:${sc};">${fillerPct}%</div>
+                    <div style="font-size:13px;color:${sc};font-weight:700;">${totalFillers} fillers · ~${totalWords} words</div>
+                    <div style="font-size:12px;color:#8E8E93;margin-top:3px;">Duration: ${durationMins} min · Rate: ${fillersPerMin}/min</div>
+                </div>
+                <div style="font-size:14px;font-weight:900;color:${sc};letter-spacing:1px;">${fillerScore}</div>
+            </div>
+            <div style="font-size:12px;color:#8E8E93;text-align:center;font-style:italic;margin-bottom:4px;">Word count estimated at 130 wpm</div>`;
+    }
+
+    if(!sessionFromTranscript) {
+        writeSession({
+            speaker:currentSpeaker, role:selectedTypeLabel,
+            date:new Date().toLocaleString(), type:'counter',
+            fillerDetail, totalFillers,
+            ...scoreData
+        });
+    }
+    sessionFromTranscript = false;
+
+    openModal("Results", scoreCardHTML || 'Counts saved.', () => { showScreen('menu'); }, 'Cancel', 'Done');
 }
 function parseTallyString(s){let o={};if(s==="0 Fillers")return o;s.split(', ').forEach(p=>{const[w,c]=p.split(': ');o[w]=parseInt(c);});return o;}
 function serializeTally(o){let r=[];for(let w in o)if(o[w]>0)r.push(`${w}: ${o[w]}`);return r.length>0?r.join(', '):"0 Fillers";}
@@ -1178,9 +1249,152 @@ function handleStart(){
     });
 }
 
+/* ============ REPORT TABS ============ */
+let activeReportTab = 'local';
+
+function switchReportTab(tab) {
+    activeReportTab = tab;
+    document.getElementById('reportTabLocal').classList.toggle('active', tab === 'local');
+    document.getElementById('reportTabCloud').classList.toggle('active', tab === 'cloud');
+    document.getElementById('reportLocalPanel').style.display  = tab === 'local'  ? 'flex' : 'none';
+    document.getElementById('reportCloudPanel').style.display  = tab === 'cloud' ? 'flex' : 'none';
+    if(tab === 'cloud') loadCloudReport();
+}
+
+async function loadCloudReport() {
+    const el = document.getElementById('reportCloudLog');
+    const statusEl = document.getElementById('reportCloudStatus');
+    const club = getActiveClub();
+
+    if(!club || !club.syncKey || club.practiceOnly) {
+        el.innerText = 'Cloud sync is not enabled for this club.\nEnable it in Settings > Clubs to use Cloud Report.';
+        return;
+    }
+
+    if(statusEl) statusEl.innerText = 'Loading\u2026';
+    el.innerText = 'Loading from cloud\u2026';
+
+    try {
+        const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+        const todayEnd   = new Date(); todayEnd.setHours(23,59,59,999);
+
+        const [snap, clubDoc] = await Promise.all([
+            db.collection('clubs').doc(club.syncKey)
+              .collection('sessions')
+              .where('createdAt', '>=', firebase.firestore.Timestamp.fromDate(todayStart))
+              .where('createdAt', '<=', firebase.firestore.Timestamp.fromDate(todayEnd))
+              .orderBy('createdAt', 'asc')
+              .get(),
+            db.collection('clubs').doc(club.syncKey).get()
+        ]);
+
+        const clubData = clubDoc.data() || {};
+        const wod      = clubData.wod    || null;
+        const wodDate  = clubData.wodDate || null;
+        const isToday  = wodDate === new Date().toDateString();
+        const md       = localStorage.getItem(pk(KEY_MD)) === 'true';
+
+        const sessions = snap.docs.map(d => d.data());
+        const timerSessions   = sessions.filter(s => s.type === 'timer');
+        const counterSessions = sessions.filter(s => s.type === 'counter');
+
+        let out = '';
+
+        // ── Header ───────────────────────────────────────────────────────
+        out += md ? '# Cloud Meeting Report\n' : 'Cloud Meeting Report\n' + '='.repeat(22) + '\n';
+        out += 'Date: ' + new Date().toLocaleDateString() + '\n';
+        out += 'Club: ' + (club.name || club.syncKey) + '\n\n';
+
+        // ── Word of the Day ───────────────────────────────────────────────
+        if(wod && isToday) {
+            out += md
+                ? '## WOD: ' + wod.word.toUpperCase() + '\n> ' + wod.definition + '\n\n'
+                : 'WOD: ' + wod.word.toUpperCase() + '\nDef: ' + wod.definition + '\n' + '-'.repeat(25) + '\n\n';
+        }
+
+        if(snap.empty) {
+            out += 'No sessions recorded today via cloud.\n\nSessions appear here when members use cloud-synced devices.';
+            el.innerText = out;
+            if(statusEl) statusEl.innerText = '0 sessions \u00b7 loaded ' + new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+            return;
+        }
+
+        // ── Timing Report ─────────────────────────────────────────────────
+        if(timerSessions.length > 0) {
+            if(md) {
+                out += '## \u23f1 Timing Report\n';
+                out += '| Name | Role | Time | By |\n| :--- | :--- | :--- | :--- |\n';
+                timerSessions.forEach(s => {
+                    out += '| ' + (s.speaker||'?') + ' | ' + (s.role||'?') + ' | ' + (s.result||'--') + ' | ' + (s.recordedBy||'?') + ' |\n';
+                });
+                out += '\n';
+            } else {
+                out += '\u23f1 TIMING REPORT\n' + '-'.repeat(60) + '\n';
+                out += 'NAME             | ROLE             | TIME     | BY\n';
+                out += '-'.repeat(16) + '|' + '-'.repeat(18) + '|' + '-'.repeat(10) + '|' + '-'.repeat(16) + '\n';
+                timerSessions.forEach(s => {
+                    out += (s.speaker||'?').padEnd(16) + ' | ' + (s.role||'?').padEnd(16) + ' | ' + (s.result||'--').padEnd(8) + ' | ' + (s.recordedBy||'?') + '\n';
+                });
+                out += '\n';
+            }
+        } else {
+            out += (md ? '## \u23f1 Timing Report\n' : '\u23f1 TIMING REPORT\n' + '-'.repeat(60) + '\n');
+            out += 'No timer sessions recorded today.\n\n';
+        }
+
+        // ── Counter Report ────────────────────────────────────────────────
+        if(counterSessions.length > 0) {
+            if(md) {
+                out += '## \u270d Counter Report\n';
+                out += '| Name | Role | Total Fillers | Breakdown | By |\n| :--- | :--- | :--- | :--- | :--- |\n';
+                counterSessions.forEach(s => {
+                    const total = s.totalFillers != null ? s.totalFillers : '--';
+                    const detail = s.fillerDetail
+                        ? Object.entries(s.fillerDetail).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]).map(([w,c])=>w+': '+c).join(', ') || 'none'
+                        : '--';
+                    out += '| ' + (s.speaker||'?') + ' | ' + (s.role||'?') + ' | ' + total + ' | ' + detail + ' | ' + (s.recordedBy||'?') + ' |\n';
+                });
+                out += '\n';
+            } else {
+                out += '\u270d COUNTER REPORT\n' + '-'.repeat(60) + '\n';
+                counterSessions.forEach(s => {
+                    const total = s.totalFillers != null ? s.totalFillers : '--';
+                    const detail = s.fillerDetail
+                        ? Object.entries(s.fillerDetail).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]).map(([w,c])=>w+': '+c).join(', ') || 'none'
+                        : '--';
+                    out += (s.speaker||'?').padEnd(16) + ' | ' + (s.role||'?').padEnd(16) + ' | ' + String(total).padEnd(6) + ' | ' + detail + '  [' + (s.recordedBy||'?') + ']\n';
+                });
+                out += '\n';
+            }
+        } else {
+            out += (md ? '## \u270d Counter Report\n' : '\u270d COUNTER REPORT\n' + '-'.repeat(60) + '\n');
+            out += 'No counter sessions recorded today.\n\n';
+        }
+
+        el.innerText = out;
+        if(statusEl) statusEl.innerText = timerSessions.length + ' timer, ' + counterSessions.length + ' counter \u00b7 loaded ' + new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+
+    } catch(e) {
+        el.innerText = 'Error loading cloud report:\n' + e.message;
+        if(statusEl) statusEl.innerText = 'Error';
+        console.warn('Cloud report error:', e);
+    }
+}
+
 function copyReport(){const t=generateReportText();if(t)navigator.clipboard.writeText(t).then(()=>{openModal("Success","Copied!",()=>{});});}
 function shareReport(){const t=generateReportText();if(t&&navigator.share)navigator.share({title:'Report',text:t});}
-function generateReportText(){const logs=JSON.parse(localStorage.getItem(clubKey('logs'))||'[]');const wod=JSON.parse(localStorage.getItem(clubKey('wod_full')));const md=localStorage.getItem(pk(KEY_MD))==='true';let r=md?`# Meeting Report\n`:`Meeting Report\n${'='.repeat(20)}\n`;if(wod){r+=md?`## WOD: ${wod.word.toUpperCase()}\n> ${wod.definition}\n\n`:`WOD: ${wod.word.toUpperCase()}\nDef: ${wod.definition}\n\n`;}if(!logs.length)return r+'No data recorded.';if(md){r+=`| Name | Role | Result |\n| :--- | :--- | :--- |\n`;logs.forEach(l=>{const p=l.split(' | ');const s=p[1].split(' :: ');r+=`| ${p[0]} | ${s[0]} | ${s[1]} |\n`;});}else{logs.forEach(l=>r+=`• ${l.replace(' :: ',': ')}\n`);}return r;}
+function generateReportText(){
+    if(activeReportTab==='cloud'){return document.getElementById('reportCloudLog').innerText||'';}
+    const logs=JSON.parse(localStorage.getItem(clubKey('logs'))||'[]');
+    const wod=JSON.parse(localStorage.getItem(clubKey('wod_full')));
+    const md=localStorage.getItem(pk(KEY_MD))==='true';
+    let r=md?`# Meeting Report\n`:`Meeting Report\n${'='.repeat(20)}\n`;
+    if(wod){r+=md?`## WOD: ${wod.word.toUpperCase()}\n> ${wod.definition}\n\n`:`WOD: ${wod.word.toUpperCase()}\nDef: ${wod.definition}\n\n`;}
+    if(!logs.length)return r+'No data recorded.';
+    if(md){r+=`| Name | Role | Result |\n| :--- | :--- | :--- |\n`;logs.forEach(l=>{const p=l.split(' | ');const s=p[1].split(' :: ');r+=`| ${p[0]} | ${s[0]} | ${s[1]} |\n`;});}
+    else{logs.forEach(l=>r+=`• ${l.replace(' :: ',': ')}\n`);}
+    return r;
+}
 
 /* ============ TRANSCRIPTION ============ */
 function initTranscription(){transcriptResult='';transcriptCounts={};audioChunks=[];const st=document.getElementById('transcriptionStatus');st.innerText='READY TO RECORD';st.style.color='#8E8E93';st.classList.remove('recording-pulse');document.getElementById('transcriptionContent').innerHTML='<span style="color:#8E8E93;font-style:italic;">Transcript will appear here after recording...</span>';document.getElementById('transcriptionResults').style.display='none';const btn=document.getElementById('transRecordBtn');btn.disabled=false;btn.innerText='Start Recording';btn.style.background='var(--red)';btn.onclick=startTranscriptionRecording;}
