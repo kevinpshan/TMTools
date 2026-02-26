@@ -14,6 +14,7 @@
         * { box-sizing: border-box; }
         body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple-system, system-ui, sans-serif; line-height: 1.6; }
 
+```
     .page-header { background: var(--card); border-bottom: 1px solid var(--border); padding: 20px 20px 0; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
     .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; max-width: 800px; margin-left: auto; margin-right: auto; width: 100%; }
     .btn-back { text-decoration: none; color: var(--accent); font-weight: 700; font-size: 16px; }
@@ -60,6 +61,7 @@
     .alert { background: #FFF9E6; border-left: 4px solid var(--gold); padding: 12px 16px; border-radius: 8px; margin: 0 0 20px; font-size: 14px; color: var(--subtext); }
     .footer { text-align: center; opacity: 0.4; font-size: 13px; padding: 20px; }
 </style>
+```
 
 </head>
 <body>
@@ -89,6 +91,7 @@
 
 <div id="panel-released" class="tab-panel active">
 
+```
 <!-- v3.2.3 -->
 <div class="release">
     <div class="release-header">
@@ -117,17 +120,17 @@
                 <li>Manual counter sessions (tap-to-count) now produce an estimated filler score on save</li>
                 <li>App records session duration invisibly from the moment the tally screen opens</li>
                 <li>On SAVE RESULTS, estimates word count at 130 wpm and computes filler %, rate per minute, and EXCELLENT / GOOD / NEEDS WORK rating</li>
-                <li>Score card displays in the save modal with green / yellow / red color coding, labeled <em>estimated</em> and footnoted "Word count estimated at 130 wpm"</li>
-                <li>Sessions under 15 seconds skip scoring — protects against accidental early saves</li>
-                <li>Scored sessions write the same Firestore fields as transcription sessions (<code>fillerPct</code>, <code>fillerScore</code>, <code>totalWords</code>, <code>fillersPerMin</code>, <code>durationMins</code>) — Progress tracker trend line and Cloud Report work automatically</li>
-                <li>Older sessions already in the system display as "counted, no score" in the Progress tracker to distinguish them from newly scored sessions</li>
+                <li>Score card displays in the save modal with green / yellow / red color coding, labeled <em>estimated</em> and footnoted &ldquo;Word count estimated at 130 wpm&rdquo;</li>
+                <li>Sessions under 15 seconds skip scoring &mdash; protects against accidental early saves</li>
+                <li>Scored sessions write the same Firestore fields as transcription sessions (<code>fillerPct</code>, <code>fillerScore</code>, <code>totalWords</code>, <code>fillersPerMin</code>, <code>durationMins</code>) &mdash; Progress tracker trend line and Cloud Report work automatically</li>
+                <li>Older sessions already in the system display as &ldquo;counted, no score&rdquo; in the Progress tracker to distinguish them from newly scored sessions</li>
             </ul>
         </div>
         <div class="change-group">
             <div class="change-group-label">Bug Fix &mdash; Progress Trend Consistency</div>
             <ul>
-                <li>Speaker detail screen showed incorrect trend (↓ Worsening) even when the most recent session was the speaker's best result</li>
-                <li>Root cause: detail screen used a half-split average algorithm while the progress list used a simpler oldest-vs-newest comparison — they disagreed on the same data</li>
+                <li>Speaker detail screen showed incorrect trend (&darr; Worsening) even when the most recent session was the speaker&rsquo;s best result</li>
+                <li>Root cause: detail screen used a half-split average algorithm while the progress list used a simpler oldest-vs-newest comparison &mdash; they disagreed on the same data</li>
                 <li>Fix: aligned both screens to oldest vs newest session comparison with a 0.5% threshold, so trend is consistent everywhere</li>
             </ul>
         </div>
@@ -172,7 +175,7 @@
         <div class="change-group">
             <div class="change-group-label">New &mdash; Progress Screen</div>
             <ul>
-                <li>List filters to current roster members only &mdash; deleted members' history preserved but hidden</li>
+                <li>List filters to current roster members only &mdash; deleted members&rsquo; history preserved but hidden</li>
                 <li>Manual counter sessions now show filler count and per-word breakdown in speaker detail</li>
             </ul>
         </div>
@@ -183,7 +186,7 @@
                 <li>Join Club: API key field updates immediately in Settings after joining</li>
                 <li>WOD search field no longer pre-populates with club name on first visit</li>
                 <li>Timer display no longer flashes stale time from previous session on new start</li>
-                <li>Full name validation placeholder changed from developer name to "JOHN SMITH"</li>
+                <li>Full name validation placeholder changed from developer name to &ldquo;JOHN SMITH&rdquo;</li>
             </ul>
         </div>
     </div>
@@ -253,7 +256,7 @@
         <div class="change-group">
             <div class="change-group-label">New &mdash; Firebase Cloud Sync</div>
             <ul>
-                <li>Firestore integration &mdash; roster, fillers, and API key sync across all club members' devices</li>
+                <li>Firestore integration &mdash; roster, fillers, and API key sync across all club members&rsquo; devices</li>
                 <li>8-character sync code generation (XXXX-XXXX format)</li>
                 <li>Join existing club by code &mdash; full data download on first join</li>
                 <li>Auto-sync on every roster and filler change &mdash; manual Push/Pull available as override</li>
@@ -323,7 +326,7 @@
         <div class="change-group">
             <div class="change-group-label">Development History</div>
             <p class="note">Meeting Tools was originally conceived and built in collaboration with <strong>Google Gemini</strong>. Development proceeded through v2.7, establishing the core architecture and feature set. As the codebase grew in complexity, Gemini encountered limitations handling the scope of changes required, and development transitioned to <strong>Claude (Anthropic)</strong> starting at v2.8. Claude has handled all development from that point forward.</p>
-            <p class="note">The following is Gemini's own functional specification of the app at the point of handoff:</p>
+            <p class="note">The following is Gemini&rsquo;s own functional specification of the app at the point of handoff:</p>
         </div>
         <div class="change-group">
             <div class="change-group-label">Identity &amp; Navigation</div>
@@ -352,6 +355,7 @@
         </div>
     </div>
 </div>
+```
 
 </div><!-- end panel-released -->
 
@@ -363,6 +367,7 @@
 
 <div id="panel-roadmap" class="tab-panel">
 
+```
 <div class="alert">Items move from this tab to Released when shipped. Last updated: v3.2.3</div>
 
 <div class="milestone-divider">&#8212;&#8212; Medium Priority &#8212;&#8212;</div>
@@ -378,7 +383,7 @@
     <div class="release-body">
         <div class="change-group">
             <div class="change-group-label">Problem</div>
-            <p class="note">Club roles are hardcoded in <code>renderSetupGrid()</code>. Clubs cannot add, rename, or customize roles to match their chapter's practices, and there's no way to assign timer thresholds or PACE point values per role.</p>
+            <p class="note">Club roles are hardcoded in <code>renderSetupGrid()</code>. Clubs cannot add, rename, or customize roles to match their chapter&rsquo;s practices, and there&rsquo;s no way to assign timer thresholds or PACE point values per role.</p>
         </div>
         <div class="change-group">
             <div class="change-group-label">Three Systems Stay Independent</div>
@@ -392,6 +397,7 @@
         <div class="change-group">
             <div class="change-group-label">Firestore Schema</div>
             <pre>clubs/{syncCode}/roles → [
+```
 
 { name: “SPEAKER”,      timerPreset: {g:300,y:360,r:420}, pacePoints: 15, showInTimer: true,  showInCounter: true  },
 { name: “EVALUATOR”,    timerPreset: {g:120,y:150,r:180}, pacePoints: 10, showInTimer: true,  showInCounter: true  },
@@ -413,6 +419,7 @@
 </div>
 </div>
 
+```
 <!-- PACE Race -->
 <div class="release">
     <div class="release-header">
@@ -473,7 +480,7 @@
     <div class="release-body">
         <div class="change-group">
             <div class="change-group-label">Problem</div>
-            <p class="note">No admin capability exists &mdash; dead clubs accumulate, there's no usage visibility, and there's no way to manage elevated access without giving everyone the same sync code.</p>
+            <p class="note">No admin capability exists &mdash; dead clubs accumulate, there&rsquo;s no usage visibility, and there&rsquo;s no way to manage elevated access without giving everyone the same sync code.</p>
         </div>
         <div class="change-group">
             <div class="change-group-label">Authentication</div>
@@ -530,7 +537,7 @@
     <div class="release-body">
         <div class="change-group">
             <div class="change-group-label">Problem &amp; Solution</div>
-            <p class="note">When a speaker is deleted from the roster, their Firestore session history remains (by design &mdash; Progress filter hides it). No formal archive vs. delete distinction. Solution: on speaker delete, offer "Remove from roster only" vs. "Remove from roster and delete all cloud history." Destructive path requires confirmation modal.</p>
+            <p class="note">When a speaker is deleted from the roster, their Firestore session history remains (by design &mdash; Progress filter hides it). No formal archive vs. delete distinction. Solution: on speaker delete, offer &ldquo;Remove from roster only&rdquo; vs. &ldquo;Remove from roster and delete all cloud history.&rdquo; Destructive path requires confirmation modal.</p>
         </div>
     </div>
 </div>
@@ -562,6 +569,7 @@
         </div>
     </div>
 </div>
+```
 
 </div><!-- end panel-roadmap -->
 
