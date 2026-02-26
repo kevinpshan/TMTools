@@ -12,7 +12,6 @@ deploy:
 runs-on: ubuntu-latest
 if: github.event.inputs.confirm == ‘DEPLOY’
 
-```
 steps:
   - name: Checkout repository
     uses: actions/checkout@v4
@@ -30,4 +29,3 @@ steps:
       git add index.html sw.js manifest.json
       git diff --staged --quiet || git commit -m "Deploy: promote test to prod [skip ci]"
       git push
-```
