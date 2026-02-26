@@ -21,11 +21,15 @@ jobs:
           cp test/index.html index.html
           cp test/sw.js sw.js
           cp test/manifest.json manifest.json
+          cp test/manual.html manual.html
+          cp test/changelog.html changelog.html
+          cp test/technical-reference.html technical-reference.html
+          cp test/test-plan.html test-plan.html
 
       - name: Commit and push
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add index.html sw.js manifest.json
+          git add index.html sw.js manifest.json manual.html changelog.html technical-reference.html test-plan.html
           git diff --staged --quiet || git commit -m "Deploy: promote test to prod [skip ci]"
           git push
