@@ -657,6 +657,32 @@ async function enableSync(clubId) {
     }
 }
 
+/* ============ FIREBASE — RECONNECT SYNC ============ */
+function reconnectSync(clubId) {
+    openModal("Reconnect to Cloud",
+        `<p style="font-size:15px;color:var(--subtext);margin-bottom:12px;">Enter the existing sync code for this club to restore the cloud link without creating a new one.</p>
+        <input type="text" id="reconnectCode" placeholder="XXXX-XXXX" style="text-transform:uppercase;letter-spacing:2px;text-align:center;" maxlength="9">`,
+        async () => {
+            const code = document.getElementById('reconnectCode').value.trim().toUpperCase();
+            if (code.length < 8) { openModal("Invalid Code","Please enter a valid 8-character sync code.",()=>{}); return; }
+            try {
+                const doc = await db.collection('clubs').doc(code).get();
+                if (!doc.exists) { openModal("Not Found","No club found with that code. Please check and try again.",()=>{}); return; }
+                const club = clubs.find(c=>c.id===clubId);
+                if (!club) return;
+                club.syncKey = code;
+                localStorage.setItem(pk(KEY_CLUBS), JSON.stringify(clubs));
+                updateClubUI(); renderClubManager();
+                // Pull latest data from cloud now that we're reconnected
+                await syncDown(clubId);
+                openModal("Reconnected ✓", `This club is now linked to the cloud. Roster and filler words have been synced.`, ()=>{});
+            } catch(e) {
+                openModal("Connection Error","Could not reach the cloud. Check your internet and try again.",()=>{});
+            }
+        }
+    );
+}
+
 /* ============ FIREBASE — JOIN BY CODE ============ */
 function askJoinByCode() {
     openModal("Join Club by Code",`<input type="text" id="joinCode" placeholder="XXXX-XXXX" style="text-transform:uppercase;letter-spacing:2px;text-align:center;" maxlength="9">`,async ()=>{
@@ -796,8 +822,11 @@ function renderClubManager() {
                 </div>
                 <div class="sync-status" id="syncStatus_${c.id}">${(()=>{ const t=localStorage.getItem(prefix+'club_'+c.id+'_last_sync'); return t ? '✓ Connected · last synced at '+t : 'Opening app will auto-sync'; })()}</div>
             `:`
-                <div style="padding:6px 18px 14px;">
-                    <button onclick="enableSync('${c.id}')" style="width:100%;background:#E8F5E9;color:var(--green);border:2px solid var(--green);border-radius:10px;padding:12px;font-size:15px;font-weight:700;cursor:pointer;">☁ Enable Cloud Sync</button>
+                <div style="padding:6px 18px 14px;display:flex;flex-direction:column;gap:8px;">
+                    <button onclick="reconnectSync('${c.id}')" style="width:100%;background:#E8F2FF;color:var(--accent);border:2px solid var(--accent);border-radius:10px;padding:12px;font-size:15px;font-weight:700;cursor:pointer;">🔗 Reconnect with Existing Code</button>
+                    <div style="font-size:13px;color:var(--subtext);line-height:1.5;padding:2px 4px 8px;">Ask another club member for your club&rsquo;s sync code and use Reconnect to rejoin the shared data.</div>
+                    <button onclick="enableSync('${c.id}')" style="width:100%;background:#F9F9FB;color:#8E8E93;border:1px solid var(--border);border-radius:10px;padding:10px;font-size:14px;font-weight:600;cursor:pointer;">☁ Create New Sync Code</button>
+                    <div style="font-size:12px;color:var(--red);line-height:1.5;padding:2px 4px;">&#9888; Only use this for a brand new club. This creates a separate cloud record &mdash; you will not be able to share data with existing club members.</div>
                 </div>
             `}
         </div>`;
