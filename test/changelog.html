@@ -127,6 +127,15 @@
             </ul>
         </div>
     </div>
+        <div class="change-group">
+            <div class="change-group-label">Bug Fix &mdash; Progress Trend Consistency</div>
+            <ul>
+                <li>Speaker detail screen showed incorrect trend (↓ Worsening) even when the most recent session was the speaker's best result</li>
+                <li>Root cause: detail screen used a half-split average algorithm while the progress list used a simpler oldest-vs-newest comparison — they disagreed on the same data</li>
+                <li>Fix: aligned both screens to oldest vs newest session comparison with a 0.5% threshold, so trend is consistent everywhere</li>
+            </ul>
+        </div>
+    </div>
 </div>
 
 <!-- v3.2.2 -->
@@ -592,7 +601,6 @@
         </div>
     </div>
 </div>
-```
 
 </div><!-- end panel-roadmap -->
 
