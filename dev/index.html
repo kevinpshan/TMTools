@@ -417,7 +417,7 @@
         <div id="paceEntryList" style="background:var(--card);border-radius:16px;overflow:hidden;border:1px solid var(--border);flex:1;overflow-y:auto;"></div>
     </div>
     <div class="button-row">
-        <button class="footer-btn secondary-btn" onclick="showScreen('pace')">Back</button>
+        <button class="footer-btn secondary-btn" onclick="returnToPaceLeaderboard()">Back</button>
     </div>
 </div>
 
@@ -1712,6 +1712,15 @@ async function loadPaceLeaderboard() {
         return;
     }
     area.innerHTML = '<div class="spinner"></div>';
+    // Safety timeout — if spinner still showing after 8s, offer retry
+    const spinnerTimer = setTimeout(() => {
+        if (area.querySelector('.spinner')) {
+            area.innerHTML = `<div style="padding:30px 20px;text-align:center;">
+                <div style="font-size:15px;color:#8E8E93;margin-bottom:16px;">Taking longer than expected...</div>
+                <button onclick="loadPaceLeaderboard()" style="background:var(--accent);color:white;border:none;border-radius:12px;padding:14px 24px;font-size:17px;font-weight:700;cursor:pointer;">Retry</button>
+            </div>`;
+        }
+    }, 8000);
     try {
         const {startStr, endStr} = getTMYearBounds(paceSelectedYear);
         const snap = await db.collection('clubs').doc(club.syncKey)
@@ -1726,6 +1735,7 @@ async function loadPaceLeaderboard() {
             totals[d.member].points += (d.pointsEarned || 0);
             totals[d.member].meetings.add(d.date);
         });
+        clearTimeout(spinnerTimer);
         const sorted = Object.entries(totals).sort((a,b) => b[1].points - a[1].points);
         if (!sorted.length) {
             area.innerHTML = `<div style="padding:30px 20px;text-align:center;opacity:0.5;font-size:17px;">No entries for ${paceSelectedYear}.<br><br>Tap <strong>+ New Entry</strong> to record a meeting.</div>`;
@@ -1750,9 +1760,18 @@ async function loadPaceLeaderboard() {
                 </div>
             </div>`;
         }).join('');
+        clearTimeout(spinnerTimer);
     } catch(e) {
-        area.innerHTML = `<div style="padding:20px;text-align:center;color:var(--red);font-size:15px;">Could not load PACE data.<br><span style="font-size:13px;">${e.message}</span></div>`;
+        clearTimeout(spinnerTimer);
+        area.innerHTML = `<div style="padding:20px;text-align:center;color:var(--red);font-size:15px;">Could not load PACE data.<br><span style="font-size:13px;">${e.message}</span><br><br><button onclick="loadPaceLeaderboard()" style="background:var(--accent);color:white;border:none;border-radius:12px;padding:12px 20px;font-size:15px;font-weight:700;cursor:pointer;">Retry</button></div>`;
     }
+}
+
+function returnToPaceLeaderboard() {
+    // Return to leaderboard preserving current year (don't reset via showPace)
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    document.getElementById('pace').classList.add('active');
+    loadPaceLeaderboard();
 }
 
 async function changePaceYear(dir) {
