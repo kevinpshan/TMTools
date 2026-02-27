@@ -6,7 +6,6 @@ var src = thisScript.src;
 var params = {};
 src.replace(/[?&]([^=&]+)=([^&]*)/g, function(_, k, v) { params[k] = decodeURIComponent(v); });
 
-```
 var clubCode = params.club;
 var type     = params.type || 'leaderboard';   // 'leaderboard' or 'chart'
 var targetId = params.target;
@@ -178,6 +177,5 @@ if (document.readyState === 'loading') {
 } else {
     mount();
 }
-```
 
 })();
