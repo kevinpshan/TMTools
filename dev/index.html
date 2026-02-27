@@ -113,6 +113,22 @@
         .trans-result-count { font-size:28px; font-weight:800; color:var(--accent); }
         @keyframes spin { to { transform:rotate(360deg); } }
         .spinner { width:32px; height:32px; border:3px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 0.8s linear infinite; margin:40px auto; }
+        /* PACE */
+        .pace-leader-row { padding:14px 18px; border-bottom:1px solid var(--bg); display:flex; align-items:center; gap:12px; cursor:pointer; background:var(--card); }
+        .pace-leader-row:last-child { border-bottom:none; }
+        .pace-rank { width:32px; text-align:center; font-size:22px; flex-shrink:0; }
+        .pace-leader-name { font-size:17px; font-weight:700; text-transform:uppercase; color:var(--text); }
+        .pace-progress-bar-bg { height:6px; background:#E5E5EA; border-radius:3px; margin-top:6px; overflow:hidden; }
+        .pace-progress-bar-fill { height:100%; border-radius:3px; transition:width 0.4s ease; }
+        .pace-entry-row { padding:14px 18px; border-bottom:1px solid var(--bg); display:flex; align-items:center; cursor:pointer; background:var(--card); }
+        .pace-entry-row:last-child { border-bottom:none; }
+        .pace-role-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; flex-shrink:0; padding-bottom:10px; }
+        .pace-role-card { background:var(--card); border:2px solid var(--border); border-radius:12px; padding:14px 12px; text-align:center; cursor:pointer; transition:all 0.15s; }
+        .pace-role-selected { border-color:var(--accent); background:#E8F2FF; }
+        .pace-tally-box { background:var(--card); border-radius:16px; border:1px solid var(--border); padding:18px; text-align:center; flex-shrink:0; }
+        .pace-year-bar { display:flex; align-items:center; justify-content:space-between; padding:0 20px 12px; flex-shrink:0; }
+        .pace-year-btn { background:var(--card); border:1px solid var(--border); border-radius:10px; width:40px; height:40px; font-size:20px; cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--accent); font-weight:700; }
+        .pace-year-label { font-size:20px; font-weight:800; color:var(--accent); }
     </style>
 </head>
 <body onload="initApp()">
@@ -175,6 +191,7 @@
         <div class="main-menu-card" onclick="showScreen('setup')"><div class="card-content"><h3>Start Tracking</h3><p>Count filler words</p></div><div class="icon">✍</div></div>
         <div class="main-menu-card" onclick="showScreen('transcriptList')"><div class="card-content"><h3>Transcripts</h3><p>Share with speakers</p></div><div class="icon">📋</div></div>
         <div class="main-menu-card" onclick="showScreen('progress')"><div class="card-content"><h3>Progress</h3><p>Speaker improvement over time</p></div><div class="icon">📈</div></div>
+        <div class="main-menu-card" onclick="showScreen('pace')"><div class="card-content"><h3 style="color:var(--green);">PACE</h3><p>Club participation tracker</p></div><div class="icon" style="color:var(--green);">🏆</div></div>
         <div class="main-menu-card" onclick="showScreen('report')"><div class="card-content"><h3>Counter Report</h3><p>View totals</p></div><div class="icon">📊</div></div>
     </div>
     <div class="credit-footer">
@@ -364,6 +381,54 @@
     <div class="button-row">
         <button class="footer-btn secondary-btn" onclick="showScreen('transcriptList')">Back</button>
         <button class="footer-btn" style="background:var(--green);" onclick="shareTranscript()">Share</button>
+    </div>
+</div>
+
+<!-- PACE LEADERBOARD -->
+
+<div id="pace" class="screen">
+    <div class="header"><h1>PACE</h1><div class="subtitle" id="paceSubtitle">Club participation</div></div>
+    <div class="pace-year-bar">
+        <button class="pace-year-btn" onclick="changePaceYear(1)">&#8249;</button>
+        <span class="pace-year-label" id="paceYearLabel">2025-26</span>
+        <button class="pace-year-btn" onclick="changePaceYear(-1)">&#8250;</button>
+    </div>
+    <div class="container">
+        <div id="paceLeaderboardArea" style="background:var(--card);border-radius:16px;overflow:hidden;border:1px solid var(--border);flex:1;overflow-y:auto;"></div>
+    </div>
+    <div class="button-row">
+        <button class="footer-btn secondary-btn" onclick="showScreen('menu')">Back</button>
+        <button class="footer-btn" style="background:var(--green);" onclick="showPaceEntryScreen()">+ New Entry</button>
+    </div>
+</div>
+
+<!-- PACE ENTRY — date + roster -->
+
+<div id="paceEntry" class="screen">
+    <div class="header"><h1>PACE Entry</h1><div class="subtitle">Tap a member to enter roles</div></div>
+    <div style="padding:0 20px 12px;flex-shrink:0;">
+        <input type="date" id="paceEntryDate" onchange="paceEntryDateChanged()" style="font-size:17px;padding:12px 15px;">
+    </div>
+    <div class="container">
+        <div id="paceEntryList" style="background:var(--card);border-radius:16px;overflow:hidden;border:1px solid var(--border);flex:1;overflow-y:auto;"></div>
+    </div>
+    <div class="button-row">
+        <button class="footer-btn secondary-btn" onclick="showScreen('pace')">Back</button>
+    </div>
+</div>
+
+<!-- PACE MEMBER ENTRY — role checkboxes -->
+
+<div id="paceMemberEntry" class="screen">
+    <div class="header"><h1 id="paceMemberName">Member</h1><div class="subtitle">Select roles for this meeting</div></div>
+    <div class="container">
+        <div id="paceRoleGrid" class="pace-role-grid"></div>
+        <div class="pace-tally-box" id="paceTallyDisplay"><span style="color:#8E8E93;">Select roles above</span></div>
+    </div>
+    <div class="button-row">
+        <button class="footer-btn secondary-btn" onclick="showScreen('paceEntry')">Cancel</button>
+        <button class="footer-btn" style="background:#FFE5E3;color:var(--red);flex:0.6;" onclick="deletePaceEntry()">Remove</button>
+        <button class="footer-btn" style="background:var(--green);" onclick="savePaceMemberEntry()">Save</button>
     </div>
 </div>
 
@@ -1088,6 +1153,7 @@ function showScreen(id){
     if(id==='fillerManager')renderFillerManager();
     if(id==='clubManager')renderClubManager();
     if(id==='progress')loadProgress();
+    if(id==='pace')showPace();
 }
 
 /* ============ SETUP GRID ============ */
@@ -1548,6 +1614,280 @@ function shareTranscript(){
     }
     doShare();
 }
+/* ============ PACE ============ */
+const PACE_ROLES = [
+    {name:'SPEAKER',           points:15},
+    {name:'TOASTMASTER',       points:10},
+    {name:'EVALUATOR',         points:10},
+    {name:'GENERAL EVALUATOR', points:5},
+    {name:'TABLE TOPICS MASTER', points:5},
+    {name:'TABLE TOPICS',      points:3},
+    {name:'TIMER',             points:2},
+    {name:'AH COUNTER',        points:2},
+    {name:'GRAMMARIAN',        points:2},
+    {name:'SERGEANT AT ARMS',  points:1},
+];
+
+let paceSelectedYear = '';
+let paceEntryDateStr = '';
+let paceCurrentMember = '';
+let paceEntryCache = {}; // member -> {entryId, roles, points}
+let paceMemberSelectedRoles = new Set();
+
+/* ---- TM Year helpers ---- */
+function getTMYear(dateStr) {
+    let y, m;
+    if (dateStr) {
+        const p = dateStr.split('-');
+        y = parseInt(p[0]); m = parseInt(p[1]) - 1;
+    } else {
+        const now = new Date(); y = now.getFullYear(); m = now.getMonth();
+    }
+    return m >= 6 ? `${y}-${String(y+1).slice(2)}` : `${y-1}-${String(y).slice(2)}`;
+}
+function getCurrentTMYear() { return getTMYear(null); }
+function getTMYearBounds(tmYear) {
+    const startY = parseInt(tmYear.split('-')[0]);
+    const startStr = `${startY}-07-01`;
+    const endStr   = `${startY+1}-06-30`;
+    return {startStr, endStr};
+}
+function getAvailableTMYears() {
+    const cur = getCurrentTMYear();
+    const curStart = parseInt(cur.split('-')[0]);
+    const years = [];
+    for (let y = curStart; y >= curStart - 4; y--) {
+        years.push(`${y}-${String(y+1).slice(2)}`);
+    }
+    return years;
+}
+
+/* ---- Leaderboard ---- */
+async function showPace() {
+    paceSelectedYear = getCurrentTMYear();
+    document.getElementById('paceYearLabel').innerText = paceSelectedYear;
+    const club = getActiveClub();
+    document.getElementById('paceSubtitle').innerText = club ? club.name : 'Club participation';
+    await loadPaceLeaderboard();
+}
+
+async function loadPaceLeaderboard() {
+    const club = getActiveClub();
+    const area = document.getElementById('paceLeaderboardArea');
+    if (!club || !club.syncKey) {
+        area.innerHTML = `<div style="padding:30px 20px;text-align:center;opacity:0.6;font-size:17px;line-height:1.6;"><div style="font-size:40px;margin-bottom:15px;">☁</div>Cloud sync required for PACE tracking.<div style="margin-top:20px;"><button onclick="showScreen('clubManager')" style="background:var(--accent);color:white;border:none;border-radius:12px;padding:14px 24px;font-size:17px;font-weight:700;cursor:pointer;">Go to Club Settings</button></div></div>`;
+        return;
+    }
+    area.innerHTML = '<div class="spinner"></div>';
+    try {
+        const {startStr, endStr} = getTMYearBounds(paceSelectedYear);
+        const snap = await db.collection('clubs').doc(club.syncKey)
+            .collection('pace_entries')
+            .where('date', '>=', startStr)
+            .where('date', '<=', endStr)
+            .get();
+        const totals = {};
+        snap.forEach(doc => {
+            const d = doc.data();
+            if (!totals[d.member]) totals[d.member] = {points:0, meetings:new Set()};
+            totals[d.member].points += (d.pointsEarned || 0);
+            totals[d.member].meetings.add(d.date);
+        });
+        const sorted = Object.entries(totals).sort((a,b) => b[1].points - a[1].points);
+        if (!sorted.length) {
+            area.innerHTML = `<div style="padding:30px 20px;text-align:center;opacity:0.5;font-size:17px;">No entries for ${paceSelectedYear}.<br><br>Tap <strong>+ New Entry</strong> to record a meeting.</div>`;
+            return;
+        }
+        const goal = 100;
+        area.innerHTML = sorted.map(([name, data], i) => {
+            const meetings = data.meetings.size;
+            const pct = Math.min(100, Math.round((data.points / goal) * 100));
+            const over = data.points > goal;
+            const color = data.points >= goal ? 'var(--green)' : data.points >= 50 ? 'var(--gold)' : 'var(--accent)';
+            const medal = i===0 ? '🥇' : i===1 ? '🥈' : i===2 ? '🥉' : `<span style="font-size:14px;color:#8E8E93;font-weight:700;min-width:20px;display:inline-block;">${i+1}</span>`;
+            return `<div class="pace-leader-row">
+                <div class="pace-rank">${medal}</div>
+                <div style="flex:1;min-width:0;">
+                    <div class="pace-leader-name">${name}</div>
+                    <div class="pace-progress-bar-bg"><div class="pace-progress-bar-fill" style="width:${pct}%;background:${color};"></div></div>
+                </div>
+                <div style="text-align:right;flex-shrink:0;margin-left:12px;">
+                    <div style="font-size:22px;font-weight:800;color:${color};">${data.points}${over?' <span style=\"font-size:13px;\">over 100</span>':''}</div>
+                    <div style="font-size:11px;color:#8E8E93;">${meetings} meeting${meetings!==1?'s':''}</div>
+                </div>
+            </div>`;
+        }).join('');
+    } catch(e) {
+        area.innerHTML = `<div style="padding:20px;text-align:center;color:var(--red);font-size:15px;">Could not load PACE data.<br><span style="font-size:13px;">${e.message}</span></div>`;
+    }
+}
+
+async function changePaceYear(dir) {
+    const years = getAvailableTMYears();
+    const idx = years.indexOf(paceSelectedYear);
+    const newIdx = idx + dir;
+    if (newIdx < 0 || newIdx >= years.length) return;
+    paceSelectedYear = years[newIdx];
+    document.getElementById('paceYearLabel').innerText = paceSelectedYear;
+    await loadPaceLeaderboard();
+}
+
+/* ---- Entry screen ---- */
+async function showPaceEntryScreen() {
+    const today = new Date();
+    const m = String(today.getMonth()+1).padStart(2,'0');
+    const d = String(today.getDate()).padStart(2,'0');
+    paceEntryDateStr = `${today.getFullYear()}-${m}-${d}`;
+    document.getElementById('paceEntryDate').value = paceEntryDateStr;
+    showScreen('paceEntry');
+    await loadPaceEntryRoster();
+}
+
+async function loadPaceEntryRoster() {
+    const club = getActiveClub();
+    const list = document.getElementById('paceEntryList');
+    list.innerHTML = '<div class="spinner"></div>';
+    paceEntryCache = {};
+    try {
+        if (club && club.syncKey) {
+            const snap = await db.collection('clubs').doc(club.syncKey)
+                .collection('pace_entries')
+                .where('date', '==', paceEntryDateStr)
+                .get();
+            snap.forEach(doc => {
+                const d = doc.data();
+                paceEntryCache[d.member] = {entryId:doc.id, roles:d.roles, points:d.pointsEarned};
+            });
+        }
+        if (!allSpeakers.length) {
+            list.innerHTML = '<div style="padding:20px;text-align:center;opacity:0.5;">No roster members. Add members in Settings first.</div>';
+            return;
+        }
+        const dateLabel = new Date(paceEntryDateStr+'T12:00:00').toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});
+        list.innerHTML = `<div style="padding:10px 18px;font-size:12px;font-weight:700;color:#8E8E93;text-transform:uppercase;letter-spacing:1px;background:#F9F9FB;border-bottom:1px solid var(--border);">${dateLabel} &mdash; ${Object.keys(paceEntryCache).length} of ${allSpeakers.length} entered</div>` +
+            allSpeakers.map(name => {
+                const entry = paceEntryCache[name];
+                const has = !!entry;
+                const sub = has ? `&#10003; ${entry.roles.join(', ')} &middot; ${entry.points} pts` : 'Tap to enter roles';
+                return `<div class="pace-entry-row" onclick="openPaceMemberEntry('${name}')">
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-size:18px;font-weight:700;">${name}</div>
+                        <div style="font-size:13px;color:${has?'var(--green)':'#8E8E93'};margin-top:2px;">${sub}</div>
+                    </div>
+                    <div style="font-size:22px;color:${has?'var(--green)':'#D1D1D6'};margin-left:10px;">${has?'&#10003;':'&#8250;'}</div>
+                </div>`;
+            }).join('');
+    } catch(e) {
+        list.innerHTML = `<div style="padding:20px;text-align:center;color:var(--red);">Error: ${e.message}</div>`;
+    }
+}
+
+async function paceEntryDateChanged() {
+    paceEntryDateStr = document.getElementById('paceEntryDate').value;
+    await loadPaceEntryRoster();
+}
+
+/* ---- Per-member role entry ---- */
+function openPaceMemberEntry(name) {
+    paceCurrentMember = name;
+    paceMemberSelectedRoles = new Set();
+    const existing = paceEntryCache[name];
+    if (existing) existing.roles.forEach(r => paceMemberSelectedRoles.add(r));
+    document.getElementById('paceMemberName').innerText = name;
+    renderPaceRoleGrid();
+    showScreen('paceMemberEntry');
+}
+
+function renderPaceRoleGrid() {
+    const grid = document.getElementById('paceRoleGrid');
+    grid.innerHTML = PACE_ROLES.map(role => {
+        const sel = paceMemberSelectedRoles.has(role.name);
+        return `<div class="pace-role-card ${sel?'pace-role-selected':''}" onclick="togglePaceRole('${role.name}')">
+            <div style="font-size:15px;font-weight:700;">${role.name}</div>
+            <div style="font-size:13px;color:${sel?'var(--accent)':'#8E8E93'};margin-top:3px;">${role.points} pt${role.points!==1?'s':''}</div>
+        </div>`;
+    }).join('');
+    updatePaceTally();
+}
+
+function togglePaceRole(roleName) {
+    if (paceMemberSelectedRoles.has(roleName)) paceMemberSelectedRoles.delete(roleName);
+    else paceMemberSelectedRoles.add(roleName);
+    renderPaceRoleGrid();
+}
+
+function updatePaceTally() {
+    let total = 0;
+    const breakdown = [];
+    PACE_ROLES.forEach(role => {
+        if (paceMemberSelectedRoles.has(role.name)) {
+            total += role.points;
+            breakdown.push(`${role.points} ${role.name}`);
+        }
+    });
+    const el = document.getElementById('paceTallyDisplay');
+    if (!breakdown.length) {
+        el.innerHTML = '<span style="color:#8E8E93;">Select roles above</span>';
+    } else {
+        el.innerHTML = `<span style="font-size:28px;font-weight:900;color:var(--accent);">${total} pts</span><div style="font-size:13px;color:#8E8E93;margin-top:6px;line-height:1.6;">${breakdown.join(' + ')}</div>`;
+    }
+}
+
+async function savePaceMemberEntry() {
+    const club = getActiveClub();
+    if (!club || !club.syncKey) {
+        openModal('Cloud Required','PACE tracking requires cloud sync. Enable it in Club Settings.',()=>{});
+        return;
+    }
+    if (!paceMemberSelectedRoles.size) {
+        openModal('No Roles Selected','Select at least one role before saving.',()=>{});
+        return;
+    }
+    const roles = PACE_ROLES.filter(r => paceMemberSelectedRoles.has(r.name)).map(r=>r.name);
+    const pointsEarned = PACE_ROLES.filter(r => paceMemberSelectedRoles.has(r.name)).reduce((s,r)=>s+r.points,0);
+    const recordedBy = localStorage.getItem(pk(KEY_DEVICE_NAME)) || 'Unknown device';
+    const tmYear = getTMYear(paceEntryDateStr);
+    const entryData = {
+        date: paceEntryDateStr,
+        member: paceCurrentMember,
+        roles,
+        pointsEarned,
+        recordedBy,
+        tmYear,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    try {
+        const ref = db.collection('clubs').doc(club.syncKey).collection('pace_entries');
+        const existing = paceEntryCache[paceCurrentMember];
+        if (existing) {
+            await ref.doc(existing.entryId).update(entryData);
+        } else {
+            entryData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+            await ref.add(entryData);
+        }
+        paceEntryCache[paceCurrentMember] = {roles, points:pointsEarned};
+        showScreen('paceEntry');
+        await loadPaceEntryRoster();
+    } catch(e) {
+        openModal('Save Failed',`Could not save entry: ${e.message}`,()=>{});
+    }
+}
+
+async function deletePaceEntry() {
+    const existing = paceEntryCache[paceCurrentMember];
+    if (!existing) { showScreen('paceEntry'); return; }
+    const club = getActiveClub();
+    openModal('Remove Entry?',`Remove all roles for ${paceCurrentMember} on ${paceEntryDateStr}?`, async ()=>{
+        try {
+            await db.collection('clubs').doc(club.syncKey).collection('pace_entries').doc(existing.entryId).delete();
+            delete paceEntryCache[paceCurrentMember];
+            showScreen('paceEntry');
+            await loadPaceEntryRoster();
+        } catch(e) { openModal('Error',e.message,()=>{}); }
+    });
+}
+
+
 </script>
 
 </body>
