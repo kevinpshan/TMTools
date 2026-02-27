@@ -12,7 +12,6 @@ promote:
 runs-on: ubuntu-latest
 if: github.event.inputs.confirm == ‘DEPLOY’
 
-```
 steps:
   - name: Checkout repository
     uses: actions/checkout@v4
@@ -34,4 +33,3 @@ steps:
       git add test/
       git diff --staged --quiet || git commit -m "Promote: dev to test [skip ci]"
       git push
-```
