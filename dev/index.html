@@ -297,6 +297,7 @@
         <div class="main-menu-card settings-card" onclick="showScreen('fillerManager')"><div class="card-content"><h3>Filler Words</h3><p>Add, edit, delete</p></div><div class="icon" style="font-size:30px;">💬</div></div>
         <div class="main-menu-card settings-card" style="cursor:default;"><div class="card-content"><h3>Markdown Export</h3><p>Enable Slack/Email tables</p></div><label class="switch"><input type="checkbox" id="mdToggle" onchange="saveSettings()"><span class="slider"></span></label></div>
         <div class="main-menu-card settings-card" style="cursor:default;flex-direction:column;align-items:flex-start;"><div class="card-content"><h3>ChatGPT API Key</h3><p id="apiKeySubtext">Shared with club via sync</p></div><input type="password" id="openaiKey" placeholder="Paste Key Here" onchange="saveSettings()" style="margin-top:12px;font-size:16px;"></div>
+        <div class="main-menu-card settings-card" onclick="editYourName()"><div class="card-content"><h3>Your Name</h3><p id="settingsDeviceName">Loading...</p></div><div class="icon" style="font-size:30px;">👤</div></div>
         <div class="main-menu-card settings-card" onclick="exportData()"><div class="card-content"><h3>Backup Data</h3><p>Export JSON</p></div><div class="icon">⤓</div></div>
         <div class="main-menu-card settings-card" onclick="document.getElementById('importFile').click()"><div class="card-content"><h3>Restore Data</h3><p>Import JSON</p></div><div class="icon">⤒</div></div>
         <div class="main-menu-card settings-card" onclick="askClearLogs()" style="background:#FFF5F5;border:2px solid var(--red);"><div class="card-content"><h3 style="color:var(--red);">Clear Meeting Data</h3><p>Reset logs, WOD, transcripts</p></div><div class="icon">⚠</div></div>
@@ -864,6 +865,22 @@ async function writeSession(sessionData) {
 }
 
 /* Prompt for device name if not set, then run callback */
+function editYourName() {
+    const current = localStorage.getItem(pk(KEY_DEVICE_NAME)) || '';
+    openModal(
+        'Your Name',
+        '<div style="font-size:15px;color:var(--subtext);margin-bottom:12px;">Your name appears on session records so you can be identified as the recorder.</div>' +
+        '<input type="text" id="deviceNameInput" placeholder="First Last" value="' + current + '" style="text-transform:uppercase;width:100%;padding:10px;border:2px solid var(--border);border-radius:10px;font-size:16px;box-sizing:border-box;">',
+        () => {
+            const val = document.getElementById('deviceNameInput').value.trim().toUpperCase();
+            if (!val) return;
+            localStorage.setItem(pk(KEY_DEVICE_NAME), val);
+            document.getElementById('settingsDeviceName').innerText = val;
+        },
+        'Cancel', 'Save'
+    );
+}
+
 function getDeviceName(callback) {
     const stored = localStorage.getItem(pk(KEY_DEVICE_NAME));
     if (stored) { callback(stored); return; }
@@ -1190,6 +1207,7 @@ function showScreen(id){
     if(id==='progress')loadProgress();
     if(id==='pace')showPace();
     if(id==='paceRoleManager')renderPaceRoleManager();
+    if(id==='settings'){const n=localStorage.getItem(pk(KEY_DEVICE_NAME));document.getElementById('settingsDeviceName').innerText=n||'Tap to set your name';}
 }
 
 /* ============ SETUP GRID ============ */
@@ -1200,7 +1218,9 @@ function renderSetupGrid(){
         const sc=JSON.parse(localStorage.getItem(clubKey('custom_limits'))||'{"g":5,"cy":6,"r":7}');
         grid.innerHTML+=`<div class="role-card" style="grid-column:span 2;" onclick="askCustomTime(this)"><h4>CUSTOM</h4><p id="customLabel">${sc.g}-${sc.r}m</p></div>`;
     } else {
-        ["TOASTMASTER","TIMER","AH COUNTER","GRAMMARIAN","WORD MASTER","SPEAKER","EVALUATOR","TABLE TOPICS"].forEach(r=>{grid.innerHTML+=`<div class="role-card" onclick="selectRole(this,0,0,0,'${r}')"><h4>${r}</h4></div>`;});
+        const defaultRoles = ["TOASTMASTER","TIMER","AH COUNTER","GRAMMARIAN","WORD MASTER","SPEAKER","EVALUATOR","TABLE TOPICS"];
+        const counterRoles = (paceRoles && paceRoles.length) ? paceRoles.map(r=>r.name) : defaultRoles;
+        counterRoles.forEach(r=>{grid.innerHTML+=`<div class="role-card" onclick="selectRole(this,0,0,0,'${r}')"><h4>${r}</h4></div>`;});
         grid.innerHTML+=`<div class="role-card" onclick="askCustomTime(this)"><h4>OTHER</h4><p id="customLabel">Type entry</p></div>`;
     }
 }
