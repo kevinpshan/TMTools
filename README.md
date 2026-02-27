@@ -34,7 +34,7 @@ Two-tab report screen. **This Device** shows sessions recorded locally in the st
 
 Per-speaker filler rate history stored in Firestore across meetings. Each speaker shows their latest rate, trend indicator (↑ improving / ↓ worsening / → steady), and session count. Tap any speaker for the full session log with dates, scores, and who recorded each session. Individual sessions can be deleted if entered in error.
 
-### PACE Participation Tracker
+### PACE — Participating and Achieving Competence and Excellence
 
 Club participation tracking system aligned to the Toastmasters year (July 1 – June 30). Members earn points for each role they fill at a meeting. The leaderboard shows ranked standings with progress bars toward the 100-point annual goal, color-coded by achievement level. Officers enter meeting roles after each meeting; the data syncs to all club devices via Firestore.
 
@@ -73,6 +73,7 @@ On iOS: open the app in Safari, tap **Share → Add to Home Screen**. On Android
 
 ## Repository Structure
 
+```
 index.html              Main app (entire codebase)
 sw.js                   Service worker — cache versioning and offline support
 manifest.json           PWA manifest — icons, theme, display mode
@@ -83,6 +84,7 @@ technical-reference.html  Architecture, Firestore schema, function reference
 test-plan.html          Test cases across 15+ sections
 dev/                    Active development environment (dev_ localStorage prefix)
 test/                   Beta validation environment (test_ localStorage prefix)
+```
 
 -----
 
