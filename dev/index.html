@@ -1662,6 +1662,7 @@ const PACE_ROLES = [
 ];
 
 let paceSelectedYear = '';
+let paceSpinnerTimer = null;
 let paceEntryDateStr = '';
 let paceCurrentMember = '';
 let paceEntryCache = {}; // member -> {entryId, roles, points}
@@ -1712,8 +1713,10 @@ async function loadPaceLeaderboard() {
         return;
     }
     area.innerHTML = '<div class="spinner"></div>';
+    // Clear any previous timer before starting a new one
+    if (paceSpinnerTimer) clearTimeout(paceSpinnerTimer);
     // Safety timeout — if spinner still showing after 8s, offer retry
-    const spinnerTimer = setTimeout(() => {
+    paceSpinnerTimer = setTimeout(() => {
         if (area.querySelector('.spinner')) {
             area.innerHTML = `<div style="padding:30px 20px;text-align:center;">
                 <div style="font-size:15px;color:#8E8E93;margin-bottom:16px;">Taking longer than expected...</div>
@@ -1735,7 +1738,7 @@ async function loadPaceLeaderboard() {
             totals[d.member].points += (d.pointsEarned || 0);
             totals[d.member].meetings.add(d.date);
         });
-        clearTimeout(spinnerTimer);
+        clearTimeout(paceSpinnerTimer);
         const sorted = Object.entries(totals).sort((a,b) => b[1].points - a[1].points);
         if (!sorted.length) {
             area.innerHTML = `<div style="padding:30px 20px;text-align:center;opacity:0.5;font-size:17px;">No entries for ${paceSelectedYear}.<br><br>Tap <strong>+ New Entry</strong> to record a meeting.</div>`;
@@ -1760,9 +1763,9 @@ async function loadPaceLeaderboard() {
                 </div>
             </div>`;
         }).join('');
-        clearTimeout(spinnerTimer);
+        clearTimeout(paceSpinnerTimer);
     } catch(e) {
-        clearTimeout(spinnerTimer);
+        clearTimeout(paceSpinnerTimer);
         area.innerHTML = `<div style="padding:20px;text-align:center;color:var(--red);font-size:15px;">Could not load PACE data.<br><span style="font-size:13px;">${e.message}</span><br><br><button onclick="loadPaceLeaderboard()" style="background:var(--accent);color:white;border:none;border-radius:12px;padding:12px 20px;font-size:15px;font-weight:700;cursor:pointer;">Retry</button></div>`;
     }
 }
