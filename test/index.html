@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -20,7 +19,7 @@
         h1 { margin:0; font-size:clamp(34px,5vw,55px); font-weight:800; color:#1C1C1E; }
         .subtitle { font-size:clamp(17px,2.5vw,26px); margin-top:5px; color:var(--accent); font-weight:700; }
         .settings-icon { position:absolute; top:35px; right:20px; font-size:32px; color:var(--accent); cursor:pointer; padding:5px; z-index:10; }
-        .tab-container { display:flex; background:#E3E3E8; border-radius:10px; padding:2px; margin:0 20px 15px; flex-shrink:0; }
+        .tab-container { display:flex; background:#E3E3E8; border-radius:10px; padding:2px; gap:3px; margin:0 20px 15px; flex-shrink:0; }
         .tab { flex:1; padding:12px; text-align:center; font-weight:600; font-size:16px; border-radius:8px; cursor:pointer; transition:all 0.2s; color:var(--subtext); }
         .tab.active { background:white; color:var(--accent); box-shadow:0 2px 4px rgba(0,0,0,0.1); }
         .container { flex:1; display:flex; flex-direction:column; padding:0 20px; gap:15px; overflow-y:auto; min-height:0; max-width:950px; margin:0 auto; width:100%; box-sizing:border-box; }
@@ -134,7 +133,6 @@
 <body onload="initApp()">
 
 <!-- MODAL -->
-
 <div id="customModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10000;align-items:center;justify-content:center;backdrop-filter:blur(8px);">
     <div style="background:var(--card);width:85%;max-width:500px;padding:25px;border-radius:24px;text-align:center;border:1px solid var(--border);">
         <h2 id="modalTitle" style="margin:0;"></h2>
@@ -147,7 +145,6 @@
 </div>
 
 <!-- CLUB SWITCHER -->
-
 <div id="clubSwitcherOverlay" onclick="closeClubSwitcher(event)">
     <div id="clubSwitcherPanel">
         <div class="club-switcher-title">Switch Club</div>
@@ -162,7 +159,6 @@
 </div>
 
 <!-- MENU -->
-
 <div id="menu" class="screen active">
     <div class="header">
         <div onclick="showClubSwitcher()" style="cursor:pointer;">
@@ -175,8 +171,8 @@
         <div class="settings-icon" onclick="showScreen('settings')">⚙</div>
     </div>
     <div class="tab-container">
-        <div id="tabTimer" class="tab active" onclick="switchMode('timer')">Timer</div>
-        <div id="tabCounter" class="tab" onclick="switchMode('counter')">Ah-Counter</div>
+        <div id="tabTimer" class="tab active" onclick="switchMode('timer')">Timing</div>
+        <div id="tabCounter" class="tab" onclick="switchMode('counter')">Verbal</div>
         <div id="tabClub" class="tab" onclick="switchMode('club')">Club</div>
     </div>
     <div id="staleDataBanner" style="display:none;margin:0 20px 10px;background:#FFF9E6;border:2px solid var(--gold);border-radius:14px;padding:14px 16px;display:none;flex-direction:row;justify-content:space-between;align-items:center;gap:12px;">
@@ -205,7 +201,6 @@
 </div>
 
 <!-- WOD -->
-
 <div id="wod" class="screen">
     <div class="header"><h1>W.O.D.</h1><div class="subtitle">Search or Generate</div></div>
     <div class="container">
@@ -226,7 +221,6 @@
 </div>
 
 <!-- SETUP -->
-
 <div id="setup" class="screen">
     <div class="header"><h1 id="setupHeader">Setup</h1></div>
     <div class="container">
@@ -248,7 +242,6 @@
 </div>
 
 <!-- COUNTER DISPLAY -->
-
 <div id="counterDisplay" class="screen">
     <div class="header"><h1 id="counterSpeakerName">Name</h1><div id="counterSpeakerRole" class="subtitle">ROLE</div></div>
     <div class="container"><div id="tallyArea" class="tally-grid"></div></div>
@@ -256,7 +249,6 @@
 </div>
 
 <!-- TIMER DISPLAY -->
-
 <div id="timerDisplay" class="screen">
     <div id="spkName" style="font-size:30px;color:#666;margin-top:20px;text-align:center;text-transform:uppercase;font-weight:700;"></div>
     <div id="timer" style="font-size:clamp(100px,30vw,400px);font-weight:200;text-align:center;margin:auto 0;font-variant-numeric:tabular-nums;color:#000;">00:00</div>
@@ -264,7 +256,6 @@
 </div>
 
 <!-- REPORT -->
-
 <div id="report" class="screen">
     <div class="header"><h1 id="reportPageTitle">Report</h1></div>
     <div class="tab-container" style="margin:0 20px 10px;">
@@ -289,7 +280,6 @@
 </div>
 
 <!-- SETTINGS -->
-
 <div id="settings" class="screen">
     <div class="header"><h1>Settings</h1></div>
     <div class="container">
@@ -297,6 +287,7 @@
         <div class="main-menu-card settings-card" onclick="showScreen('fillerManager')"><div class="card-content"><h3>Filler Words</h3><p>Add, edit, delete</p></div><div class="icon" style="font-size:30px;">💬</div></div>
         <div class="main-menu-card settings-card" style="cursor:default;"><div class="card-content"><h3>Markdown Export</h3><p>Enable Slack/Email tables</p></div><label class="switch"><input type="checkbox" id="mdToggle" onchange="saveSettings()"><span class="slider"></span></label></div>
         <div class="main-menu-card settings-card" style="cursor:default;flex-direction:column;align-items:flex-start;"><div class="card-content"><h3>ChatGPT API Key</h3><p id="apiKeySubtext">Shared with club via sync</p></div><input type="password" id="openaiKey" placeholder="Paste Key Here" onchange="saveSettings()" style="margin-top:12px;font-size:16px;"></div>
+        <div class="main-menu-card settings-card" onclick="editYourName()"><div class="card-content"><h3>Your Name</h3><p id="settingsDeviceName">Loading...</p></div><div class="icon" style="font-size:30px;">👤</div></div>
         <div class="main-menu-card settings-card" onclick="exportData()"><div class="card-content"><h3>Backup Data</h3><p>Export JSON</p></div><div class="icon">⤓</div></div>
         <div class="main-menu-card settings-card" onclick="document.getElementById('importFile').click()"><div class="card-content"><h3>Restore Data</h3><p>Import JSON</p></div><div class="icon">⤒</div></div>
         <div class="main-menu-card settings-card" onclick="askClearLogs()" style="background:#FFF5F5;border:2px solid var(--red);"><div class="card-content"><h3 style="color:var(--red);">Clear Meeting Data</h3><p>Reset logs, WOD, transcripts</p></div><div class="icon">⚠</div></div>
@@ -306,7 +297,6 @@
 </div>
 
 <!-- CLUB MANAGER -->
-
 <div id="clubManager" class="screen">
     <div class="header"><h1>Clubs</h1><div class="subtitle">Cloud sync &amp; switching</div></div>
     <div class="container">
@@ -319,7 +309,6 @@
 </div>
 
 <!-- FILLER MANAGER -->
-
 <div id="fillerManager" class="screen">
     <div class="header"><h1>Filler Words</h1><div id="fillerManagerSubtitle" class="subtitle">Current club</div></div>
     <div class="container">
@@ -330,7 +319,6 @@
 </div>
 
 <!-- PROGRESS -->
-
 <div id="progress" class="screen">
     <div class="header"><h1>Progress</h1><div id="progressSubtitle" class="subtitle">Speaker improvement</div></div>
     <div class="container">
@@ -340,7 +328,6 @@
 </div>
 
 <!-- SPEAKER PROGRESS -->
-
 <div id="speakerProgress" class="screen">
     <div class="header"><h1 id="speakerProgressName">Speaker</h1><div id="speakerProgressMeta" class="subtitle">Session history</div></div>
     <div class="container">
@@ -351,7 +338,6 @@
 </div>
 
 <!-- TRANSCRIPTION -->
-
 <div id="transcription" class="screen">
     <div class="header"><h1 id="transcriptionSpeakerName">Name</h1><div id="transcriptionSpeakerRole" class="subtitle">ROLE</div></div>
     <div class="container">
@@ -366,7 +352,6 @@
 </div>
 
 <!-- TRANSCRIPT LIST -->
-
 <div id="transcriptList" class="screen">
     <div class="header"><h1>Transcripts</h1><div class="subtitle">Saved this meeting</div></div>
     <div class="container"><div id="transcriptListArea" style="background:var(--card);border-radius:16px;padding:2px;flex:1;overflow-y:auto;border:1px solid var(--border);min-height:120px;"></div></div>
@@ -374,7 +359,6 @@
 </div>
 
 <!-- TRANSCRIPT VIEW -->
-
 <div id="transcriptView" class="screen">
     <div class="header"><h1 id="transcriptViewName">Name</h1><div id="transcriptViewRole" class="subtitle">ROLE</div></div>
     <div class="container">
@@ -388,7 +372,6 @@
 </div>
 
 <!-- PACE LEADERBOARD -->
-
 <div id="pace" class="screen">
     <div class="header"><h1>PACE</h1><div class="subtitle" id="paceSubtitle">Participating and Achieving Competence and Excellence</div></div>
     <div class="pace-year-bar">
@@ -408,7 +391,6 @@
 </div>
 
 <!-- PACE ENTRY — date + roster -->
-
 <div id="paceEntry" class="screen">
     <div class="header"><h1>PACE Entry</h1><div class="subtitle">Tap a member to enter roles</div></div>
     <div style="padding:0 20px 12px;flex-shrink:0;">
@@ -423,7 +405,6 @@
 </div>
 
 <!-- PACE MEMBER ENTRY — role checkboxes -->
-
 <div id="paceMemberEntry" class="screen">
     <div class="header"><h1 id="paceMemberName">Member</h1><div class="subtitle">Select roles for this meeting</div></div>
     <div class="container">
@@ -438,7 +419,6 @@
 </div>
 
 <!-- PACE MEMBER HISTORY -->
-
 <div id="paceMemberHistory" class="screen">
     <div class="header"><h1 id="paceHistoryName">Member</h1><div class="subtitle" id="paceHistoryMeta">Year history</div></div>
     <div class="container">
@@ -449,7 +429,6 @@
 </div>
 
 <!-- PACE ROLE MANAGER -->
-
 <div id="paceRoleManager" class="screen">
     <div class="header"><h1>PACE Roles</h1><div class="subtitle">Points per role &middot; synced to cloud</div></div>
     <div class="container">
@@ -460,7 +439,6 @@
 </div>
 
 <!-- WELCOME SCREEN -->
-
 <div id="welcome" class="screen">
     <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px 25px;text-align:center;">
         <div style="font-size:64px;margin-bottom:10px;">⏱</div>
@@ -864,6 +842,22 @@ async function writeSession(sessionData) {
 }
 
 /* Prompt for device name if not set, then run callback */
+function editYourName() {
+    const current = localStorage.getItem(pk(KEY_DEVICE_NAME)) || '';
+    openModal(
+        'Your Name',
+        '<div style="font-size:15px;color:var(--subtext);margin-bottom:12px;">Your name appears on session records so you can be identified as the recorder.</div>' +
+        '<input type="text" id="deviceNameInput" placeholder="First Last" value="' + current + '" style="text-transform:uppercase;width:100%;padding:10px;border:2px solid var(--border);border-radius:10px;font-size:16px;box-sizing:border-box;">',
+        () => {
+            const val = document.getElementById('deviceNameInput').value.trim().toUpperCase();
+            if (!val) return;
+            localStorage.setItem(pk(KEY_DEVICE_NAME), val);
+            document.getElementById('settingsDeviceName').innerText = val;
+        },
+        'Cancel', 'Save'
+    );
+}
+
 function getDeviceName(callback) {
     const stored = localStorage.getItem(pk(KEY_DEVICE_NAME));
     if (stored) { callback(stored); return; }
@@ -1190,6 +1184,7 @@ function showScreen(id){
     if(id==='progress')loadProgress();
     if(id==='pace')showPace();
     if(id==='paceRoleManager')renderPaceRoleManager();
+    if(id==='settings'){const n=localStorage.getItem(pk(KEY_DEVICE_NAME));document.getElementById('settingsDeviceName').innerText=n||'Tap to set your name';}
 }
 
 /* ============ SETUP GRID ============ */
@@ -1200,7 +1195,9 @@ function renderSetupGrid(){
         const sc=JSON.parse(localStorage.getItem(clubKey('custom_limits'))||'{"g":5,"cy":6,"r":7}');
         grid.innerHTML+=`<div class="role-card" style="grid-column:span 2;" onclick="askCustomTime(this)"><h4>CUSTOM</h4><p id="customLabel">${sc.g}-${sc.r}m</p></div>`;
     } else {
-        ["TOASTMASTER","TIMER","AH COUNTER","GRAMMARIAN","WORD MASTER","SPEAKER","EVALUATOR","TABLE TOPICS"].forEach(r=>{grid.innerHTML+=`<div class="role-card" onclick="selectRole(this,0,0,0,'${r}')"><h4>${r}</h4></div>`;});
+        const defaultRoles = ["TOASTMASTER","TIMER","AH COUNTER","GRAMMARIAN","WORD MASTER","SPEAKER","EVALUATOR","TABLE TOPICS"];
+        const counterRoles = (paceRoles && paceRoles.length) ? paceRoles.map(r=>r.name) : defaultRoles;
+        counterRoles.forEach(r=>{grid.innerHTML+=`<div class="role-card" onclick="selectRole(this,0,0,0,'${r}')"><h4>${r}</h4></div>`;});
         grid.innerHTML+=`<div class="role-card" onclick="askCustomTime(this)"><h4>OTHER</h4><p id="customLabel">Type entry</p></div>`;
     }
 }
@@ -1381,7 +1378,7 @@ function openModal(t,b,c,cancelLabel,confirmLabel){
     document.getElementById('modalConfirm').onclick=()=>{c();document.getElementById('customModal').style.display='none';};
     document.getElementById('modalCancel').onclick=()=>{document.getElementById('customModal').style.display='none';};
 }function askCustomTime(el){const saved=JSON.parse(localStorage.getItem(clubKey('custom_limits'))||'{"g":5,"cy":6,"r":7}');const title=currentMode==='timer'?"Thresholds":"Enter Custom Role";const body=currentMode==='timer'?`<label>Green (Min):</label><input type="number" id="cg" value="${saved.g}"><label>Yellow (Target):</label><input type="number" id="cy" value="${saved.cy}"><label>Red (Max):</label><input type="number" id="cr" value="${saved.r}">`:`<label>Role Name:</label><input type="text" id="customRole" placeholder="e.g. JOKE MASTER" style="text-transform:uppercase">`;openModal(title,body,()=>{if(currentMode==='timer'){const g=document.getElementById('cg').value,y=document.getElementById('cy').value,r=document.getElementById('cr').value;lims={g:g*60,y:y*60,r:r*60};localStorage.setItem(clubKey('custom_limits'),JSON.stringify({g,cy:y,r}));document.getElementById('customLabel').innerText=`${g}-${r}m`;selectedTypeLabel='CUSTOM';}else{selectedTypeLabel=document.getElementById('customRole').value.toUpperCase();document.getElementById('customLabel').innerText=selectedTypeLabel;}document.querySelectorAll('.role-card').forEach(c=>c.classList.remove('selected'));el.classList.add('selected');});}
-function switchMode(m){currentMode=m;document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));const tabId=m==='timer'?'tabTimer':m==='counter'?'tabCounter':'tabClub';document.getElementById(tabId).classList.add('active');const titles={'timer':'Meeting Timer','counter':'Ah-Counter','club':'Club Tools'};document.getElementById('modeTitle').innerText=titles[m]||'Meeting Timer';document.getElementById('timerMode').style.display=m==='timer'?'flex':'none';document.getElementById('counterMode').style.display=m==='counter'?'flex':'none';document.getElementById('clubMode').style.display=m==='club'?'flex':'none';}
+function switchMode(m){currentMode=m;document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));const tabId=m==='timer'?'tabTimer':m==='counter'?'tabCounter':'tabClub';document.getElementById(tabId).classList.add('active');const titles={'timer':'Timing','counter':'Verbal','club':'Club Tools'};document.getElementById('modeTitle').innerText=titles[m]||'Meeting Timer';document.getElementById('timerMode').style.display=m==='timer'?'flex':'none';document.getElementById('counterMode').style.display=m==='counter'?'flex':'none';document.getElementById('clubMode').style.display=m==='club'?'flex':'none';}
 
 /* ============ START HANDLER ============ */
 function handleStart(){
@@ -2129,16 +2126,14 @@ function showPaceEmbedModal() {
         '<div style="margin-bottom:16px;">' +
         '<div style="font-size:12px;font-weight:700;color:#8E8E93;margin-bottom:6px;">RANKED LIST</div>' +
         '<textarea readonly onclick="this.select()" style="width:100%;box-sizing:border-box;height:68px;font-family:monospace;font-size:11px;padding:10px;border:2px solid #D1D1D6;border-radius:10px;background:#F9F9FB;resize:none;">' + enc(lbRaw) + '</textarea>' +
-
-    '</div>' +
-    '<div>' +
-    '<div style="font-size:12px;font-weight:700;color:#8E8E93;margin-bottom:6px;">BAR CHART</div>' +
-    '<textarea readonly onclick="this.select()" style="width:100%;box-sizing:border-box;height:68px;font-family:monospace;font-size:11px;padding:10px;border:2px solid #D1D1D6;border-radius:10px;background:#F9F9FB;resize:none;">' + enc(chRaw) + '</textarea>' +
-    '</div>' +
-    '<div style="font-size:12px;color:#8E8E93;margin-top:12px;">Tap a snippet to select it, then copy and paste into your website HTML.</div>',
-    ()=>{}, null, 'Close'
-);
-
+        '</div>' +
+        '<div>' +
+        '<div style="font-size:12px;font-weight:700;color:#8E8E93;margin-bottom:6px;">BAR CHART</div>' +
+        '<textarea readonly onclick="this.select()" style="width:100%;box-sizing:border-box;height:68px;font-family:monospace;font-size:11px;padding:10px;border:2px solid #D1D1D6;border-radius:10px;background:#F9F9FB;resize:none;">' + enc(chRaw) + '</textarea>' +
+        '</div>' +
+        '<div style="font-size:12px;color:#8E8E93;margin-top:12px;">Tap a snippet to select it, then copy and paste into your website HTML.</div>',
+        ()=>{}, null, 'Close'
+    );
 }
 
 </script>
