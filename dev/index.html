@@ -1539,6 +1539,19 @@ function generateReportText(){
 }
 
 /* ============ TRANSCRIPTION ============ */
+function showTransBanner(type, rtt) {
+    const container = document.getElementById('transcriptionContent').parentElement;
+    const existing = document.getElementById('transBandwidthBanner');
+    if (existing) existing.remove();
+    const banner = document.createElement('div');
+    banner.id = 'transBandwidthBanner';
+    if (type === 'slow') {
+        banner.style.cssText = 'background:#FFF9E6;border-left:4px solid #BF941A;padding:10px 14px;font-size:14px;color:#7A5C00;margin:8px 0;border-radius:8px;';
+        banner.innerHTML = '⚠️ Slow connection detected. Transcription may take longer than usual or fail. Consider manual filler counting instead.';
+    }
+    container.insertBefore(banner, container.firstChild);
+}
+
 function initTranscription(){transcriptResult='';transcriptCounts={};audioChunks=[];whisperAbortController=null;clearInterval(whisperElapsedTimer);whisperElapsedTimer=null;
     const st=document.getElementById('transcriptionStatus');st.innerText='READY TO RECORD';st.style.color='#8E8E93';st.classList.remove('recording-pulse');
     document.getElementById('transcriptionContent').innerHTML='<span style="color:#8E8E93;font-style:italic;">Transcript will appear here after recording...</span>';
@@ -1547,28 +1560,25 @@ function initTranscription(){transcriptResult='';transcriptCounts={};audioChunks
     // Remove any previous bandwidth banner
     const oldBanner = document.getElementById('transBandwidthBanner');
     if (oldBanner) oldBanner.remove();
-    // Bandwidth probe
+    // Bandwidth probe — fetch a known small resource with a 4-second timeout
     const probeStart = Date.now();
-    fetch('https://www.gstatic.com/generate_204', {method:'HEAD', cache:'no-store'})
-        .then(() => {
-            const rtt = Date.now() - probeStart;
-            if (rtt > 1500) {
-                const banner = document.createElement('div');
-                banner.id = 'transBandwidthBanner';
-                banner.style.cssText = 'background:#FFF9E6;border-left:4px solid #BF941A;padding:10px 14px;font-size:14px;color:#7A5C00;margin:8px 0;border-radius:8px;';
-                banner.innerHTML = '⚠️ Slow connection detected (' + rtt + 'ms). Transcription may take longer than usual or fail. Consider using manual filler counting instead.';
-                const container = document.getElementById('transcriptionContent').parentElement;
-                container.insertBefore(banner, container.firstChild);
-            }
-        })
-        .catch(() => {
-            const banner = document.createElement('div');
-            banner.id = 'transBandwidthBanner';
-            banner.style.cssText = 'background:#FFE8E8;border-left:4px solid var(--red);padding:10px 14px;font-size:14px;color:#990000;margin:8px 0;border-radius:8px;';
-            banner.innerHTML = '⚠️ No internet connection detected. Transcription will not be available.';
-            const container = document.getElementById('transcriptionContent').parentElement;
-            container.insertBefore(banner, container.firstChild);
-        });btn.onclick=startTranscriptionRecording;}
+    const probeController = new AbortController();
+    const probeTimeout = setTimeout(() => probeController.abort(), 4000);
+    fetch('https://api.openai.com/v1/models', {
+        method: 'HEAD',
+        cache: 'no-store',
+        signal: probeController.signal
+    }).then(() => {
+        clearTimeout(probeTimeout);
+        const rtt = Date.now() - probeStart;
+        if (rtt > 1500) showTransBanner('slow', rtt);
+    }).catch(e => {
+        clearTimeout(probeTimeout);
+        const rtt = Date.now() - probeStart;
+        // Only show slow warning on timeout (4s), ignore other errors (CORS etc)
+        if (e.name === 'AbortError') showTransBanner('slow', rtt);
+        // Network errors other than timeout/CORS are ignored — don't false-alarm
+    });btn.onclick=startTranscriptionRecording;}
 async function startTranscriptionRecording(){
     const aiKey=(localStorage.getItem(pk(KEY_AI_KEY))||'').trim();
     if(!aiKey){openModal("API Key Required","Please add your OpenAI Key in Settings first.",()=>{});return;}
