@@ -1848,9 +1848,18 @@ async function loadPaceLeaderboard() {
         clearTimeout(paceSpinnerTimer);
         const sorted = Object.entries(totals).sort((a,b) => b[1].points - a[1].points);
         if (!sorted.length) {
-            area.innerHTML = `<div style="padding:30px 20px;text-align:center;opacity:0.5;font-size:17px;">No entries for ${paceSelectedYear}.<br><br>Tap <strong>+ New Entry</strong> to record a meeting.</div>`;
+            // If this is the first load after a fresh sync, retry once after 2s
+            // in case pace_entries haven't settled yet
+            if (!loadPaceLeaderboard._retried) {
+                loadPaceLeaderboard._retried = true;
+                setTimeout(loadPaceLeaderboard, 2000);
+                return;
+            }
+            loadPaceLeaderboard._retried = false;
+            area.innerHTML = `<div style="padding:30px 20px;text-align:center;opacity:0.5;font-size:17px;">No PACE data for ${paceSelectedYear}.<br><br>Tap <strong>+ New Entry</strong> to record a meeting.</div>`;
             return;
         }
+        loadPaceLeaderboard._retried = false;
         const goal = 100;
         area.innerHTML = sorted.map(([name, data], i) => {
             const meetings = data.meetings.size;
