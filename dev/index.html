@@ -1539,13 +1539,16 @@ function generateReportText(){
 }
 
 /* ============ TRANSCRIPTION ============ */
-function showTransBanner(type, rtt) {
+function showTransBanner(type) {
     const container = document.getElementById('transcriptionContent').parentElement;
     const existing = document.getElementById('transBandwidthBanner');
     if (existing) existing.remove();
     const banner = document.createElement('div');
     banner.id = 'transBandwidthBanner';
-    if (type === 'slow') {
+    if (type === 'offline') {
+        banner.style.cssText = 'background:#FFE8E8;border-left:4px solid var(--red);padding:10px 14px;font-size:14px;color:#990000;margin:8px 0;border-radius:8px;';
+        banner.innerHTML = '⚠️ No internet connection. Transcription is not available — use manual filler counting instead.';
+    } else if (type === 'slow') {
         banner.style.cssText = 'background:#FFF9E6;border-left:4px solid #BF941A;padding:10px 14px;font-size:14px;color:#7A5C00;margin:8px 0;border-radius:8px;';
         banner.innerHTML = '⚠️ Slow connection detected. Transcription may take longer than usual or fail. Consider manual filler counting instead.';
     }
@@ -1560,7 +1563,12 @@ function initTranscription(){transcriptResult='';transcriptCounts={};audioChunks
     // Remove any previous bandwidth banner
     const oldBanner = document.getElementById('transBandwidthBanner');
     if (oldBanner) oldBanner.remove();
-    // Bandwidth probe — fetch a known small resource with a 4-second timeout
+    // Step 1: instant offline check via navigator.onLine
+    if (!navigator.onLine) {
+        showTransBanner('offline');
+        return;
+    }
+    // Step 2: timed probe to detect slow connections (4s timeout)
     const probeStart = Date.now();
     const probeController = new AbortController();
     const probeTimeout = setTimeout(() => probeController.abort(), 4000);
@@ -1571,13 +1579,12 @@ function initTranscription(){transcriptResult='';transcriptCounts={};audioChunks
     }).then(() => {
         clearTimeout(probeTimeout);
         const rtt = Date.now() - probeStart;
-        if (rtt > 1500) showTransBanner('slow', rtt);
+        if (rtt > 1500) showTransBanner('slow');
     }).catch(e => {
         clearTimeout(probeTimeout);
-        const rtt = Date.now() - probeStart;
-        // Only show slow warning on timeout (4s), ignore other errors (CORS etc)
-        if (e.name === 'AbortError') showTransBanner('slow', rtt);
-        // Network errors other than timeout/CORS are ignored — don't false-alarm
+        // AbortError = timed out = slow connection
+        if (e.name === 'AbortError') showTransBanner('slow');
+        // CORS/other errors on HEAD are not meaningful — ignore
     });btn.onclick=startTranscriptionRecording;}
 async function startTranscriptionRecording(){
     const aiKey=(localStorage.getItem(pk(KEY_AI_KEY))||'').trim();
