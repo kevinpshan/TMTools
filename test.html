@@ -1,0 +1,6 @@
+<script>
+fetch('https://dashboards.toastmasters.org/ClubReport.aspx?id=01436813')
+  .then(r => { console.log('Status:', r.status, '| OK:', r.ok); return r.text(); })
+  .then(html => console.log('Got HTML, length:', html.length))
+  .catch(e => console.error('CORS BLOCKED:', e.message));
+</script>
