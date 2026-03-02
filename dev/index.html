@@ -2455,17 +2455,7 @@ function parseDCPData(clubHtml, districtHtml) {
     });
 
     // ── Standing ──────────────────────────────────────────────────
-    // csp-table tbody rows: Distinguished, Select Distinguished, President's Distinguished, Smedley Distinguished
-    // Each row has 3 td cells. A cell with pl-icon = requirement met.
-    let standing = 'Not Distinguished';
-    const cspRows = clubDoc.querySelectorAll('.csp-table tbody tr');
-    const levelNames = ["Distinguished","Select Distinguished","President's Distinguished","Smedley Distinguished"];
-    cspRows.forEach((row, i) => {
-        if (i >= 4) return;
-        const cells = row.querySelectorAll('td');
-        const allMet = Array.from(cells).every(td => td.querySelector('.pl-icon'));
-        if (allMet) standing = levelNames[i];
-    });
+    // Standing is derived from metCount + memCurrent in renderDCP (more reliable than HTML parsing)
 
     // ── District rankings ─────────────────────────────────────────
     // Each club row: tr.Grid_Top_Row.club_gray with onclick
@@ -2518,7 +2508,7 @@ function parseDCPData(clubHtml, districtHtml) {
         if (c.toDate > myToDate) membersRank++;
     });
 
-    return { standing, memBase, memCurrent, memGrowth, metCount, goals, totalClubs, growthRank, goalsRank, membersRank, fetchedAt: Date.now() };
+    return { memBase, memCurrent, memGrowth, metCount, goals, totalClubs, growthRank, goalsRank, membersRank, fetchedAt: Date.now() };
 }
 
 function renderDCP(data) {
@@ -2528,6 +2518,14 @@ function renderDCP(data) {
     cont.style.display = 'flex';
 
     // ── Standing card ─────────────────────────────────────────────
+    // Derive standing from metCount (more reliable than csp-table HTML parsing)
+    let standing;
+    if      (data.metCount >= 10 && data.memCurrent >= 25) standing = 'Smedley Distinguished';
+    else if (data.metCount >= 9  && data.memCurrent >= 20) standing = "President's Distinguished";
+    else if (data.metCount >= 7)                           standing = 'Select Distinguished';
+    else if (data.metCount >= 5)                           standing = 'Distinguished';
+    else                                                   standing = 'Not Distinguished';
+
     const standingColors = {
         "President's Distinguished": '#a855f7',
         "Smedley Distinguished":     '#eab308',
@@ -2535,8 +2533,8 @@ function renderDCP(data) {
         "Distinguished":             '#4ade80',
         "Not Distinguished":         '#6b7280'
     };
-    const color = standingColors[data.standing] || '#4ade80';
-    document.getElementById('dcpStandingTitle').textContent = data.standing;
+    const color = standingColors[standing] || '#4ade80';
+    document.getElementById('dcpStandingTitle').textContent = standing;
     document.getElementById('dcpStandingTitle').style.color = color;
     document.getElementById('dcpStandingSub').textContent = `${data.metCount} of 10 goals met · Club 01436813`;
 
