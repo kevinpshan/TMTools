@@ -2914,12 +2914,51 @@ function renderAdminPanel(club, adminData, deviceName) {
         + '<div style="margin-bottom:14px;">' + sendersHtml + '</div>'
         + '<div style="font-size:12px;font-weight:700;color:var(--label);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Add Person</div>'
         + '<input id="newAdminName" placeholder="Device name" style="width:100%;box-sizing:border-box;font-size:15px;padding:10px 12px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);margin-bottom:8px;">'
-        + '<div style="display:flex;gap:8px;">'
+        + '<div style="display:flex;gap:8px;margin-bottom:18px;">'
         + '<button onclick="addAdmin()" style="flex:1;background:#7c3aed;color:white;border:none;border-radius:10px;padding:10px;font-size:14px;font-weight:700;cursor:pointer;">+ Co-Admin</button>'
-        + '<button onclick="addBroadcastSender()" style="flex:1;background:var(--accent);color:white;border:none;border-radius:10px;padding:10px;font-size:14px;font-weight:700;cursor:pointer;">+ Sender Only</button></div>',
+        + '<button onclick="addBroadcastSender()" style="flex:1;background:var(--accent);color:white;border:none;border-radius:10px;padding:10px;font-size:14px;font-weight:700;cursor:pointer;">+ Sender Only</button></div>'
+        + '<div style="font-size:12px;font-weight:700;color:var(--label);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Posted Messages</div>'
+        + '<div id="broadcastMsgList" style="font-size:13px;color:var(--label);">Loading...</div>',
         () => {}, 'Close', null
     );
     document.getElementById('modalConfirm').style.display = 'none';
+    loadBroadcastMessageList(club);
+}
+
+async function loadBroadcastMessageList(club) {
+    const el = document.getElementById('broadcastMsgList');
+    if (!el) return;
+    try {
+        const snap = await db.collection('clubs').doc(club.syncKey)
+            .collection('broadcasts').orderBy('ts', 'desc').get();
+        if (snap.empty) { el.textContent = 'No messages posted yet.'; return; }
+        el.innerHTML = snap.docs.map(doc => {
+            const d = doc.data();
+            const ts = d.ts && d.ts.toDate ? d.ts.toDate() : new Date();
+            const dateStr = ts.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+            const preview = (d.text || '').length > 55 ? (d.text || '').slice(0, 55) + '...' : (d.text || '');
+            const safeId = doc.id;
+            return '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);">'
+                + '<div style="flex:1;min-width:0;">'
+                + '<div style="font-size:13px;color:var(--text);font-weight:500;">' + preview + '</div>'
+                + '<div style="font-size:11px;color:var(--label);margin-top:3px;">' + (d.sender || 'Unknown') + ' - ' + dateStr + '</div>'
+                + '</div>'
+                + '<button onclick="deleteBroadcast(\'' + safeId + '\')" style="flex-shrink:0;background:var(--red);color:white;border:none;border-radius:8px;padding:5px 12px;font-size:13px;cursor:pointer;">Delete</button>'
+                + '</div>';
+        }).join('');
+    } catch(e) { if (el) el.textContent = 'Could not load messages.'; }
+}
+
+async function deleteBroadcast(docId) {
+    const club = clubs.find(c => c.id === activeClubId);
+    if (!club || !club.syncKey) return;
+    try {
+        await db.collection('clubs').doc(club.syncKey).collection('broadcasts').doc(docId).delete();
+        // Remove from local seen list too so it doesn't leave a ghost entry
+        const seen = getBroadcastSeenIds().filter(id => id !== docId);
+        localStorage.setItem(BROADCAST_SEEN_KEY, JSON.stringify(seen));
+        loadBroadcastMessageList(club);
+    } catch(e) { openModal('Error', 'Could not delete message. Check your connection.', () => {}); }
 }
 
 async function addAdmin() {
