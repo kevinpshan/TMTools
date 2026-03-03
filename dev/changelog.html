@@ -408,6 +408,36 @@
 
 <div id="panel-roadmap" class="tab-panel">
 
+<!-- DCP In Development -->
+<div class="release">
+    <div class="release-header">
+        <div><div class="version-num">DCP Dashboard</div><div class="release-date">In Development &middot; Target: v3.3.0</div></div>
+        <span class="release-tag tag-high">In Dev</span>
+        <span class="release-tag tag-feature">Feature</span>
+    </div>
+    <div class="release-body">
+        <div class="change-group">
+            <div class="change-group-label">Distinguished Club Program Dashboard</div>
+            <ul>
+                <li>New card in the Club tab: club DCP standing, recognition level, and progress on all 10 goals</li>
+                <li>Membership stats: current members vs goal, new members, charter strength</li>
+                <li>District ranking: club position within area and division</li>
+                <li>Data sourced from TI's dashboard via Firebase Cloud Function proxy (CORS bypass)</li>
+                <li>Local cache with daily refresh &mdash; Cloud Function not called if data is under 24 hours old</li>
+                <li>Responsive CSS Grid layout with iPhone / iPad / iPad Pro breakpoints</li>
+            </ul>
+        </div>
+        <div class="change-group">
+            <div class="change-group-label">Infrastructure Status</div>
+            <ul>
+                <li><strong>&#10003; Done:</strong> Firebase Cloud Function <code>fetchDCPData</code> deployed and tested (Node.js 20, us-central1)</li>
+                <li><strong>&#10003; Done:</strong> UI mockup built and validated across all device sizes</li>
+                <li><strong>Pending:</strong> Integration into main <code>index.html</code> and HTML parser for TI data</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
 ```
 <div class="release">
     <div class="release-body" style="padding:24px 25px;">
