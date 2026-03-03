@@ -240,6 +240,7 @@
     <div id="clubMode" class="container" style="display:none;flex:1;min-height:0;overflow-y:auto;">
         <div class="main-menu-card" onclick="showScreen('pace')"><div class="card-content"><h3 style="color:var(--green);">PACE</h3><p>Participating and Achieving Competence and Excellence</p></div><div class="icon" style="color:var(--green);">🏆</div></div>
         <div class="main-menu-card" onclick="showDCPScreen()"><div class="card-content"><h3 style="color:var(--accent);">DCP Dashboard</h3><p>Club standing &amp; district ranking</p></div><div class="icon" style="color:var(--accent);">🏛</div></div>
+        <div class="main-menu-card" onclick="showBroadcastCompose()"><div class="card-content"><h3 style="color:#f59e0b;">📢 Broadcast</h3><p>Send a message to all club members</p></div><div class="icon" style="color:#f59e0b;">✉</div></div>
     </div>
     <div class="credit-footer">
         <div class="resource-row"><a href="https://bit.ly/m/SDTM" target="_blank" class="res-btn">Website ↗</a><a href="manual.html" class="res-btn">Manual ↗</a></div>
@@ -338,6 +339,7 @@
         <div class="main-menu-card settings-card" onclick="editYourName()"><div class="card-content"><h3>Your Name</h3><p id="settingsDeviceName">Loading...</p></div><div class="icon" style="font-size:30px;">👤</div></div>
         <div class="main-menu-card settings-card" onclick="exportData()"><div class="card-content"><h3>Backup Data</h3><p>Export JSON</p></div><div class="icon">⤓</div></div>
         <div class="main-menu-card settings-card" onclick="document.getElementById('importFile').click()"><div class="card-content"><h3>Restore Data</h3><p>Import JSON</p></div><div class="icon">⤒</div></div>
+        <div class="main-menu-card settings-card" onclick="manageBroadcastSenders()"><div class="card-content"><h3>Broadcast Senders</h3><p id="broadcastSendersSubtext">Manage who can send club messages</p></div><div class="icon" style="font-size:30px;">📢</div></div>
         <div class="main-menu-card settings-card" onclick="askClearLogs()" style="background:#FFF5F5;border:2px solid var(--red);"><div class="card-content"><h3 style="color:var(--red);">Clear Meeting Data</h3><p>Reset logs, WOD, transcripts</p></div><div class="icon">⚠</div></div>
         <input type="file" id="importFile" style="display:none" onchange="handleImportFile(this)">
     </div>
@@ -484,6 +486,20 @@
         <button class="add-item-btn" onclick="askAddPaceRole()">+ Add Role</button>
     </div>
     <div class="button-row"><button class="footer-btn" onclick="showScreen('pace')">Done</button></div>
+</div>
+
+<!-- BROADCAST MESSAGE MODAL -->
+<div id="broadcastModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.75);align-items:center;justify-content:center;padding:24px;">
+    <div style="background:var(--card);border-radius:22px;width:100%;max-width:480px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+        <div style="background:linear-gradient(135deg,#92400e,#78350f);padding:22px 24px 18px;">
+            <div style="font-size:13px;font-weight:700;color:#fbbf24;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">📢 Club Message</div>
+            <div id="broadcastModalSender" style="font-size:14px;color:rgba(255,255,255,0.7);"></div>
+        </div>
+        <div id="broadcastModalText" style="padding:24px;font-size:19px;line-height:1.55;color:var(--text);font-weight:500;min-height:80px;"></div>
+        <div style="padding:0 20px 20px;">
+            <button onclick="dismissBroadcast()" style="width:100%;background:var(--accent);color:white;border:none;border-radius:16px;padding:18px;font-size:18px;font-weight:700;cursor:pointer;">Got it ✓</button>
+        </div>
+    </div>
 </div>
 
 <!-- DCP DASHBOARD -->
@@ -688,6 +704,7 @@ function initApp() {
     refreshRoster(); nextWod();
     autoSyncDown();
     checkStaleBanner();
+    checkBroadcasts();
 }
 
 /* ============ WELCOME SCREEN ============ */
@@ -2701,6 +2718,260 @@ function renderDCP(data) {
     const ago = Math.round((Date.now() - data.fetchedAt) / 60000);
     const agoStr = ago < 2 ? 'just now' : ago < 60 ? `${ago}m ago` : `${Math.round(ago/60)}h ago`;
     document.getElementById('dcpFooter').innerHTML = `Updated daily · fetched ${agoStr} · <a href="https://dashboards.toastmasters.org/ClubReport.aspx?id=${getDCPConfig().clubId}" target="_blank">View on TI Dashboard →</a>`;
+}
+
+/* ============ BROADCAST MESSAGES ============ */
+const BROADCAST_SEEN_KEY = 'broadcast_seen_ids';
+
+function getBroadcastSeenIds() {
+    try { return JSON.parse(localStorage.getItem(BROADCAST_SEEN_KEY) || '[]'); } catch(e) { return []; }
+}
+function markBroadcastSeen(id) {
+    const seen = getBroadcastSeenIds();
+    if (!seen.includes(id)) { seen.push(id); localStorage.setItem(BROADCAST_SEEN_KEY, JSON.stringify(seen)); }
+}
+
+let broadcastQueue = [];
+let currentBroadcastId = null;
+
+async function checkBroadcasts() {
+    const club = clubs.find(c => c.id === activeClubId);
+    if (!club || !club.syncKey || club.practiceOnly) return;
+    try {
+        const snap = await db.collection('clubs').doc(club.syncKey)
+            .collection('broadcasts').orderBy('ts', 'asc').get();
+        const seen = getBroadcastSeenIds();
+        broadcastQueue = [];
+        snap.forEach(doc => {
+            if (!seen.includes(doc.id)) broadcastQueue.push({ id: doc.id, ...doc.data() });
+        });
+        showNextBroadcast();
+    } catch(e) { console.warn('Broadcast check failed:', e); }
+}
+
+function showNextBroadcast() {
+    if (!broadcastQueue.length) return;
+    const msg = broadcastQueue.shift();
+    currentBroadcastId = msg.id;
+    const ts = msg.ts && msg.ts.toDate ? msg.ts.toDate() : new Date();
+    const dateStr = ts.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
+    document.getElementById('broadcastModalSender').textContent = 'From ' + (msg.sender || 'Club Officer') + ' - ' + dateStr;
+    document.getElementById('broadcastModalText').textContent = msg.text || '';
+    document.getElementById('broadcastModal').style.display = 'flex';
+}
+
+function dismissBroadcast() {
+    if (currentBroadcastId) { markBroadcastSeen(currentBroadcastId); currentBroadcastId = null; }
+    document.getElementById('broadcastModal').style.display = 'none';
+    setTimeout(showNextBroadcast, 300);
+}
+
+/* ---- PIN hashing (SHA-256 via Web Crypto) ---- */
+async function hashPin(pin) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pin));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+async function verifyPin(pin, storedHash) {
+    return (await hashPin(pin)) === storedHash;
+}
+
+/* ---- Load club admin data ---- */
+async function getClubAdminData(syncKey) {
+    const doc = await db.collection('clubs').doc(syncKey).get();
+    const data = doc.data() || {};
+    return {
+        adminDevices:     data.adminDevices     || [],
+        adminPinHash:     data.adminPinHash     || null,
+        broadcastSenders: data.broadcastSenders || []
+    };
+}
+
+/* ---- PIN prompt helper ---- */
+function promptPin(title, subtitle, onVerified) {
+    openModal(title,
+        '<div style="font-size:14px;color:var(--label);margin-bottom:14px;">' + subtitle + '</div>' +
+        '<input type="password" id="pinInput" inputmode="numeric" maxlength="8" placeholder="Enter PIN" ' +
+        'style="width:100%;box-sizing:border-box;font-size:24px;padding:14px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);text-align:center;letter-spacing:6px;">',
+        () => {
+            const pin = ((document.getElementById('pinInput') || {}).value || '').trim();
+            if (!pin) { openModal('No PIN Entered', 'Please enter your admin PIN.', () => {}); return; }
+            onVerified(pin);
+        }, 'Cancel', 'Continue'
+    );
+}
+
+/* ============ ADMIN - CLAIM ============ */
+function showClaimAdmin() {
+    openModal('Claim Admin',
+        '<div style="font-size:14px;color:var(--label);margin-bottom:14px;">No admin has been set for this club yet. Set a PIN to become the admin. Share the PIN with anyone you want to give admin access.</div>' +
+        '<input type="password" id="pinNew" inputmode="numeric" maxlength="8" placeholder="Choose PIN (4-8 digits)" ' +
+        'style="width:100%;box-sizing:border-box;font-size:20px;padding:12px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);text-align:center;letter-spacing:4px;margin-bottom:10px;">' +
+        '<input type="password" id="pinConfirm" inputmode="numeric" maxlength="8" placeholder="Confirm PIN" ' +
+        'style="width:100%;box-sizing:border-box;font-size:20px;padding:12px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);text-align:center;letter-spacing:4px;">',
+        () => {
+            const pin  = ((document.getElementById('pinNew')     || {}).value || '').trim();
+            const pin2 = ((document.getElementById('pinConfirm') || {}).value || '').trim();
+            if (!pin || pin.length < 4) { openModal('PIN Too Short', 'Please choose a PIN of at least 4 digits.', () => showClaimAdmin()); return; }
+            if (pin !== pin2) { openModal('PINs Do Not Match', 'The two PINs are different. Please try again.', () => showClaimAdmin()); return; }
+            const club = clubs.find(c => c.id === activeClubId);
+            getDeviceName(async (deviceName) => {
+                try {
+                    const pinHash = await hashPin(pin);
+                    await db.collection('clubs').doc(club.syncKey).update({ adminDevices: [deviceName], adminPinHash: pinHash });
+                    openModal('Admin Claimed', 'You (' + deviceName + ') are now the admin. Share your PIN with anyone you want to give admin access.', () => manageBroadcastSenders());
+                } catch(e) { openModal('Error', 'Could not save admin data. Check your connection.', () => {}); }
+            });
+        }, 'Cancel', 'Claim Admin'
+    );
+}
+
+/* ============ ADMIN - REQUIRE AUTH ============ */
+function requireAdmin(club, onSuccess) {
+    getDeviceName(async (deviceName) => {
+        let adminData;
+        try { adminData = await getClubAdminData(club.syncKey); }
+        catch(e) { openModal('Error', 'Could not load club data. Check your connection.', () => {}); return; }
+        if (!adminData.adminPinHash) { showClaimAdmin(); return; }
+        promptPin('Admin PIN', 'Enter the club admin PIN to continue.', async (pin) => {
+            const ok = await verifyPin(pin, adminData.adminPinHash);
+            if (!ok) { openModal('Wrong PIN', 'That PIN is incorrect. Please try again.', () => {}); return; }
+            if (!adminData.adminDevices.includes(deviceName)) {
+                adminData.adminDevices.push(deviceName);
+                await db.collection('clubs').doc(club.syncKey).update({ adminDevices: adminData.adminDevices });
+            }
+            onSuccess(adminData, deviceName);
+        });
+    });
+}
+
+/* ============ BROADCAST - COMPOSE ============ */
+function showBroadcastCompose() {
+    const club = clubs.find(c => c.id === activeClubId);
+    if (!club || !club.syncKey || club.practiceOnly) {
+        openModal('Cloud Sync Required', 'Broadcast messages require cloud sync to be enabled for this club.', () => {}); return;
+    }
+    getDeviceName(async (deviceName) => {
+        let authorized = false;
+        try {
+            const d = await getClubAdminData(club.syncKey);
+            const isAdmin    = d.adminDevices.includes(deviceName);
+            const isSender   = d.broadcastSenders.includes(deviceName);
+            const openAccess = !d.adminPinHash && d.broadcastSenders.length === 0;
+            authorized = isAdmin || isSender || openAccess;
+        } catch(e) {}
+        if (!authorized) {
+            openModal('Not Authorized', 'You are not authorized to send broadcasts. Ask your club admin to add you.', () => {}); return;
+        }
+        openModal('Send Broadcast',
+            '<div style="font-size:14px;color:var(--label);margin-bottom:10px;">This message will appear on all synced club members devices the next time they open the app.</div>' +
+            '<textarea id="broadcastText" placeholder="Type your message here..." style="width:100%;box-sizing:border-box;height:120px;font-size:16px;padding:12px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);resize:none;font-family:inherit;"></textarea>',
+            async () => {
+                const text = ((document.getElementById('broadcastText') || {}).value || '').trim();
+                if (!text) { openModal('Empty Message', 'Please type a message before sending.', () => showBroadcastCompose()); return; }
+                try {
+                    await db.collection('clubs').doc(club.syncKey).collection('broadcasts').add({
+                        text, sender: deviceName,
+                        ts: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    openModal('Message Sent', 'Your broadcast has been sent to all club members.', () => {});
+                } catch(e) { openModal('Send Failed', 'Could not send message. Check your connection and try again.', () => {}); }
+            }, 'Cancel', 'Send Message'
+        );
+    });
+}
+
+/* ============ ADMIN - MANAGEMENT PANEL ============ */
+function manageBroadcastSenders() {
+    const club = clubs.find(c => c.id === activeClubId);
+    if (!club || !club.syncKey || club.practiceOnly) {
+        openModal('Cloud Sync Required', 'Broadcast management requires cloud sync.', () => {}); return;
+    }
+    requireAdmin(club, (adminData, deviceName) => renderAdminPanel(club, adminData, deviceName));
+}
+
+function renderAdminPanel(club, adminData, deviceName) {
+    const adminsHtml = adminData.adminDevices.map(a => {
+        const isSelf = a === deviceName;
+        const canRemove = adminData.adminDevices.length > 1 && !isSelf;
+        const badge = canRemove
+            ? '<button onclick="removeAdmin(\'' + a.replace(/'/g,"\\'") + '\'" )" style="background:var(--red);color:white;border:none;border-radius:8px;padding:4px 12px;font-size:13px;cursor:pointer;">Remove</button>'
+            : '<span style="font-size:12px;color:var(--label);">' + (isSelf ? 'You' : 'Last admin') + '</span>';
+        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);"><span style="font-size:15px;">Admin: ' + a + '</span>' + badge + '</div>';
+    }).join('');
+
+    const sendersHtml = adminData.broadcastSenders.length
+        ? adminData.broadcastSenders.map(s =>
+            '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">'
+            + '<span style="font-size:15px;">Sender: ' + s + '</span>'
+            + '<button onclick="removeBroadcastSender(\'' + s.replace(/'/g,"\\'") + '\')" style="background:var(--red);color:white;border:none;border-radius:8px;padding:4px 12px;font-size:13px;cursor:pointer;">Remove</button></div>'
+          ).join('')
+        : '<div style="font-size:13px;color:var(--label);padding:6px 0;">Only admins can send (add names below to allow others)</div>';
+
+    openModal('Broadcast Admin',
+        '<div style="font-size:12px;font-weight:700;color:var(--label);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Admins</div>'
+        + '<div style="margin-bottom:14px;">' + adminsHtml + '</div>'
+        + '<div style="font-size:12px;font-weight:700;color:var(--label);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Broadcast Senders</div>'
+        + '<div style="margin-bottom:14px;">' + sendersHtml + '</div>'
+        + '<div style="font-size:12px;font-weight:700;color:var(--label);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Add Person</div>'
+        + '<input id="newAdminName" placeholder="Device name" style="width:100%;box-sizing:border-box;font-size:15px;padding:10px 12px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);margin-bottom:8px;">'
+        + '<div style="display:flex;gap:8px;">'
+        + '<button onclick="addAdmin()" style="flex:1;background:#7c3aed;color:white;border:none;border-radius:10px;padding:10px;font-size:14px;font-weight:700;cursor:pointer;">+ Co-Admin</button>'
+        + '<button onclick="addBroadcastSender()" style="flex:1;background:var(--accent);color:white;border:none;border-radius:10px;padding:10px;font-size:14px;font-weight:700;cursor:pointer;">+ Sender Only</button></div>',
+        () => {}, 'Close', null
+    );
+    document.getElementById('modalConfirm').style.display = 'none';
+}
+
+async function addAdmin() {
+    const name = ((document.getElementById('newAdminName') || {}).value || '').trim();
+    if (!name) { openModal('Name Required', 'Enter the device name of the person to make admin.', () => {}); return; }
+    const club = clubs.find(c => c.id === activeClubId);
+    if (!club || !club.syncKey) return;
+    try {
+        const d = await getClubAdminData(club.syncKey);
+        if (!d.adminDevices.includes(name)) d.adminDevices.push(name);
+        await db.collection('clubs').doc(club.syncKey).update({ adminDevices: d.adminDevices });
+        document.getElementById('customModal').style.display = 'none';
+        openModal('Co-Admin Added', name + ' is now an admin. Share the club PIN with them so they can authenticate.', () => manageBroadcastSenders());
+    } catch(e) { openModal('Error', 'Could not update admin list.', () => {}); }
+}
+
+async function removeAdmin(name) {
+    const club = clubs.find(c => c.id === activeClubId);
+    if (!club || !club.syncKey) return;
+    try {
+        const d = await getClubAdminData(club.syncKey);
+        d.adminDevices = d.adminDevices.filter(a => a !== name);
+        await db.collection('clubs').doc(club.syncKey).update({ adminDevices: d.adminDevices });
+        document.getElementById('customModal').style.display = 'none';
+        manageBroadcastSenders();
+    } catch(e) { openModal('Error', 'Could not update admin list.', () => {}); }
+}
+
+async function addBroadcastSender() {
+    const name = ((document.getElementById('newAdminName') || {}).value || '').trim();
+    if (!name) { openModal('Name Required', 'Enter the device name of the person to add as sender.', () => {}); return; }
+    const club = clubs.find(c => c.id === activeClubId);
+    if (!club || !club.syncKey) return;
+    try {
+        const d = await getClubAdminData(club.syncKey);
+        if (!d.broadcastSenders.includes(name)) d.broadcastSenders.push(name);
+        await db.collection('clubs').doc(club.syncKey).update({ broadcastSenders: d.broadcastSenders });
+        document.getElementById('customModal').style.display = 'none';
+        manageBroadcastSenders();
+    } catch(e) { openModal('Error', 'Could not update senders list.', () => {}); }
+}
+
+async function removeBroadcastSender(name) {
+    const club = clubs.find(c => c.id === activeClubId);
+    if (!club || !club.syncKey) return;
+    try {
+        const d = await getClubAdminData(club.syncKey);
+        d.broadcastSenders = d.broadcastSenders.filter(s => s !== name);
+        await db.collection('clubs').doc(club.syncKey).update({ broadcastSenders: d.broadcastSenders });
+        document.getElementById('customModal').style.display = 'none';
+        manageBroadcastSenders();
+    } catch(e) { openModal('Error', 'Could not update senders list.', () => {}); }
 }
 </script>
 </body>
