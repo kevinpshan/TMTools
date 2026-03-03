@@ -241,6 +241,7 @@
         <div class="main-menu-card" onclick="showScreen('pace')"><div class="card-content"><h3 style="color:var(--green);">PACE</h3><p>Participating and Achieving Competence and Excellence</p></div><div class="icon" style="color:var(--green);">🏆</div></div>
         <div class="main-menu-card" onclick="showDCPScreen()"><div class="card-content"><h3 style="color:var(--accent);">DCP Dashboard</h3><p>Club standing &amp; district ranking</p></div><div class="icon" style="color:var(--accent);">🏛</div></div>
         <div class="main-menu-card" onclick="showBroadcastCompose()"><div class="card-content"><h3 style="color:#f59e0b;">📢 Broadcast</h3><p>Send a message to all club members</p></div><div class="icon" style="color:#f59e0b;">✉</div></div>
+        <div class="main-menu-card" onclick="showScreen('auditLog')"><div class="card-content"><h3 style="color:#64748b;">🔍 Audit Log</h3><p>See who changed what and when</p></div><div class="icon" style="color:#64748b;">📋</div></div>
     </div>
     <div class="credit-footer">
         <div class="resource-row"><a href="https://bit.ly/m/SDTM" target="_blank" class="res-btn">Website ↗</a><a href="manual.html" class="res-btn">Manual ↗</a></div>
@@ -486,6 +487,26 @@
         <button class="add-item-btn" onclick="askAddPaceRole()">+ Add Role</button>
     </div>
     <div class="button-row"><button class="footer-btn" onclick="showScreen('pace')">Done</button></div>
+</div>
+
+<!-- AUDIT LOG -->
+<div id="auditLog" class="screen">
+    <div class="header"><h1>Audit Log</h1><div class="subtitle" id="auditLogSubtitle">Club activity history</div></div>
+    <div id="auditLogSpinner" style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:12px;color:var(--label);font-size:16px;">
+        <div class="spinner"></div>Loading...
+    </div>
+    <div id="auditLogContent" style="display:none;flex:1;overflow-y:auto;padding:12px 16px;flex-direction:column;">
+        <div id="auditLogList"></div>
+        <button id="auditLoadMoreBtn" onclick="loadMoreAudit()" style="display:none;width:100%;margin-top:12px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;font-size:15px;font-weight:600;color:var(--accent);cursor:pointer;">Load Older Entries</button>
+    </div>
+    <div id="auditLogEmpty" style="display:none;flex:1;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:var(--label);text-align:center;padding:30px;">
+        <div style="font-size:40px;">&#128203;</div>
+        <div id="auditEmptyMsg" style="font-size:16px;font-weight:600;">No activity recorded yet</div>
+        <div style="font-size:13px;">Actions will appear here as club members use the app</div>
+    </div>
+    <div style="padding:12px 16px 20px;flex-shrink:0;">
+        <button onclick="showScreen('menu')" style="width:100%;background:var(--accent);color:white;border:none;border-radius:16px;padding:18px;font-size:19px;font-weight:700;cursor:pointer;">&larr; Back</button>
+    </div>
 </div>
 
 <!-- BROADCAST MESSAGE MODAL -->
@@ -859,6 +880,7 @@ async function enableSync(clubId) {
         club.syncKey=code;
         localStorage.setItem(pk(KEY_CLUBS),JSON.stringify(clubs));
         updateClubUI(); renderClubManager();
+        { const enBy=localStorage.getItem(pk(KEY_DEVICE_NAME))||'Unknown'; writeAudit(code,'Cloud Sync Enabled','Club: '+club.name,enBy); }
         openModal("Cloud Sync Enabled",`Your sync code is:<div style="font-size:28px;font-weight:900;letter-spacing:4px;color:var(--accent);font-family:monospace;margin:12px 0;">${code}</div>Share this with your club members so they can join.`,()=>{});
     } catch(e) {
         openModal("Sync Error","Could not connect to cloud. Check your internet connection.",()=>{});
@@ -968,6 +990,8 @@ async function writeSession(sessionData) {
             recordedBy,
             createdAt:firebase.firestore.FieldValue.serverTimestamp()
         });
+        const modeLabel = sessionData.type === 'timer' ? 'Timing Session' : 'Filler Count';
+        await writeAudit(club.syncKey, modeLabel, 'For: ' + sessionData.speaker, recordedBy);
     } catch(e) { console.warn('Session cloud write failed:',e.message); }
 }
 
@@ -1114,9 +1138,9 @@ function renderFillerManager() {
             <button class="manager-btn manager-del-btn" onclick="askDeleteFiller('${f}')">✕</button>
         </div>`).join('');
 }
-function askAddFiller() { openModal("Add Filler Word",`<input type="text" id="newFiller" placeholder="e.g. BASICALLY" style="text-transform:uppercase;">`,()=>{ const word=document.getElementById('newFiller').value.trim().toUpperCase(); if(!word||fillerList.includes(word))return; fillerList.push(word); localStorage.setItem(clubKey('fillers'),JSON.stringify(fillerList)); autoSyncUp(); renderFillerManager(); }); }
+function askAddFiller() { openModal("Add Filler Word",`<input type="text" id="newFiller" placeholder="e.g. BASICALLY" style="text-transform:uppercase;">`,()=>{ const word=document.getElementById('newFiller').value.trim().toUpperCase(); if(!word||fillerList.includes(word))return; fillerList.push(word); localStorage.setItem(clubKey('fillers'),JSON.stringify(fillerList)); autoSyncUp(); renderFillerManager(); const ac=getActiveClub();if(ac&&ac.syncKey)writeAudit(ac.syncKey,'Filler Word Added','Word: '+word,localStorage.getItem(pk(KEY_DEVICE_NAME))||'Unknown'); }); }
 function askEditFiller(oldWord) { openModal("Edit Filler Word",`<input type="text" id="editFiller" value="${oldWord}" style="text-transform:uppercase;">`,()=>{ const newWord=document.getElementById('editFiller').value.trim().toUpperCase(); if(!newWord||newWord===oldWord)return; fillerList=fillerList.map(f=>f===oldWord?newWord:f); localStorage.setItem(clubKey('fillers'),JSON.stringify(fillerList)); autoSyncUp(); renderFillerManager(); }); }
-function askDeleteFiller(word) { openModal("Delete Filler?",`Remove "${word}" from this club's list?`,()=>{ fillerList=fillerList.filter(f=>f!==word); localStorage.setItem(clubKey('fillers'),JSON.stringify(fillerList)); autoSyncUp(); renderFillerManager(); }); }
+function askDeleteFiller(word) { openModal("Delete Filler?",`Remove "${word}" from this club's list?`,()=>{ fillerList=fillerList.filter(f=>f!==word); localStorage.setItem(clubKey('fillers'),JSON.stringify(fillerList)); autoSyncUp(); renderFillerManager(); const ac=getActiveClub();if(ac&&ac.syncKey)writeAudit(ac.syncKey,'Filler Word Deleted','Word: '+word,localStorage.getItem(pk(KEY_DEVICE_NAME))||'Unknown'); }); }
 
 /* ============ PROGRESS ============ */
 async function loadProgress() {
@@ -1224,7 +1248,11 @@ async function deleteSession(syncKey, docId, btnEl) {
         "Remove this session from the history? This cannot be undone.",
         async () => {
             try {
+                const delBy = localStorage.getItem(pk(KEY_DEVICE_NAME)) || 'Unknown';
+                const rowEl = btnEl.closest('.session-row');
+                const rowName = rowEl ? (rowEl.querySelector('[data-speaker]')?.dataset.speaker || 'Unknown') : 'Unknown';
                 await db.collection('clubs').doc(syncKey).collection('sessions').doc(docId).delete();
+                await writeAudit(syncKey, 'Session Deleted', 'For: ' + rowName, delBy);
                 // Remove the row from the DOM immediately
                 const row = btnEl.closest('.session-row');
                 if (row) row.remove();
@@ -1282,6 +1310,7 @@ function doAddSpeaker(n){
     localStorage.setItem(clubKey('speakers'),JSON.stringify(allSpeakers));
     document.getElementById('name').value='';
     autoSyncUp();refreshRoster();
+    { const ac=getActiveClub(); if(ac&&ac.syncKey) writeAudit(ac.syncKey,'Roster Member Added','Added: '+n,localStorage.getItem(pk(KEY_DEVICE_NAME))||'Unknown'); }
 }
 function selectSpeaker(n){const el=document.getElementById('name');el.value=n;const btn=document.getElementById('nameClearBtn');if(btn)btn.style.display=n.length>0?'block':'none';}
 function handleNameInput(el){
@@ -1298,7 +1327,7 @@ function clearNameInput(){
     refreshRoster();
 }
 function renderSpeakerListFiltered(f){const area=document.getElementById('speakerArea');area.innerHTML=f.map(n=>`<div style="padding:14px 18px;border-bottom:1px solid var(--bg);display:flex;justify-content:space-between;align-items:center;"><div style="font-size:22px;flex:1;color:var(--accent);font-weight:600;text-transform:uppercase;cursor:pointer;" onclick="selectSpeaker('${n}')">${n}</div><div style="padding:5px 12px;color:var(--red);font-weight:800;font-size:22px;cursor:pointer;" onclick="askDeleteSpeaker('${n}')">✕</div></div>`).join('');}
-function askDeleteSpeaker(n){openModal("Delete?",`Remove ${n}?`,()=>{allSpeakers=allSpeakers.filter(s=>s!==n);localStorage.setItem(clubKey('speakers'),JSON.stringify(allSpeakers));autoSyncUp();refreshRoster();});}
+function askDeleteSpeaker(n){openModal("Delete?",`Remove ${n}?`,()=>{allSpeakers=allSpeakers.filter(s=>s!==n);localStorage.setItem(clubKey('speakers'),JSON.stringify(allSpeakers));autoSyncUp();refreshRoster();const ac=getActiveClub();if(ac&&ac.syncKey)writeAudit(ac.syncKey,'Roster Member Deleted','Removed: '+n,localStorage.getItem(pk(KEY_DEVICE_NAME))||'Unknown');});}
 
 /* ============ NAVIGATION ============ */
 function showScreen(id){
@@ -1315,6 +1344,7 @@ function showScreen(id){
     if(id==='pace')showPace();
     if(id==='paceRoleManager')renderPaceRoleManager();
     if(id==='dcp')loadDCPData(false);
+    if(id==='auditLog')loadAuditLog();
     if(id==='settings'){const n=localStorage.getItem(pk(KEY_DEVICE_NAME));document.getElementById('settingsDeviceName').innerText=n||'Tap to set your name';}
 }
 
@@ -2177,6 +2207,8 @@ async function savePaceMemberEntry() {
             await ref.add(entryData);
         }
         paceEntryCache[paceCurrentMember] = {roles, points:pointsEarned};
+        await writeAudit(club.syncKey, existing ? 'PACE Entry Updated' : 'PACE Entry Saved',
+            'For: ' + paceCurrentMember + ' (' + roles.join(', ') + ')', recordedBy);
         showScreen('paceEntry');
         await loadPaceEntryRoster();
     } catch(e) {
@@ -2196,7 +2228,9 @@ async function deletePaceEntry() {
     const dateLabel = new Date(paceEntryDateStr+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});
     openModal('Remove Entry?',`Remove all roles for ${paceCurrentMember} on ${dateLabel}?`, async ()=>{
         try {
+            const paceDelBy = localStorage.getItem(pk(KEY_DEVICE_NAME)) || 'Unknown';
             await db.collection('clubs').doc(club.syncKey).collection('pace_entries').doc(existing.entryId).delete();
+            await writeAudit(club.syncKey, 'PACE Entry Deleted', 'For: ' + paceCurrentMember + ' on ' + dateLabel, paceDelBy);
             delete paceEntryCache[paceCurrentMember];
             if (returnFn) await returnFn();
             else { showScreen('paceEntry'); await loadPaceEntryRoster(); }
@@ -2327,6 +2361,7 @@ function askAddPaceRole() {
             if (paceRoles.find(r=>r.name===name)) { openModal('Duplicate','A role with that name already exists.',()=>{}); return; }
             paceRoles.push({name, points});
             savePaceRoles();
+            { const ac=getActiveClub(); if(ac&&ac.syncKey) writeAudit(ac.syncKey,'PACE Role Added','Role: '+name,localStorage.getItem(pk(KEY_DEVICE_NAME))||'Unknown'); }
         }
     );
 }
@@ -2343,8 +2378,10 @@ function askEditPaceRole(index) {
             if (!name || isNaN(points) || points < 1) return;
             const dup = paceRoles.find((r,i)=>r.name===name&&i!==index);
             if (dup) { openModal('Duplicate','A role with that name already exists.',()=>{}); return; }
+            const oldRoleName = paceRoles[index].name;
             paceRoles[index] = {name, points};
             savePaceRoles();
+            { const ac=getActiveClub(); if(ac&&ac.syncKey) writeAudit(ac.syncKey,'PACE Role Edited',oldRoleName+' -> '+name,localStorage.getItem(pk(KEY_DEVICE_NAME))||'Unknown'); }
         }
     );
 }
@@ -2355,8 +2392,10 @@ function askDeletePaceRole(index) {
     openModal('Delete Role?',
         `Remove &ldquo;${role.name}&rdquo; (${role.points} pts) from the PACE role list?<div style="margin-top:10px;font-size:14px;color:#8E8E93;">Past entries that used this role are not affected &mdash; points are frozen at the time of entry.</div>`,
         () => {
+            const delRoleName = role.name;
             paceRoles.splice(index, 1);
             savePaceRoles();
+            { const ac=getActiveClub(); if(ac&&ac.syncKey) writeAudit(ac.syncKey,'PACE Role Deleted','Role: '+delRoleName,localStorage.getItem(pk(KEY_DEVICE_NAME))||'Unknown'); }
         }
     );
 }
@@ -2819,6 +2858,7 @@ function showClaimAdmin() {
                 try {
                     const pinHash = await hashPin(pin);
                     await db.collection('clubs').doc(club.syncKey).update({ adminDevices: [deviceName], adminPinHash: pinHash });
+                    await writeAudit(club.syncKey, 'Admin Claimed', 'By: ' + deviceName, deviceName);
                     openModal('Admin Claimed', 'You (' + deviceName + ') are now the admin. Share your PIN with anyone you want to give admin access.', () => manageBroadcastSenders());
                 } catch(e) { openModal('Error', 'Could not save admin data. Check your connection.', () => {}); }
             });
@@ -2874,6 +2914,8 @@ function showBroadcastCompose() {
                         text, sender: deviceName,
                         ts: firebase.firestore.FieldValue.serverTimestamp()
                     });
+                    const bPreview = text.length > 50 ? text.slice(0,50)+'...' : text;
+                    await writeAudit(club.syncKey, 'Broadcast Sent', 'Msg: ' + bPreview, deviceName);
                     openModal('Message Sent', 'Your broadcast has been sent to all club members.', () => {});
                 } catch(e) { openModal('Send Failed', 'Could not send message. Check your connection and try again.', () => {}); }
             }, 'Cancel', 'Send Message'
@@ -2954,7 +2996,9 @@ async function deleteBroadcast(docId) {
     const club = clubs.find(c => c.id === activeClubId);
     if (!club || !club.syncKey) return;
     try {
+        const bdBy = localStorage.getItem(pk(KEY_DEVICE_NAME)) || 'Unknown';
         await db.collection('clubs').doc(club.syncKey).collection('broadcasts').doc(docId).delete();
+        await writeAudit(club.syncKey, 'Broadcast Deleted', 'Msg ID: ' + docId.slice(0,8), bdBy);
         // Remove from local seen list too so it doesn't leave a ghost entry
         const seen = getBroadcastSeenIds().filter(id => id !== docId);
         localStorage.setItem(BROADCAST_SEEN_KEY, JSON.stringify(seen));
@@ -2971,6 +3015,7 @@ async function addAdmin() {
         const d = await getClubAdminData(club.syncKey);
         if (!d.adminDevices.includes(name)) d.adminDevices.push(name);
         await db.collection('clubs').doc(club.syncKey).update({ adminDevices: d.adminDevices });
+        await writeAudit(club.syncKey, 'Co-Admin Added', 'Added: ' + name, localStorage.getItem(pk(KEY_DEVICE_NAME))||'Unknown');
         document.getElementById('customModal').style.display = 'none';
         openModal('Co-Admin Added', name + ' is now an admin. Share the club PIN with them so they can authenticate.', () => manageBroadcastSenders());
     } catch(e) { openModal('Error', 'Could not update admin list.', () => {}); }
@@ -2983,6 +3028,7 @@ async function removeAdmin(name) {
         const d = await getClubAdminData(club.syncKey);
         d.adminDevices = d.adminDevices.filter(a => a !== name);
         await db.collection('clubs').doc(club.syncKey).update({ adminDevices: d.adminDevices });
+        await writeAudit(club.syncKey, 'Co-Admin Removed', 'Removed: ' + name, localStorage.getItem(pk(KEY_DEVICE_NAME))||'Unknown');
         document.getElementById('customModal').style.display = 'none';
         manageBroadcastSenders();
     } catch(e) { openModal('Error', 'Could not update admin list.', () => {}); }
@@ -2997,6 +3043,7 @@ async function addBroadcastSender() {
         const d = await getClubAdminData(club.syncKey);
         if (!d.broadcastSenders.includes(name)) d.broadcastSenders.push(name);
         await db.collection('clubs').doc(club.syncKey).update({ broadcastSenders: d.broadcastSenders });
+        await writeAudit(club.syncKey, 'Broadcast Sender Added', 'Added: ' + name, localStorage.getItem(pk(KEY_DEVICE_NAME))||'Unknown');
         document.getElementById('customModal').style.display = 'none';
         manageBroadcastSenders();
     } catch(e) { openModal('Error', 'Could not update senders list.', () => {}); }
@@ -3009,9 +3056,104 @@ async function removeBroadcastSender(name) {
         const d = await getClubAdminData(club.syncKey);
         d.broadcastSenders = d.broadcastSenders.filter(s => s !== name);
         await db.collection('clubs').doc(club.syncKey).update({ broadcastSenders: d.broadcastSenders });
+        await writeAudit(club.syncKey, 'Broadcast Sender Removed', 'Removed: ' + name, localStorage.getItem(pk(KEY_DEVICE_NAME))||'Unknown');
         document.getElementById('customModal').style.display = 'none';
         manageBroadcastSenders();
     } catch(e) { openModal('Error', 'Could not update senders list.', () => {}); }
+}
+/* ============ AUDIT LOG ============ */
+
+async function writeAudit(syncKey, action, target, byName) {
+    if (!syncKey) return;
+    try {
+        await db.collection('clubs').doc(syncKey).collection('audit_log').add({
+            action, target,
+            by: byName || 'Unknown',
+            ts: firebase.firestore.FieldValue.serverTimestamp()
+        });
+    } catch(e) { console.warn('Audit write failed:', e.message); }
+}
+
+let auditLastDoc = null;
+const AUDIT_PAGE = 50;
+
+async function loadAuditLog() {
+    const club = getActiveClub();
+    const spin = document.getElementById('auditLogSpinner');
+    const cont = document.getElementById('auditLogContent');
+    const empty = document.getElementById('auditLogEmpty');
+    const sub = document.getElementById('auditLogSubtitle');
+    const emptyMsg = document.getElementById('auditEmptyMsg');
+    spin.style.display='flex'; cont.style.display='none'; empty.style.display='none';
+    auditLastDoc = null;
+    document.getElementById('auditLogList').innerHTML = '';
+    if (!club || !club.syncKey || club.practiceOnly) {
+        spin.style.display='none'; empty.style.display='flex';
+        if(sub) sub.textContent='Cloud sync required';
+        if(emptyMsg) emptyMsg.textContent='Cloud sync is required to view the audit log.';
+        return;
+    }
+    if(sub) sub.textContent = club.name;
+    try {
+        const snap = await db.collection('clubs').doc(club.syncKey)
+            .collection('audit_log').orderBy('ts','desc').limit(AUDIT_PAGE).get();
+        spin.style.display = 'none';
+        if (snap.empty) { empty.style.display='flex'; return; }
+        auditLastDoc = snap.docs[snap.docs.length-1];
+        document.getElementById('auditLogList').innerHTML = snap.docs.map(renderAuditRow).join('');
+        document.getElementById('auditLoadMoreBtn').style.display =
+            snap.docs.length===AUDIT_PAGE ? 'block' : 'none';
+        cont.style.display = 'flex';
+    } catch(e) {
+        spin.style.display='none'; empty.style.display='flex';
+        if(emptyMsg) emptyMsg.textContent='Could not load audit log.';
+    }
+}
+
+async function loadMoreAudit() {
+    if (!auditLastDoc) return;
+    const club = getActiveClub();
+    if (!club || !club.syncKey) return;
+    const btn = document.getElementById('auditLoadMoreBtn');
+    btn.textContent='Loading...'; btn.disabled=true;
+    try {
+        const snap = await db.collection('clubs').doc(club.syncKey)
+            .collection('audit_log').orderBy('ts','desc')
+            .startAfter(auditLastDoc).limit(AUDIT_PAGE).get();
+        if (!snap.empty) {
+            auditLastDoc = snap.docs[snap.docs.length-1];
+            document.getElementById('auditLogList').insertAdjacentHTML('beforeend',
+                snap.docs.map(renderAuditRow).join(''));
+        }
+        btn.textContent='Load Older Entries'; btn.disabled=false;
+        btn.style.display = snap.docs.length===AUDIT_PAGE ? 'block' : 'none';
+    } catch(e) { btn.textContent='Load Older Entries'; btn.disabled=false; }
+}
+
+function renderAuditRow(doc) {
+    const d = doc.data();
+    const ts = d.ts && d.ts.toDate ? d.ts.toDate() : new Date();
+    const dateStr = ts.toLocaleDateString('en-US',{year:'numeric',month:'2-digit',day:'2-digit'});
+    const timeStr = ts.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+    const colors = {
+        'Timing Session':'#3b82f6','Filler Count':'#8b5cf6','Session Deleted':'#ef4444',
+        'PACE Entry Saved':'#10b981','PACE Entry Updated':'#10b981','PACE Entry Deleted':'#ef4444',
+        'PACE Role Added':'#10b981','PACE Role Edited':'#f59e0b','PACE Role Deleted':'#ef4444',
+        'Roster Member Added':'#10b981','Roster Member Deleted':'#ef4444',
+        'Filler Word Added':'#10b981','Filler Word Deleted':'#ef4444',
+        'Broadcast Sent':'#f59e0b','Broadcast Deleted':'#ef4444',
+        'Admin Claimed':'#7c3aed','Co-Admin Added':'#7c3aed','Co-Admin Removed':'#ef4444',
+        'Broadcast Sender Added':'#3b82f6','Broadcast Sender Removed':'#ef4444',
+        'Cloud Sync Enabled':'#10b981'
+    };
+    const color = colors[d.action] || '#64748b';
+    return '<div style="display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);">'
+        + '<div style="width:3px;min-height:52px;border-radius:2px;background:'+color+';flex-shrink:0;margin-top:2px;"></div>'
+        + '<div style="flex:1;min-width:0;">'
+        + '<div style="font-size:15px;font-weight:700;color:'+color+';">'+(d.action||'')+'</div>'
+        + '<div style="font-size:14px;color:var(--text);margin-top:2px;">'+(d.target||'')+'</div>'
+        + '<div style="font-size:12px;color:var(--label);margin-top:4px;">By: '+(d.by||'Unknown')+' &middot; '+dateStr+' '+timeStr+'</div>'
+        + '</div></div>';
 }
 </script>
 </body>
