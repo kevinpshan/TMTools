@@ -45,6 +45,7 @@
             <strong style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#8E8E93;display:block;margin-bottom:8px;">Sections</strong>
             <a href="#architecture">Architecture</a>
             <a href="#firebase">Firebase</a>
+            <a href="#cloudfunctions">Cloud Functions</a>
             <a href="#localstorage">LocalStorage Keys</a>
             <a href="#state">Global State</a>
             <a href="#screens">Screens</a>
@@ -145,6 +146,52 @@ const prefix = isTest ? 'test_' : 'prod_';</pre>
 
             <h3>Security</h3>
             <p>Current Firestore rules: <code>allow read, write: if true</code> (open access). The sync code acts as the shared secret — knowing the code is required to access a club's data. Rules should be tightened before wide public distribution.</p>
+        </div>
+
+        <!-- CLOUD FUNCTIONS -->
+        <div class="card" id="cloudfunctions">
+            <h2>Firebase Cloud Functions <span class="new-badge">DCP</span></h2>
+
+            <h3>Purpose</h3>
+            <p>Toastmasters International's club and district dashboard pages do not set CORS headers, so they cannot be fetched directly from a browser. A Firebase Cloud Function acts as a server-side proxy to bypass this restriction for the DCP Dashboard feature.</p>
+
+            <h3>Deployed Function</h3>
+            <pre>Project:  sdtm-tm-app
+Runtime:  Node.js 20
+Region:   us-central1
+Function: fetchDCPData</pre>
+            <p>The function accepts a club and/or district number, fetches the corresponding HTML pages from Toastmasters International's servers, and returns the parsed content as JSON. Server-to-server requests bypass browser CORS restrictions.</p>
+
+            <h3>Request Format</h3>
+            <pre>GET https://[REGION]-sdtm-tm-app.cloudfunctions.net/fetchDCPData
+  ?clubNumber=XXXXXXX
+  &districtNumber=XX</pre>
+
+            <h3>Response Format</h3>
+            <pre>{
+  club: {
+    html: string,      // raw HTML from TI club dashboard page
+    fetched: timestamp
+  },
+  district: {
+    html: string,      // raw HTML from TI district dashboard page
+    fetched: timestamp
+  }
+}</pre>
+            <p>The DCP dashboard parser in <code>index.html</code> receives this JSON and extracts goal progress, membership stats, and district ranking by walking the returned HTML.</p>
+
+            <h3>CORS &amp; Auth</h3>
+            <p>Deployed with <code>--allow-unauthenticated</code> (Cloud Run invoker open). The function sets appropriate CORS response headers for requests from the TMTools origin. Firebase Blaze plan required — Cloud Functions are not available on the Spark (free) plan.</p>
+
+            <h3>Deployment</h3>
+            <pre>cd functions
+firebase deploy --only functions:fetchDCPData</pre>
+            <p>Key deployment notes: use compatible versions of <code>firebase-admin</code> and <code>firebase-functions</code>. Jest must not be in <code>package.json</code> during deploy (causes build interference). Node.js runtime must match the <code>engines</code> field in <code>package.json</code>. After deploy, grant Cloud Run invoker role to allow unauthenticated access.</p>
+
+            <h3>Caching</h3>
+            <p>DCP data is cached locally with a daily refresh interval. The app checks the cache timestamp on load — if data is under 24 hours old the Cloud Function is not called. A manual Refresh button is available on the DCP dashboard.</p>
+
+            <div class="rule">The Cloud Function URL should be stored in a named constant in index.html — never hardcoded inline — so it can be updated in one place if the function is redeployed.</div>
         </div>
 
         <!-- LOCALSTORAGE -->
