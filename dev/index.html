@@ -3061,29 +3061,100 @@ async function removeBroadcastSender(name) {
         manageBroadcastSenders();
     } catch(e) { openModal('Error', 'Could not update senders list.', () => {}); }
 }
-v3.2.6 - Audit Log
+/* ============ AUDIT LOG ============ */
 
-Added full club activity audit log accessible from the Club tab.
+async function writeAudit(syncKey, action, target, byName) {
+    if (!syncKey) return;
+    try {
+        await db.collection('clubs').doc(syncKey).collection('audit_log').add({
+            action, target,
+            by: byName || 'Unknown',
+            ts: firebase.firestore.FieldValue.serverTimestamp()
+        });
+    } catch(e) { console.warn('Audit write failed:', e.message); }
+}
 
-- New Audit Log screen (Club tab → 🔍 Audit Log)
-- Entries display newest first: date/time · action · target · by whom
-- Loads 50 entries per page with "Load Older Entries" pagination
-- Color-coded by action type (green = add, red = delete, blue = session, purple = admin)
-- Requires cloud sync; practice-only clubs show informational empty state
+let auditLastDoc = null;
+const AUDIT_PAGE = 50;
 
-Instrumented all Firestore write points:
-- Timing Session saved / Filler Count saved
-- Session deleted
-- PACE entry saved, updated, deleted
-- PACE role added, edited, deleted
-- Roster member added / deleted
-- Filler word added / deleted
-- Broadcast sent / deleted
-- Admin claimed, co-admin added/removed, sender added/removed
-- Cloud sync enabled
+async function loadAuditLog() {
+    const club = getActiveClub();
+    const spin = document.getElementById('auditLogSpinner');
+    const cont = document.getElementById('auditLogContent');
+    const empty = document.getElementById('auditLogEmpty');
+    const sub = document.getElementById('auditLogSubtitle');
+    const emptyMsg = document.getElementById('auditEmptyMsg');
+    spin.style.display='flex'; cont.style.display='none'; empty.style.display='none';
+    auditLastDoc = null;
+    document.getElementById('auditLogList').innerHTML = '';
+    if (!club || !club.syncKey || club.practiceOnly) {
+        spin.style.display='none'; empty.style.display='flex';
+        if(sub) sub.textContent='Cloud sync required';
+        if(emptyMsg) emptyMsg.textContent='Cloud sync is required to view the audit log.';
+        return;
+    }
+    if(sub) sub.textContent = club.name;
+    try {
+        const snap = await db.collection('clubs').doc(club.syncKey)
+            .collection('audit_log').orderBy('ts','desc').limit(AUDIT_PAGE).get();
+        spin.style.display = 'none';
+        if (snap.empty) { empty.style.display='flex'; return; }
+        auditLastDoc = snap.docs[snap.docs.length-1];
+        document.getElementById('auditLogList').innerHTML = snap.docs.map(renderAuditRow).join('');
+        document.getElementById('auditLoadMoreBtn').style.display =
+            snap.docs.length===AUDIT_PAGE ? 'block' : 'none';
+        cont.style.display = 'flex';
+    } catch(e) {
+        spin.style.display='none'; empty.style.display='flex';
+        if(emptyMsg) emptyMsg.textContent='Could not load audit log.';
+    }
+}
 
-Audit records stored in Firestore: clubs/{syncCode}/audit_log
-Fields: action, target, by, ts
+async function loadMoreAudit() {
+    if (!auditLastDoc) return;
+    const club = getActiveClub();
+    if (!club || !club.syncKey) return;
+    const btn = document.getElementById('auditLoadMoreBtn');
+    btn.textContent='Loading...'; btn.disabled=true;
+    try {
+        const snap = await db.collection('clubs').doc(club.syncKey)
+            .collection('audit_log').orderBy('ts','desc')
+            .startAfter(auditLastDoc).limit(AUDIT_PAGE).get();
+        if (!snap.empty) {
+            auditLastDoc = snap.docs[snap.docs.length-1];
+            document.getElementById('auditLogList').insertAdjacentHTML('beforeend',
+                snap.docs.map(renderAuditRow).join(''));
+        }
+        btn.textContent='Load Older Entries'; btn.disabled=false;
+        btn.style.display = snap.docs.length===AUDIT_PAGE ? 'block' : 'none';
+    } catch(e) { btn.textContent='Load Older Entries'; btn.disabled=false; }
+}
+
+function renderAuditRow(doc) {
+    const d = doc.data();
+    const ts = d.ts && d.ts.toDate ? d.ts.toDate() : new Date();
+    const dateStr = ts.toLocaleDateString('en-US',{year:'numeric',month:'2-digit',day:'2-digit'});
+    const timeStr = ts.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+    const colors = {
+        'Timing Session':'#3b82f6','Filler Count':'#8b5cf6','Session Deleted':'#ef4444',
+        'PACE Entry Saved':'#10b981','PACE Entry Updated':'#10b981','PACE Entry Deleted':'#ef4444',
+        'PACE Role Added':'#10b981','PACE Role Edited':'#f59e0b','PACE Role Deleted':'#ef4444',
+        'Roster Member Added':'#10b981','Roster Member Deleted':'#ef4444',
+        'Filler Word Added':'#10b981','Filler Word Deleted':'#ef4444',
+        'Broadcast Sent':'#f59e0b','Broadcast Deleted':'#ef4444',
+        'Admin Claimed':'#7c3aed','Co-Admin Added':'#7c3aed','Co-Admin Removed':'#ef4444',
+        'Broadcast Sender Added':'#3b82f6','Broadcast Sender Removed':'#ef4444',
+        'Cloud Sync Enabled':'#10b981'
+    };
+    const color = colors[d.action] || '#64748b';
+    return '<div style="display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);">'
+        + '<div style="width:3px;min-height:52px;border-radius:2px;background:'+color+';flex-shrink:0;margin-top:2px;"></div>'
+        + '<div style="flex:1;min-width:0;">'
+        + '<div style="font-size:15px;font-weight:700;color:'+color+';">'+(d.action||'')+'</div>'
+        + '<div style="font-size:14px;color:var(--text);margin-top:2px;">'+(d.target||'')+'</div>'
+        + '<div style="font-size:12px;color:var(--label);margin-top:4px;">By: '+(d.by||'Unknown')+' &middot; '+dateStr+' '+timeStr+'</div>'
+        + '</div></div>';
+}
 </script>
 </body>
 </html>
