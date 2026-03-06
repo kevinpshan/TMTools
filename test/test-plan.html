@@ -52,7 +52,7 @@
 
 <div class="header-card">
     <h1>Test Plan</h1>
-    <p class="subtitle">Meeting Tools v3.2.2 &nbsp;·&nbsp; Southern Dutchess Toastmasters &nbsp;·&nbsp; Test environment: <code>/test/index.html</code></p>
+    <p class="subtitle">Meeting Tools v3.2.4 &nbsp;·&nbsp; Southern Dutchess Toastmasters &nbsp;·&nbsp; Test environment: <code>/test/index.html</code></p>
 </div>
 
 <div class="toc">
@@ -69,8 +69,9 @@
     <a href="#progress">10. Progress</a>
     <a href="#settings">11. Settings</a>
     <a href="#data">12. Data Management</a>
-    <a href="#offline">13. Offline / Edge Cases</a>
-    <a href="#pwa">14. PWA</a>
+    <a href="#pace">13. PACE</a>
+    <a href="#offline">14. Offline / Edge Cases</a>
+    <a href="#pwa">15. PWA</a>
 </div>
 
 <div class="note">
@@ -872,6 +873,89 @@
     </table>
 </div>
 
+<!-- ============ PACE ============ -->
+<div class="section" id="pace">
+    <div class="section-header">
+        <h2>13. PACE Participation Tracker</h2>
+        <span class="count">New in v3.2.4</span>
+    </div>
+    <table>
+        <tr><th width="30">✓</th><th width="80">ID</th><th width="100">Priority</th><th>Test Description</th><th>Expected Result</th></tr>
+        <tr>
+            <td><span class="pass-box"></span></td><td class="test-id">PC-01</td>
+            <td><span class="priority p-critical">Critical</span></td>
+            <td>PACE leaderboard loads<br><ol class="steps"><li>Tap Club tab in bottom bar</li><li>Tap PACE</li></ol></td>
+            <td class="expected">Leaderboard shows members ranked by points for current TM year. Year selector and Roles / Embed buttons visible.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td><td class="test-id">PC-02</td>
+            <td><span class="priority p-critical">Critical</span></td>
+            <td>New entry full flow<br><ol class="steps"><li>Tap + New Entry</li><li>Select date, tap member, check 2 roles</li><li>Tap Save</li></ol></td>
+            <td class="expected">Live tally updates as roles selected. Entry saves and syncs to Firestore <code>pace_entries</code>. Leaderboard total updates.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td><td class="test-id">PC-03</td>
+            <td><span class="priority p-critical">Critical</span></td>
+            <td>Points frozen at save time<br><ol class="steps"><li>Save entry for Speaker (15 pts)</li><li>Edit Speaker to 20 pts in Role Manager</li><li>Check the saved entry total</li></ol></td>
+            <td class="expected">Saved entry still shows 15 pts. Future entries use 20 pts. Past entries unaffected.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td><td class="test-id">PC-04</td>
+            <td><span class="priority p-high">High</span></td>
+            <td>Member history drill-down<br><ol class="steps"><li>Tap any member row on leaderboard</li></ol></td>
+            <td class="expected">Shows total pts, meeting count, progress toward 100-pt goal, and chronological entry list for selected year.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td><td class="test-id">PC-05</td>
+            <td><span class="priority p-high">High</span></td>
+            <td>Remove entry<br><ol class="steps"><li>Open member history, tap an entry</li><li>Tap Remove, confirm</li></ol></td>
+            <td class="expected">Entry deleted from Firestore. Member total decreases. Back returns to history screen.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td><td class="test-id">PC-06</td>
+            <td><span class="priority p-high">High</span></td>
+            <td>Year navigation<br><ol class="steps"><li>Tap ‹ on leaderboard</li></ol></td>
+            <td class="expected">Moves to prior TM year. Leaderboard reloads. › returns to current year.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td><td class="test-id">PC-07</td>
+            <td><span class="priority p-high">High</span></td>
+            <td>Progress bar colors<br><ol class="steps"><li>View leaderboard at varied totals</li></ol></td>
+            <td class="expected">Green for &ge;100 pts, gold for 50&ndash;99, blue for under 50.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td><td class="test-id">PC-08</td>
+            <td><span class="priority p-high">High</span></td>
+            <td>Role Manager<br><ol class="steps"><li>Tap Roles on leaderboard</li><li>Add new role with point value, confirm</li></ol></td>
+            <td class="expected">New role in entry grid. Syncs to <code>paceRoles</code> in Firestore. Existing entries unaffected.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td><td class="test-id">PC-09</td>
+            <td><span class="priority p-high">High</span></td>
+            <td>PACE syncs across devices<br><ol class="steps"><li>Save PACE entry on Device A</li><li>Open PACE on Device B</li></ol></td>
+            <td class="expected">Entry from Device A visible on Device B without manual sync.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td><td class="test-id">PC-10</td>
+            <td><span class="priority p-high">High</span></td>
+            <td>Embed widget modal<br><ol class="steps"><li>Tap Embed on leaderboard</li></ol></td>
+            <td class="expected">Modal shows leaderboard and chart HTML snippets pre-filled with sync code.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td><td class="test-id">PC-11</td>
+            <td><span class="priority p-medium">Medium</span></td>
+            <td>Back from entry preserves year<br><ol class="steps"><li>Navigate to prior year, open entry, tap Back</li></ol></td>
+            <td class="expected">Returns to leaderboard showing same prior year.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td><td class="test-id">PC-12</td>
+            <td><span class="priority p-medium">Medium</span></td>
+            <td>Spinner timeout with retry<br><ol class="steps"><li>Open PACE in offline mode, wait 8 seconds</li></ol></td>
+            <td class="expected">Spinner clears. Retry button appears. Tapping Retry re-attempts Firestore load.</td>
+        </tr>
+    </table>
+</div>
+
 <!-- ============ OFFLINE ============ -->
 <div class="section" id="offline">
     <div class="section-header">
@@ -964,7 +1048,7 @@
             <td class="test-id">PW-04</td>
             <td><span class="priority p-medium">Medium</span></td>
             <td>Version label displays correctly<br><ol class="steps"><li>Check bottom of main menu</li></ol></td>
-            <td class="expected">Shows "Version 3.2.2 (TEST)" at /test/ or "Version 3.2.2" at root.</td>
+            <td class="expected">Shows "Version 3.2.4 (TEST)" at /test/ or "Version 3.2.4" at root.</td>
         </tr>
         <tr>
             <td><span class="pass-box"></span></td>
@@ -976,7 +1060,7 @@
     </table>
 </div>
 
-<div class="footer">Meeting Tools v3.2.3 &nbsp;·&nbsp; Test Plan &nbsp;·&nbsp; Southern Dutchess Toastmasters</div>
+<div class="footer">Meeting Tools v3.2.4 &nbsp;·&nbsp; Test Plan &nbsp;·&nbsp; Southern Dutchess Toastmasters</div>
 
 </div>
 </body>
