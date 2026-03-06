@@ -1335,7 +1335,11 @@ function doAddSpeaker(n){
 function selectSpeaker(n){const el=document.getElementById('name');el.value=n;rosterSelectedName=n;const btn=document.getElementById('nameClearBtn');if(btn)btn.style.display=n.length>0?'block':'none';}
 function handleNameInput(el){
     el.value=el.value.toUpperCase();
-    rosterSelectedName=''; // user is typing manually — clear any roster lock
+    // Clear the roster lock only if the user has typed something that no longer matches
+    // the selected name — backspacing alone keeps the lock intact
+    if(rosterSelectedName && !rosterSelectedName.startsWith(el.value.trim())) {
+        rosterSelectedName='';
+    }
     const btn=document.getElementById('nameClearBtn');
     if(btn)btn.style.display=el.value.length>0?'block':'none';
     renderSpeakerListFiltered(allSpeakers.filter(s=>s.includes(el.value)));
