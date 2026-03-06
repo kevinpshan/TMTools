@@ -3244,14 +3244,20 @@ auth.onAuthStateChanged(async (user) => {
 async function handleAdminSignIn() {
     try {
         const provider = new firebase.auth.GoogleAuthProvider();
-        await auth.signInWithPopup(provider);
-        // onAuthStateChanged handles the rest
+        await auth.signInWithRedirect(provider);
     } catch(e) {
-        if (e.code !== 'auth/popup-closed-by-user') {
-            openModal('Sign In Failed','Please try again.',()=>{});
-        }
+        openModal('Sign In Failed','Please try again.',()=>{});
     }
 }
+
+// Handle return from Google redirect sign-in
+auth.getRedirectResult().then(result => {
+    // onAuthStateChanged handles the user state — nothing extra needed here
+}).catch(e => {
+    if (e.code && e.code !== 'auth/no-auth-event') {
+        openModal('Sign In Failed', e.message || 'Please try again.', ()=>{});
+    }
+});
 
 async function handleAdminSignOut() {
     await auth.signOut();
