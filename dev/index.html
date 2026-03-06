@@ -647,6 +647,7 @@ function clubKey(s) { return prefix+'club_'+activeClubId+'_'+s; }
 function getActiveClub() { return clubs.find(c=>c.id===activeClubId); }
 
 let currentMode='timer', currentSpeaker='', currentTally={}, iv, start, elapsed=0, lims={g:0,y:0,r:0}, selectedTypeLabel='';
+let rosterSelectedName = ''; // tracks last name tapped from roster — guards against partial backspace
 let fillerList=[], allSpeakers=[], paceRoles=[], recordingEnabled=false, sessionFromTranscript=false, counterStartTime=0;
 let mediaRecorder=null, recordingStream=null, audioChunks=[], transcriptResult='', transcriptCounts={};
 let recordingStartTime=0, speechDuration=0, activeTranscriptIndex=-1, whisperAbortController=null, whisperElapsedTimer=null, whisperStartTime=0;
@@ -1331,9 +1332,10 @@ function doAddSpeaker(n){
     autoSyncUp();refreshRoster();
     { const ac=getActiveClub(); if(ac&&ac.syncKey) writeAudit(ac.syncKey,'Roster Member Added','Added: '+n,localStorage.getItem(pk(KEY_DEVICE_NAME))||'Unknown'); }
 }
-function selectSpeaker(n){const el=document.getElementById('name');el.value=n;const btn=document.getElementById('nameClearBtn');if(btn)btn.style.display=n.length>0?'block':'none';}
+function selectSpeaker(n){const el=document.getElementById('name');el.value=n;rosterSelectedName=n;const btn=document.getElementById('nameClearBtn');if(btn)btn.style.display=n.length>0?'block':'none';}
 function handleNameInput(el){
     el.value=el.value.toUpperCase();
+    rosterSelectedName=''; // user is typing manually — clear any roster lock
     const btn=document.getElementById('nameClearBtn');
     if(btn)btn.style.display=el.value.length>0?'block':'none';
     renderSpeakerListFiltered(allSpeakers.filter(s=>s.includes(el.value)));
@@ -1341,6 +1343,7 @@ function handleNameInput(el){
 function clearNameInput(){
     const el=document.getElementById('name');
     if(el){el.value='';el.focus();}
+    rosterSelectedName='';
     const btn=document.getElementById('nameClearBtn');
     if(btn)btn.style.display='none';
     refreshRoster();
@@ -1352,7 +1355,7 @@ function askDeleteSpeaker(n){openModal("Delete?",`Remove ${n}?`,()=>{allSpeakers
 function showScreen(id){
     document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
     document.getElementById(id).classList.add('active');
-    if(id==='setup'){selectedTypeLabel='';renderSetupGrid();refreshRoster();recordingEnabled=false;const rt=document.getElementById('recordToggle');if(rt)rt.checked=false;const rr=document.getElementById('recordToggleRow');if(rr)rr.style.display=currentMode==='counter'?'flex':'none';const nb=document.getElementById('nameClearBtn');if(nb)nb.style.display='none';}
+    if(id==='setup'){selectedTypeLabel='';rosterSelectedName='';renderSetupGrid();refreshRoster();recordingEnabled=false;const rt=document.getElementById('recordToggle');if(rt)rt.checked=false;const rr=document.getElementById('recordToggleRow');if(rr)rr.style.display=currentMode==='counter'?'flex':'none';const nb=document.getElementById('nameClearBtn');if(nb)nb.style.display='none';}
     if(id==='report'){switchReportTab('local');loadReport();}
     if(id==='menu')checkStaleBanner();
     if(id==='transcriptList')loadTranscriptList();
@@ -1563,8 +1566,11 @@ function switchMode(m){currentMode=m;document.querySelectorAll('.tab').forEach(t
 
 /* ============ START HANDLER ============ */
 function handleStart(){
-    const n=document.getElementById('name').value.trim().toUpperCase();
+    let n=document.getElementById('name').value.trim().toUpperCase();
     if(!n||!selectedTypeLabel){openModal("Error","Enter Name & Role.",()=>{});return;}
+    // If the user tapped a roster name then accidentally backspaced, restore the full name
+    if(rosterSelectedName && rosterSelectedName.startsWith(n)) n=rosterSelectedName;
+    rosterSelectedName=''; // reset after use
     currentSpeaker=n;
     getDeviceName(()=>{
         if(currentMode==='timer'){elapsed=0;document.getElementById('timer').innerText='00:00';document.body.style.background='var(--bg)';showScreen('timerDisplay');document.getElementById('spkName').innerText=n;startTimer();}
