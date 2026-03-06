@@ -1397,7 +1397,7 @@ function showScreen(id){
     if(id==='paceRoleManager')renderPaceRoleManager();
     if(id==='dcp')loadDCPData(false);
     if(id==='auditLog')loadAuditLog();
-    if(id==='settings'){const n=localStorage.getItem(pk(KEY_DEVICE_NAME));document.getElementById('settingsDeviceName').innerText=n||'Tap to set your name';}
+    if(id==='settings'){const n=localStorage.getItem(pk(KEY_DEVICE_NAME));document.getElementById('settingsDeviceName').innerText=n||'Tap to set your name'; if(currentAdminUser){renderAdminSignedIn();}else{renderAdminSignedOut();}}
 }
 
 /* ============ SETUP GRID ============ */
@@ -3252,9 +3252,14 @@ async function handleAdminSignIn() {
 
 // Handle return from Google redirect sign-in
 auth.getRedirectResult().then(result => {
-    // onAuthStateChanged handles the user state — nothing extra needed here
+    if (result && result.user) {
+        // User just returned from redirect — onAuthStateChanged will fire too,
+        // but force a UI update here in case settings is already open
+        console.log('Redirect result user:', result.user.email);
+    }
 }).catch(e => {
     if (e.code && e.code !== 'auth/no-auth-event') {
+        console.error('Redirect error:', e.code, e.message);
         openModal('Sign In Failed', e.message || 'Please try again.', ()=>{});
     }
 });
