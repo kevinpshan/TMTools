@@ -11,6 +11,7 @@
     <link rel="apple-touch-icon" href="icon-timer.png">
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <style>
         :root { --bg:#F2F2F7; --card:#FFFFFF; --accent:#007AFF; --text:#000000; --subtext:#3A3A3C; --red:#FF3B30; --green:#34C759; --yellow:#FFCC00; --gold:#BF941A; --border:#D1D1D6; }
         html { height:-webkit-fill-available; }
@@ -343,6 +344,30 @@
         <div class="main-menu-card settings-card" onclick="showScreen('auditLog')"><div class="card-content"><h3>Audit Log</h3><p>Club activity history</p></div><div class="icon" style="font-size:30px;">&#128269;</div></div>
         <div class="main-menu-card settings-card" onclick="askClearLogs()" style="background:#FFF5F5;border:2px solid var(--red);"><div class="card-content"><h3 style="color:var(--red);">Clear Meeting Data</h3><p>Reset logs, WOD, transcripts</p></div><div class="icon">⚠</div></div>
         <input type="file" id="importFile" style="display:none" onchange="handleImportFile(this)">
+
+        <!-- ADMINISTRATOR SECTION -->
+        <div style="margin-top:24px;margin-bottom:6px;padding:0 4px;">
+            <div style="font-size:13px;font-weight:700;color:#8E8E93;text-transform:uppercase;letter-spacing:0.8px;">Administrator</div>
+        </div>
+        <div id="adminLoginCard" class="main-menu-card settings-card" onclick="handleAdminSignIn()" style="background:var(--card);border:1px solid var(--border);">
+            <div class="card-content"><h3>Admin Sign In</h3><p>Sign in with Google to access admin tools</p></div>
+            <div class="icon" style="font-size:28px;">🔐</div>
+        </div>
+        <div id="adminSignedInCard" style="display:none;">
+            <div class="main-menu-card settings-card" style="cursor:default;background:#F0FFF4;border:1px solid var(--green);">
+                <div class="card-content"><h3 style="color:var(--green);">Signed In</h3><p id="adminEmailLabel" style="font-size:13px;"></p></div>
+                <button onclick="handleAdminSignOut()" style="background:none;border:1px solid #8E8E93;border-radius:10px;padding:6px 14px;font-size:14px;color:#8E8E93;cursor:pointer;white-space:nowrap;">Sign Out</button>
+            </div>
+            <div style="margin-top:8px;background:var(--card);border-radius:16px;border:1px solid var(--border);overflow:hidden;">
+                <div style="padding:14px 18px;border-bottom:1px solid var(--border);">
+                    <div style="font-size:17px;font-weight:700;">Active Clubs</div>
+                    <div style="font-size:13px;color:#8E8E93;margin-top:2px;">All clubs registered in Firestore</div>
+                </div>
+                <div id="adminClubList" style="padding:10px 18px 14px;">
+                    <div style="color:#8E8E93;font-size:15px;padding:8px 0;">Loadingu2026</div>
+                </div>
+            </div>
+        </div>
     </div>
     <div class="button-row"><button class="footer-btn" onclick="showScreen('menu')">Done</button></div>
 </div>
@@ -633,6 +658,7 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+const auth = firebase.auth();
 
 /* ============ KEY ARCHITECTURE v3.1.0 ============ */
 const isDev  = window.location.pathname.toLowerCase().includes('/dev/');
@@ -3184,6 +3210,93 @@ function renderAuditRow(doc) {
         + '<div style="font-size:14px;color:var(--text);margin-top:2px;">'+(d.target||'')+'</div>'
         + '<div style="font-size:12px;color:var(--label);margin-top:4px;">By: '+(d.by||'Unknown')+' &middot; '+dateStr+' '+timeStr+'</div>'
         + '</div></div>';
+}
+
+/* ============ SUPER ADMIN AUTH ============ */
+let currentAdminUser = null;
+
+auth.onAuthStateChanged(async (user) => {
+    if (user) {
+        // Verify against whitelist
+        try {
+            const doc = await db.collection('superAdmins').doc(user.email).get();
+            if (doc.exists && doc.data().authorized === true) {
+                currentAdminUser = user;
+                renderAdminSignedIn();
+            } else {
+                // Not on whitelist — sign out silently
+                await auth.signOut();
+                currentAdminUser = null;
+                renderAdminSignedOut();
+                openModal('Not Authorized','Your Google account is not on the admin whitelist.',()=>{});
+            }
+        } catch(e) {
+            await auth.signOut();
+            currentAdminUser = null;
+            renderAdminSignedOut();
+        }
+    } else {
+        currentAdminUser = null;
+        renderAdminSignedOut();
+    }
+});
+
+async function handleAdminSignIn() {
+    try {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        await auth.signInWithPopup(provider);
+        // onAuthStateChanged handles the rest
+    } catch(e) {
+        if (e.code !== 'auth/popup-closed-by-user') {
+            openModal('Sign In Failed','Please try again.',()=>{});
+        }
+    }
+}
+
+async function handleAdminSignOut() {
+    await auth.signOut();
+    // signed out
+}
+
+function renderAdminSignedIn() {
+    const loginCard = document.getElementById('adminLoginCard');
+    const signedInCard = document.getElementById('adminSignedInCard');
+    const emailLabel = document.getElementById('adminEmailLabel');
+    if (loginCard) loginCard.style.display = 'none';
+    if (signedInCard) signedInCard.style.display = 'block';
+    if (emailLabel && currentAdminUser) emailLabel.innerText = currentAdminUser.email;
+    loadAdminClubs();
+}
+
+function renderAdminSignedOut() {
+    const loginCard = document.getElementById('adminLoginCard');
+    const signedInCard = document.getElementById('adminSignedInCard');
+    if (loginCard) loginCard.style.display = '';
+    if (signedInCard) signedInCard.style.display = 'none';
+}
+
+async function loadAdminClubs() {
+    const list = document.getElementById('adminClubList');
+    if (!list) return;
+    list.innerHTML = '<div style="color:#8E8E93;font-size:15px;padding:8px 0;">Loading\u2026</div>';
+    try {
+        const snap = await db.collection('clubs').get();
+        if (snap.empty) {
+            list.innerHTML = '<div style="color:#8E8E93;font-size:15px;padding:8px 0;">No clubs found.</div>';
+            return;
+        }
+        list.innerHTML = snap.docs.map(doc => {
+            const d = doc.data();
+            const name = d.name || '(Unnamed)';
+            const id = doc.id;
+            return `<div style="padding:10px 0;border-bottom:1px solid var(--border);">
+                <div style="font-size:16px;font-weight:600;">${name}</div>
+                <div style="font-size:12px;color:#8E8E93;margin-top:2px;font-family:monospace;">${id}</div>
+            </div>`;
+        }).join('') + '<div style="font-size:12px;color:#8E8E93;padding-top:10px;">' + snap.size + ' club' + (snap.size !== 1 ? 's' : '') + ' total</div>';
+    } catch(e) {
+        list.innerHTML = '<div style="color:var(--red);font-size:15px;padding:8px 0;">Error loading clubs.</div>';
+    }
 }
 </script>
 </body>
