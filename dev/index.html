@@ -3248,9 +3248,13 @@ auth.onAuthStateChanged(async (user) => {
 async function handleAdminSignIn() {
     try {
         const provider = new firebase.auth.GoogleAuthProvider();
-        await auth.signInWithRedirect(provider);
+        await auth.signInWithPopup(provider);
+        // onAuthStateChanged handles the rest
     } catch(e) {
-        openModal('Sign In Failed','Please try again.',()=>{});
+        console.error('Popup sign in error:', e.code, e.message);
+        if (e.code !== 'auth/popup-closed-by-user') {
+            openModal('Sign In Failed', e.code + ': ' + (e.message || 'Please try again.'), ()=>{});
+        }
     }
 }
 
