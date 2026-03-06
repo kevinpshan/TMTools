@@ -3217,9 +3217,11 @@ let currentAdminUser = null;
 
 auth.onAuthStateChanged(async (user) => {
     if (user) {
+        console.log('Auth state: signed in as', user.email);
         // Verify against whitelist
         try {
             const doc = await db.collection('superAdmins').doc(user.email).get();
+            console.log('Whitelist doc exists:', doc.exists);
             if (doc.exists && doc.data().authorized === true) {
                 currentAdminUser = user;
                 renderAdminSignedIn();
@@ -3231,11 +3233,13 @@ auth.onAuthStateChanged(async (user) => {
                 openModal('Not Authorized','Your Google account is not on the admin whitelist.',()=>{});
             }
         } catch(e) {
-            await auth.signOut();
-            currentAdminUser = null;
-            renderAdminSignedOut();
+            console.error('Whitelist check failed:', e.code, e.message);
+            // Don't sign out — Firestore rule may be blocking, keep user signed in
+            // but show error
+            openModal('Admin Error', 'Could not verify authorization: ' + e.message, ()=>{});
         }
     } else {
+        console.log('Auth state: signed out');
         currentAdminUser = null;
         renderAdminSignedOut();
     }
