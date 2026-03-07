@@ -246,6 +246,7 @@
     <div id="clubMode" class="container" style="display:none;flex:1;min-height:0;overflow-y:auto;">
         <div class="main-menu-card" onclick="showScreen('pace')"><div class="card-content"><h3 style="color:var(--green);">PACE</h3><p>Participating and Achieving Competence and Excellence</p></div><div class="icon" style="color:var(--green);">🏆</div></div>
         <div class="main-menu-card" onclick="showDCPScreen()"><div class="card-content"><h3 style="color:var(--accent);">DCP Dashboard</h3><p>Club standing &amp; district ranking</p></div><div class="icon" style="color:var(--accent);">🏛</div></div>
+        <div class="main-menu-card" onclick="showScreen('meetingPlanner')"><div class="card-content"><h3 style="color:var(--gold);">Meeting Planner</h3><p>WOD, themes &amp; table topics</p></div><div class="icon" style="font-size:28px;">🗓</div></div>
         <div class="main-menu-card" onclick="showBroadcastCompose()"><div class="card-content"><h3 style="color:#f59e0b;">📢 Broadcast</h3><p>Send a message to all club members</p></div><div class="icon" style="color:#f59e0b;">✉</div></div>
     </div>
     <div class="credit-footer">
@@ -298,7 +299,7 @@
         </div>
         <div style="background:var(--card);border-radius:16px;border:1px solid var(--border);padding:16px 18px;">
             <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
-                <input type="date" id="themeDateInput" style="flex:1;padding:8px 10px;border-radius:8px;border:1px solid var(--border);font-size:15px;background:var(--bg);color:var(--text);">
+                <input type="date" id="themeDateInput" placeholder="Enter date of meeting" style="flex:1;padding:8px 10px;border-radius:8px;border:1px solid var(--border);font-size:15px;background:var(--bg);color:var(--text);">
                 <button onclick="suggestThemes()" style="background:var(--accent);color:white;border:none;border-radius:10px;padding:9px 16px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;">Suggest</button>
             </div>
             <div id="themeResults"></div>
@@ -384,7 +385,6 @@
     <div class="header"><h1>Settings</h1></div>
     <div class="container">
         <div class="main-menu-card settings-card" onclick="showScreen('clubManager')"><div class="card-content"><h3>Clubs</h3><p id="settingsClubName">Manage your clubs</p></div><div class="icon" style="font-size:30px;">🏛</div></div>
-        <div class="main-menu-card settings-card" onclick="showScreen('meetingPlanner')"><div class="card-content"><h3>Meeting Planner</h3><p>WOD, themes &amp; table topics</p></div><div class="icon" style="font-size:30px;">🗓</div></div>
         <div class="main-menu-card settings-card" onclick="showScreen('fillerManager')"><div class="card-content"><h3>Filler Words</h3><p>Add, edit, delete</p></div><div class="icon" style="font-size:30px;">💬</div></div>
         <div class="main-menu-card settings-card" style="cursor:default;"><div class="card-content"><h3>Markdown Export</h3><p>Enable Slack/Email tables</p></div><label class="switch"><input type="checkbox" id="mdToggle" onchange="saveSettings()"><span class="slider"></span></label></div>
         <div class="main-menu-card settings-card" style="cursor:default;flex-direction:column;align-items:flex-start;"><div class="card-content"><h3>ChatGPT API Key</h3><p id="apiKeySubtext">Shared with club via sync</p></div><input type="password" id="openaiKey" placeholder="Paste Key Here" onchange="saveSettings()" style="margin-top:12px;font-size:16px;"></div>
@@ -3270,12 +3270,6 @@ function renderAuditRow(doc) {
 let selectedTheme = '';
 
 function initMeetingPlanner() {
-    // Default date input to today
-    const di = document.getElementById('themeDateInput');
-    if (di && !di.value) {
-        const today = new Date();
-        di.value = today.toISOString().split('T')[0];
-    }
     // Update WOD status label
     const wod = JSON.parse(localStorage.getItem(clubKey('wod_full')) || 'null');
     const statusEl = document.getElementById('plannerWodStatus');
