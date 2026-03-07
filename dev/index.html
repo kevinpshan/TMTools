@@ -232,7 +232,12 @@
         <div class="main-menu-card" onclick="showScreen('report')"><div class="card-content"><h3>Meeting Report</h3><p>View recorded times</p></div><div class="icon">☰</div></div>
     </div>
     <div id="counterMode" class="container" style="display:none;flex:1;min-height:0;overflow-y:auto;">
-        <div class="main-menu-card" onclick="showScreen('wod')"><div class="card-content"><h3 style="color:var(--gold);">Word of the Day</h3><p>AI Definition &amp; Search</p></div><div class="icon" style="color:var(--gold);">★</div></div>
+        <div id="wodBanner" style="display:none;background:#FFF9E6;border:1px solid var(--gold);border-radius:12px;padding:10px 14px;margin-bottom:4px;flex-shrink:0;">
+            <span style="font-size:11px;font-weight:800;color:var(--gold);text-transform:uppercase;letter-spacing:0.8px;">Word of the Day</span>
+            <div style="font-size:15px;font-weight:700;color:var(--text);margin-top:2px;" id="wodBannerWord"></div>
+            <div style="font-size:13px;color:var(--subtext);margin-top:2px;" id="wodBannerDef"></div>
+            <div style="font-size:13px;color:#8E8E93;font-style:italic;margin-top:2px;" id="wodBannerEx"></div>
+        </div>
         <div class="main-menu-card" onclick="showScreen('setup')"><div class="card-content"><h3>Start Tracking</h3><p>Count filler words</p></div><div class="icon">✍</div></div>
         <div class="main-menu-card" onclick="showScreen('transcriptList')"><div class="card-content"><h3>Transcripts</h3><p>Share with speakers</p></div><div class="icon">📋</div></div>
         <div class="main-menu-card" onclick="showScreen('progress')"><div class="card-content"><h3>Progress</h3><p>Speaker improvement over time</p></div><div class="icon">📈</div></div>
@@ -264,10 +269,55 @@
         </div>
     </div>
     <div class="button-row">
-        <button class="footer-btn secondary-btn" onclick="showScreen('menu')">Back</button>
+        <button class="footer-btn secondary-btn" onclick="showScreen('meetingPlanner')">Back</button>
         <button class="footer-btn secondary-btn" onclick="nextWod()">Random</button>
         <button class="footer-btn" style="background:var(--green);" onclick="selectWod()">Select</button>
     </div>
+</div>
+
+<!-- MEETING PLANNER -->
+<div id="meetingPlanner" class="screen">
+    <div class="header"><h1>Meeting Planner</h1><div class="subtitle">AI-powered meeting prep</div></div>
+    <div class="container">
+
+        <!-- Word of the Day -->
+        <div style="margin-bottom:6px;padding:0 4px;">
+            <div style="font-size:13px;font-weight:700;color:#8E8E93;text-transform:uppercase;letter-spacing:0.8px;">Word of the Day</div>
+        </div>
+        <div class="main-menu-card settings-card" onclick="showScreen('wod')">
+            <div class="card-content">
+                <h3 style="color:var(--gold);">Word of the Day</h3>
+                <p id="plannerWodStatus">Tap to search or generate</p>
+            </div>
+            <div class="icon" style="color:var(--gold);font-size:28px;">★</div>
+        </div>
+
+        <!-- Meeting Theme -->
+        <div style="margin-top:20px;margin-bottom:6px;padding:0 4px;">
+            <div style="font-size:13px;font-weight:700;color:#8E8E93;text-transform:uppercase;letter-spacing:0.8px;">Meeting Theme</div>
+        </div>
+        <div style="background:var(--card);border-radius:16px;border:1px solid var(--border);padding:16px 18px;">
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
+                <input type="date" id="themeDateInput" style="flex:1;padding:8px 10px;border-radius:8px;border:1px solid var(--border);font-size:15px;background:var(--bg);color:var(--text);">
+                <button onclick="suggestThemes()" style="background:var(--accent);color:white;border:none;border-radius:10px;padding:9px 16px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;">Suggest</button>
+            </div>
+            <div id="themeResults"></div>
+        </div>
+
+        <!-- Table Topics -->
+        <div id="tableTopicsSection" style="display:none;margin-top:20px;">
+            <div style="margin-bottom:6px;padding:0 4px;">
+                <div style="font-size:13px;font-weight:700;color:#8E8E93;text-transform:uppercase;letter-spacing:0.8px;">Table Topics</div>
+            </div>
+            <div style="background:var(--card);border-radius:16px;border:1px solid var(--border);padding:16px 18px;">
+                <div style="font-size:14px;color:#8E8E93;margin-bottom:10px;">Theme: <span id="selectedThemeLabel" style="color:var(--text);font-weight:600;"></span></div>
+                <button onclick="generateTableTopics()" style="width:100%;background:var(--accent);color:white;border:none;border-radius:10px;padding:12px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:12px;">Generate Table Topics</button>
+                <div id="tableTopicsResults"></div>
+            </div>
+        </div>
+
+    </div>
+    <div class="button-row"><button class="footer-btn" onclick="showScreen('settings')">Done</button></div>
 </div>
 
 <!-- SETUP -->
@@ -334,6 +384,7 @@
     <div class="header"><h1>Settings</h1></div>
     <div class="container">
         <div class="main-menu-card settings-card" onclick="showScreen('clubManager')"><div class="card-content"><h3>Clubs</h3><p id="settingsClubName">Manage your clubs</p></div><div class="icon" style="font-size:30px;">🏛</div></div>
+        <div class="main-menu-card settings-card" onclick="showScreen('meetingPlanner')"><div class="card-content"><h3>Meeting Planner</h3><p>WOD, themes &amp; table topics</p></div><div class="icon" style="font-size:30px;">🗓</div></div>
         <div class="main-menu-card settings-card" onclick="showScreen('fillerManager')"><div class="card-content"><h3>Filler Words</h3><p>Add, edit, delete</p></div><div class="icon" style="font-size:30px;">💬</div></div>
         <div class="main-menu-card settings-card" style="cursor:default;"><div class="card-content"><h3>Markdown Export</h3><p>Enable Slack/Email tables</p></div><label class="switch"><input type="checkbox" id="mdToggle" onchange="saveSettings()"><span class="slider"></span></label></div>
         <div class="main-menu-card settings-card" style="cursor:default;flex-direction:column;align-items:flex-start;"><div class="card-content"><h3>ChatGPT API Key</h3><p id="apiKeySubtext">Shared with club via sync</p></div><input type="password" id="openaiKey" placeholder="Paste Key Here" onchange="saveSettings()" style="margin-top:12px;font-size:16px;"></div>
@@ -1391,6 +1442,8 @@ function showScreen(id){
     if(id==='menu')checkStaleBanner();
     if(id==='transcriptList')loadTranscriptList();
     if(id==='wod'){const wi=document.getElementById('wodManualInput');if(wi)wi.value='';}
+    if(id==='meetingPlanner'){initMeetingPlanner();}
+    if(id==='menu'){updateWodBanner();}
     if(id==='fillerManager')renderFillerManager();
     if(id==='clubManager')renderClubManager();
     if(id==='progress')loadProgress();
@@ -1431,7 +1484,7 @@ function selectWod(){
             wodDate:new Date().toDateString()
         }).catch(e=>console.warn('WOD cloud write failed:',e.message));
     }
-    openModal("WOD Selected",`${wu} is active.`,()=>{showScreen('menu');});
+    openModal("WOD Selected",`${wu} is active.`,()=>{showScreen('meetingPlanner');});
 }
 
 /* ============ TALLY ============ */
@@ -1593,7 +1646,7 @@ function openModal(t,b,c,cancelLabel,confirmLabel){
     document.getElementById('modalConfirm').onclick=()=>{c();document.getElementById('customModal').style.display='none';};
     document.getElementById('modalCancel').onclick=()=>{document.getElementById('customModal').style.display='none';};
 }function askCustomTime(el){const saved=JSON.parse(localStorage.getItem(clubKey('custom_limits'))||'{"g":5,"cy":6,"r":7}');const title=currentMode==='timer'?"Thresholds":"Enter Custom Role";const body=currentMode==='timer'?`<label>Green (Min):</label><input type="number" id="cg" value="${saved.g}"><label>Yellow (Target):</label><input type="number" id="cy" value="${saved.cy}"><label>Red (Max):</label><input type="number" id="cr" value="${saved.r}">`:`<label>Role Name:</label><input type="text" id="customRole" placeholder="e.g. JOKE MASTER" style="text-transform:uppercase">`;openModal(title,body,()=>{if(currentMode==='timer'){const g=document.getElementById('cg').value,y=document.getElementById('cy').value,r=document.getElementById('cr').value;lims={g:g*60,y:y*60,r:r*60};localStorage.setItem(clubKey('custom_limits'),JSON.stringify({g,cy:y,r}));document.getElementById('customLabel').innerText=`${g}-${r}m`;selectedTypeLabel='CUSTOM';}else{selectedTypeLabel=document.getElementById('customRole').value.toUpperCase();document.getElementById('customLabel').innerText=selectedTypeLabel;}document.querySelectorAll('.role-card').forEach(c=>c.classList.remove('selected'));el.classList.add('selected');});}
-function switchMode(m){currentMode=m;document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));const tabId=m==='timer'?'tabTimer':m==='counter'?'tabCounter':'tabClub';document.getElementById(tabId).classList.add('active');const titles={'timer':'Timing','counter':'Verbal','club':'Club Tools'};document.getElementById('modeTitle').innerText=titles[m]||'Meeting Timer';document.getElementById('timerMode').style.display=m==='timer'?'flex':'none';document.getElementById('counterMode').style.display=m==='counter'?'flex':'none';document.getElementById('clubMode').style.display=m==='club'?'flex':'none';}
+function switchMode(m){currentMode=m;document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));const tabId=m==='timer'?'tabTimer':m==='counter'?'tabCounter':'tabClub';document.getElementById(tabId).classList.add('active');const titles={'timer':'Timing','counter':'Verbal','club':'Club Tools'};document.getElementById('modeTitle').innerText=titles[m]||'Meeting Timer';document.getElementById('timerMode').style.display=m==='timer'?'flex':'none';document.getElementById('counterMode').style.display=m==='counter'?'flex':'none';document.getElementById('clubMode').style.display=m==='club'?'flex':'none';if(m==='counter')updateWodBanner();}
 
 /* ============ START HANDLER ============ */
 function handleStart(){
@@ -3211,6 +3264,126 @@ function renderAuditRow(doc) {
         + '<div style="font-size:14px;color:var(--text);margin-top:2px;">'+(d.target||'')+'</div>'
         + '<div style="font-size:12px;color:var(--label);margin-top:4px;">By: '+(d.by||'Unknown')+' &middot; '+dateStr+' '+timeStr+'</div>'
         + '</div></div>';
+}
+
+/* ============ MEETING PLANNER ============ */
+let selectedTheme = '';
+
+function initMeetingPlanner() {
+    // Default date input to today
+    const di = document.getElementById('themeDateInput');
+    if (di && !di.value) {
+        const today = new Date();
+        di.value = today.toISOString().split('T')[0];
+    }
+    // Update WOD status label
+    const wod = JSON.parse(localStorage.getItem(clubKey('wod_full')) || 'null');
+    const statusEl = document.getElementById('plannerWodStatus');
+    if (statusEl) statusEl.innerText = wod ? wod.word.toUpperCase() + ' — active' : 'Tap to search or generate';
+}
+
+function updateWodBanner() {
+    const wod = JSON.parse(localStorage.getItem(clubKey('wod_full')) || 'null');
+    const banner = document.getElementById('wodBanner');
+    if (!banner) return;
+    if (wod && wod.word) {
+        document.getElementById('wodBannerWord').innerText = wod.word.toUpperCase();
+        document.getElementById('wodBannerDef').innerText = wod.definition || '';
+        document.getElementById('wodBannerEx').innerText = wod.example ? '\u201c' + wod.example + '\u201d' : '';
+        banner.style.display = 'block';
+    } else {
+        banner.style.display = 'none';
+    }
+}
+
+async function suggestThemes() {
+    const dateVal = document.getElementById('themeDateInput').value;
+    if (!dateVal) { openModal('No Date', 'Please select a meeting date.', ()=>{}); return; }
+    const aiKey = localStorage.getItem(clubKey('apiKey')) || localStorage.getItem(prefix + 'openai_key') || '';
+    if (!aiKey) { openModal('No API Key', 'Add your OpenAI key in Settings \u2192 ChatGPT API Key.', ()=>{}); return; }
+
+    const resultsEl = document.getElementById('themeResults');
+    const ttSection = document.getElementById('tableTopicsSection');
+    resultsEl.innerHTML = '<div style="text-align:center;padding:16px;color:#8E8E93;font-size:15px;">Thinking\u2026</div>';
+    if (ttSection) ttSection.style.display = 'none';
+    selectedTheme = '';
+
+    const dateObj = new Date(dateVal + 'T12:00:00');
+    const formatted = dateObj.toLocaleDateString('en-US', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+
+    const prompt = `You are a Toastmasters meeting planner. Given the meeting date of ${formatted}, suggest exactly 5 compelling meeting themes based on historical events, holidays, cultural observances, seasonal themes, or notable anniversaries occurring on or near that date. Return ONLY a JSON array of 5 objects, each with "title" (short theme name, max 6 words) and "reason" (one sentence explaining its relevance to this date). No preamble, no markdown, just the JSON array.`;
+
+    try {
+        const res = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + aiKey },
+            body: JSON.stringify({ model: 'gpt-4o-mini', messages: [{ role: 'user', content: prompt }], temperature: 0.8 })
+        });
+        if (!res.ok) throw new Error('API error ' + res.status);
+        const data = await res.json();
+        const raw = data.choices[0].message.content.trim().replace(/```json|```/g, '');
+        const themes = JSON.parse(raw);
+        renderThemes(themes);
+    } catch(e) {
+        resultsEl.innerHTML = '<div style="color:var(--red);font-size:14px;padding:8px 0;">Error: ' + e.message + '</div>';
+    }
+}
+
+function renderThemes(themes) {
+    const resultsEl = document.getElementById('themeResults');
+    resultsEl.innerHTML = themes.map((t, i) => `
+        <div id="themeCard${i}" onclick="selectTheme(${i}, '${t.title.replace(/'/g, "\\'")}')"
+            style="padding:12px 14px;border-radius:10px;border:2px solid var(--border);margin-bottom:8px;cursor:pointer;transition:border-color 0.15s;">
+            <div style="font-size:15px;font-weight:700;">${t.title}</div>
+            <div style="font-size:13px;color:#8E8E93;margin-top:3px;">${t.reason}</div>
+        </div>`).join('');
+}
+
+function selectTheme(index, title) {
+    selectedTheme = title;
+    // Highlight selected card
+    document.querySelectorAll('[id^="themeCard"]').forEach((el, i) => {
+        el.style.borderColor = i === index ? 'var(--accent)' : 'var(--border)';
+        el.style.background = i === index ? 'var(--bg)' : '';
+    });
+    // Show table topics section
+    const ttSection = document.getElementById('tableTopicsSection');
+    const label = document.getElementById('selectedThemeLabel');
+    const ttResults = document.getElementById('tableTopicsResults');
+    if (ttSection) ttSection.style.display = 'block';
+    if (label) label.innerText = title;
+    if (ttResults) ttResults.innerHTML = '';
+}
+
+async function generateTableTopics() {
+    if (!selectedTheme) return;
+    const aiKey = localStorage.getItem(clubKey('apiKey')) || localStorage.getItem(prefix + 'openai_key') || '';
+    if (!aiKey) { openModal('No API Key', 'Add your OpenAI key in Settings \u2192 ChatGPT API Key.', ()=>{}); return; }
+
+    const resultsEl = document.getElementById('tableTopicsResults');
+    resultsEl.innerHTML = '<div style="text-align:center;padding:16px;color:#8E8E93;font-size:15px;">Generating\u2026</div>';
+
+    const prompt = `You are a Toastmasters Table Topics Master. Generate exactly 8 thought-provoking Table Topics questions for a Toastmasters meeting with the theme: "${selectedTheme}". Questions should encourage personal reflection and storytelling, be appropriate for all ages, and vary in style (some personal, some hypothetical, some reflective). Return ONLY a JSON array of 8 strings, each being one question. No preamble, no markdown, just the JSON array.`;
+
+    try {
+        const res = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + aiKey },
+            body: JSON.stringify({ model: 'gpt-4o-mini', messages: [{ role: 'user', content: prompt }], temperature: 0.9 })
+        });
+        if (!res.ok) throw new Error('API error ' + res.status);
+        const data = await res.json();
+        const raw = data.choices[0].message.content.trim().replace(/```json|```/g, '');
+        const questions = JSON.parse(raw);
+        resultsEl.innerHTML = questions.map((q, i) =>
+            `<div style="padding:10px 0;border-bottom:1px solid var(--border);display:flex;gap:10px;">
+                <div style="font-size:15px;font-weight:700;color:var(--accent);flex-shrink:0;">${i+1}.</div>
+                <div style="font-size:15px;line-height:1.4;">${q}</div>
+            </div>`
+        ).join('');
+    } catch(e) {
+        resultsEl.innerHTML = '<div style="color:var(--red);font-size:14px;padding:8px 0;">Error: ' + e.message + '</div>';
+    }
 }
 
 /* ============ SUPER ADMIN AUTH ============ */
