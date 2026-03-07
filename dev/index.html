@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Meeting Tools v3.2.3</title>
+    <title>Meeting Tools v3.3.0</title>
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="TMTools">
@@ -362,9 +362,10 @@
                 <div style="padding:14px 18px;border-bottom:1px solid var(--border);">
                     <div style="font-size:17px;font-weight:700;">Active Clubs</div>
                     <div style="font-size:13px;color:#8E8E93;margin-top:2px;">All clubs registered in Firestore</div>
+                    <input id="adminClubFilter" type="text" placeholder="Filter by name or ID…" oninput="filterAdminClubs(this.value)" style="margin-top:10px;width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--border);font-size:14px;background:var(--bg);color:var(--text);box-sizing:border-box;">
                 </div>
                 <div id="adminClubList" style="padding:10px 18px 14px;">
-                    <div style="color:#8E8E93;font-size:15px;padding:8px 0;">Loadingu2026</div>
+                    <div style="color:#8E8E93;font-size:15px;padding:8px 0;">Loading…</div>
                 </div>
             </div>
         </div>
@@ -643,7 +644,7 @@
             </div>
         </div>
     </div>
-    <div style="padding:20px;text-align:center;opacity:0.4;font-size:13px;">Meeting Tools v3.2.3 · Southern Dutchess Toastmasters</div>
+    <div style="padding:20px;text-align:center;opacity:0.4;font-size:13px;">Meeting Tools v3.3.0 · Southern Dutchess Toastmasters</div>
 </div>
 
 <script>
@@ -742,13 +743,13 @@ function initApp() {
         document.getElementById('welcome').classList.add('active');
         document.getElementById('mdToggle').checked = false;
         document.getElementById('openaiKey').value = '';
-        document.getElementById('versionLabel').innerText = 'Version 3.2.3'+(isDev?' (DEV)':isTest?' (TEST)':'');
+        document.getElementById('versionLabel').innerText = 'Version 3.3.0'+(isDev?' (DEV)':isTest?' (TEST)':'');
         return;
     }
     loadClubData(); updateClubUI();
     document.getElementById('mdToggle').checked = (localStorage.getItem(pk(KEY_MD))==='true');
     document.getElementById('openaiKey').value = localStorage.getItem(pk(KEY_AI_KEY))||'';
-    document.getElementById('versionLabel').innerText = 'Version 3.2.3'+(isDev?' (DEV)':isTest?' (TEST)':'');
+    document.getElementById('versionLabel').innerText = 'Version 3.3.0'+(isDev?' (DEV)':isTest?' (TEST)':'');
     refreshRoster(); nextWod();
     autoSyncDown();
     checkStaleBanner();
@@ -3294,6 +3295,8 @@ function renderAdminSignedOut() {
     if (signedInCard) signedInCard.style.display = 'none';
 }
 
+let adminClubCache = []; // store fetched clubs for client-side filtering
+
 async function loadAdminClubs() {
     const list = document.getElementById('adminClubList');
     if (!list) return;
@@ -3304,18 +3307,66 @@ async function loadAdminClubs() {
             list.innerHTML = '<div style="color:#8E8E93;font-size:15px;padding:8px 0;">No clubs found.</div>';
             return;
         }
-        list.innerHTML = snap.docs.map(doc => {
+        adminClubCache = snap.docs.map(doc => {
             const d = doc.data();
-            const name = d.name || '(Unnamed)';
-            const id = doc.id;
-            return `<div style="padding:10px 0;border-bottom:1px solid var(--border);">
-                <div style="font-size:16px;font-weight:600;">${name}</div>
-                <div style="font-size:12px;color:#8E8E93;margin-top:2px;font-family:monospace;">${id}</div>
-            </div>`;
-        }).join('') + '<div style="font-size:12px;color:#8E8E93;padding-top:10px;">' + snap.size + ' club' + (snap.size !== 1 ? 's' : '') + ' total</div>';
+            let lastUpdated = '';
+            if (d.lastUpdated && d.lastUpdated.toDate) {
+                const dt = d.lastUpdated.toDate();
+                lastUpdated = dt.toLocaleDateString('en-US', {year:'numeric', month:'short', day:'numeric'});
+            }
+            return { id: doc.id, name: d.name || '(Unnamed)', lastUpdated };
+        });
+        renderAdminClubList(adminClubCache);
     } catch(e) {
         list.innerHTML = '<div style="color:var(--red);font-size:15px;padding:8px 0;">Error loading clubs.</div>';
     }
+}
+
+function renderAdminClubList(clubs) {
+    const list = document.getElementById('adminClubList');
+    if (!list) return;
+    if (!clubs.length) {
+        list.innerHTML = '<div style="color:#8E8E93;font-size:15px;padding:8px 0;">No matching clubs.</div>';
+        return;
+    }
+    list.innerHTML = clubs.map(c => `
+        <div style="padding:12px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:10px;">
+            <div style="flex:1;min-width:0;">
+                <div style="font-size:16px;font-weight:600;">${c.name}</div>
+                <div style="font-size:12px;color:#8E8E93;margin-top:2px;font-family:monospace;">${c.id}</div>
+                <div style="font-size:12px;color:#8E8E93;margin-top:2px;">Last updated: ${c.lastUpdated || 'Unknown'}</div>
+            </div>
+            <button onclick="askDeleteAdminClub('${c.id}','${c.name.replace(/'/g,"\\'")}')"
+                style="flex-shrink:0;background:none;border:1px solid var(--red);border-radius:8px;padding:6px 12px;font-size:13px;color:var(--red);cursor:pointer;font-weight:600;">
+                Delete
+            </button>
+        </div>`).join('') +
+        `<div style="font-size:12px;color:#8E8E93;padding-top:10px;">${clubs.length} club${clubs.length !== 1 ? 's' : ''}</div>`;
+}
+
+function filterAdminClubs(query) {
+    const q = query.trim().toUpperCase();
+    if (!q) { renderAdminClubList(adminClubCache); return; }
+    renderAdminClubList(adminClubCache.filter(c =>
+        c.name.toUpperCase().includes(q) || c.id.toUpperCase().includes(q)
+    ));
+}
+
+function askDeleteAdminClub(id, name) {
+    openModal(
+        'Delete Club?',
+        `Permanently delete "<strong>${name}</strong>" from Firestore?<br><br>This cannot be undone. Local data on member devices will not be affected.`,
+        async () => {
+            try {
+                await db.collection('clubs').doc(id).delete();
+                adminClubCache = adminClubCache.filter(c => c.id !== id);
+                const filterVal = (document.getElementById('adminClubFilter') || {}).value || '';
+                filterAdminClubs(filterVal);
+            } catch(e) {
+                openModal('Delete Failed', 'Could not delete club: ' + e.message, ()=>{});
+            }
+        }
+    );
 }
 </script>
 </body>
