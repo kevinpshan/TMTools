@@ -3397,28 +3397,28 @@ function buildTableTopicsText() {
     const items = document.querySelectorAll('#tableTopicsResults > div');
     if (!items.length) return '';
     const md = localStorage.getItem(pk(KEY_MD)) === 'true';
-    const questions = Array.from(items).map((el, i) => {
+    const questions = Array.from(items).map(el => {
         const q = el.querySelector('div:last-child');
         return q ? q.innerText : '';
     }).filter(Boolean);
 
     if (md) {
-        const lines = [
-            `## Table Topics: ${selectedTheme}`,
+        return [
+            `## ${selectedTheme}`,
             selectedThemeReason ? `> ${selectedThemeReason}` : '',
             '',
-            '**Questions**',
+            '### Table Topics',
             ...questions.map((q, i) => `${i+1}. ${q}`)
-        ];
-        return lines.filter((l, i) => !(i === 1 && !l)).join('\n');
+        ].filter(Boolean).join('\n');
     } else {
-        const lines = [
-            `Table Topics: ${selectedTheme}`,
+        return [
+            selectedTheme,
             selectedThemeReason || '',
             '─'.repeat(30),
+            'Table Topics',
+            '─'.repeat(30),
             ...questions.map((q, i) => `${i+1}. ${q}`)
-        ];
-        return lines.filter((l, i) => !(i === 1 && !l)).join('\n');
+        ].filter(Boolean).join('\n');
     }
 }
 
