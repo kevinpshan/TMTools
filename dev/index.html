@@ -298,6 +298,7 @@
             <div style="font-size:13px;font-weight:700;color:#8E8E93;text-transform:uppercase;letter-spacing:0.8px;">Meeting Theme</div>
         </div>
         <div style="background:var(--card);border-radius:16px;border:1px solid var(--border);padding:16px 18px;">
+            <div style="font-size:13px;color:#8E8E93;margin-bottom:8px;">Enter the date of your meeting to get AI-suggested themes based on events, holidays, and observances near that date.</div>
             <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
                 <input type="date" id="themeDateInput" placeholder="Enter date of meeting" style="flex:1;padding:8px 10px;border-radius:8px;border:1px solid var(--border);font-size:15px;background:var(--bg);color:var(--text);">
                 <button onclick="suggestThemes()" style="background:var(--accent);color:white;border:none;border-radius:10px;padding:9px 16px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;">Suggest</button>
@@ -314,6 +315,10 @@
                 <div style="font-size:14px;color:#8E8E93;margin-bottom:10px;">Theme: <span id="selectedThemeLabel" style="color:var(--text);font-weight:600;"></span></div>
                 <button onclick="generateTableTopics()" style="width:100%;background:var(--accent);color:white;border:none;border-radius:10px;padding:12px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:12px;">Generate Table Topics</button>
                 <div id="tableTopicsResults"></div>
+                <div id="tableTopicsActions" style="display:none;margin-top:12px;display:none;gap:8px;">
+                    <button onclick="copyTableTopics()" style="flex:1;background:none;border:1px solid var(--border);border-radius:10px;padding:10px;font-size:14px;font-weight:600;cursor:pointer;">📋 Copy</button>
+                    <button onclick="shareTableTopics()" style="flex:1;background:var(--accent);color:white;border:none;border-radius:10px;padding:10px;font-size:14px;font-weight:600;cursor:pointer;">↑ Share</button>
+                </div>
             </div>
         </div>
 
@@ -3268,6 +3273,7 @@ function renderAuditRow(doc) {
 
 /* ============ MEETING PLANNER ============ */
 let selectedTheme = '';
+let selectedThemeReason = '';
 
 function initMeetingPlanner() {
     // Update WOD status label
@@ -3301,6 +3307,7 @@ async function suggestThemes() {
     resultsEl.innerHTML = '<div style="text-align:center;padding:16px;color:#8E8E93;font-size:15px;">Thinking\u2026</div>';
     if (ttSection) ttSection.style.display = 'none';
     selectedTheme = '';
+    selectedThemeReason = '';
 
     const dateObj = new Date(dateVal + 'T12:00:00');
     const formatted = dateObj.toLocaleDateString('en-US', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
@@ -3326,15 +3333,16 @@ async function suggestThemes() {
 function renderThemes(themes) {
     const resultsEl = document.getElementById('themeResults');
     resultsEl.innerHTML = themes.map((t, i) => `
-        <div id="themeCard${i}" onclick="selectTheme(${i}, '${t.title.replace(/'/g, "\\'")}')"
+        <div id="themeCard${i}" onclick="selectTheme(${i}, '${t.title.replace(/'/g, "\\'")}', '${t.reason.replace(/'/g, "\\'")}')"
             style="padding:12px 14px;border-radius:10px;border:2px solid var(--border);margin-bottom:8px;cursor:pointer;transition:border-color 0.15s;">
             <div style="font-size:15px;font-weight:700;">${t.title}</div>
             <div style="font-size:13px;color:#8E8E93;margin-top:3px;">${t.reason}</div>
         </div>`).join('');
 }
 
-function selectTheme(index, title) {
+function selectTheme(index, title, reason) {
     selectedTheme = title;
+    selectedThemeReason = reason || '';
     // Highlight selected card
     document.querySelectorAll('[id^="themeCard"]').forEach((el, i) => {
         el.style.borderColor = i === index ? 'var(--accent)' : 'var(--border)';
@@ -3347,6 +3355,8 @@ function selectTheme(index, title) {
     if (ttSection) ttSection.style.display = 'block';
     if (label) label.innerText = title;
     if (ttResults) ttResults.innerHTML = '';
+    const actions = document.getElementById('tableTopicsActions');
+    if (actions) actions.style.display = 'none';
 }
 
 async function generateTableTopics() {
@@ -3375,8 +3385,43 @@ async function generateTableTopics() {
                 <div style="font-size:15px;line-height:1.4;">${q}</div>
             </div>`
         ).join('');
+        // Show copy/share buttons
+        const actions = document.getElementById('tableTopicsActions');
+        if (actions) actions.style.display = 'flex';
     } catch(e) {
         resultsEl.innerHTML = '<div style="color:var(--red);font-size:14px;padding:8px 0;">Error: ' + e.message + '</div>';
+    }
+}
+
+function buildTableTopicsText() {
+    const items = document.querySelectorAll('#tableTopicsResults > div');
+    if (!items.length) return '';
+    const lines = [`Theme: ${selectedTheme}`, selectedThemeReason ? selectedThemeReason : '', '', 'Table Topics Questions', '─'.repeat(30)];
+    items.forEach((el, i) => {
+        const q = el.querySelector('div:last-child');
+        if (q) lines.push(`${i+1}. ${q.innerText}`);
+    });
+    return lines.filter((l, i) => !(i === 1 && !l)).join('\n');
+}
+
+function copyTableTopics() {
+    const text = buildTableTopicsText();
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+        openModal('Copied!', 'Table topics copied to clipboard.', ()=>{});
+    }).catch(() => {
+        openModal('Copy Failed', 'Your browser blocked clipboard access.', ()=>{});
+    });
+}
+
+function shareTableTopics() {
+    const text = buildTableTopicsText();
+    if (!text) return;
+    if (navigator.share) {
+        navigator.share({ title: 'Table Topics: ' + selectedTheme, text });
+    } else {
+        // Fallback to copy if Web Share API not available
+        copyTableTopics();
     }
 }
 
