@@ -304,6 +304,23 @@
                 <button onclick="suggestThemes()" style="background:var(--accent);color:white;border:none;border-radius:10px;padding:9px 16px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;">Suggest</button>
             </div>
             <div id="themeResults"></div>
+            <div id="copyThemeActions" style="display:none;margin-top:10px;">
+                <button onclick="copyTheme()" style="width:100%;background:none;border:1px solid var(--border);border-radius:10px;padding:10px;font-size:14px;font-weight:600;cursor:pointer;">📋 Copy Theme</button>
+            </div>
+        </div>
+
+        <!-- Fun Facts -->
+        <div id="funFactsSection" style="display:none;margin-top:20px;">
+            <div style="margin-bottom:6px;padding:0 4px;">
+                <div style="font-size:13px;font-weight:700;color:#8E8E93;text-transform:uppercase;letter-spacing:0.8px;">Fun Facts</div>
+            </div>
+            <div style="background:var(--card);border-radius:16px;border:1px solid var(--border);padding:16px 18px;">
+                <div id="funFactsResults"></div>
+                <div id="funFactsActions" style="display:none;margin-top:12px;gap:8px;">
+                    <button onclick="copyFacts()" style="flex:1;background:none;border:1px solid var(--border);border-radius:10px;padding:10px;font-size:14px;font-weight:600;cursor:pointer;">📋 Copy Facts</button>
+                    <button onclick="generateFacts()" style="flex:1;background:none;border:1px solid var(--border);border-radius:10px;padding:10px;font-size:14px;font-weight:600;cursor:pointer;">↻ Regenerate</button>
+                </div>
+            </div>
         </div>
 
         <!-- Table Topics -->
@@ -315,9 +332,8 @@
                 <div style="font-size:14px;color:#8E8E93;margin-bottom:10px;">Theme: <span id="selectedThemeLabel" style="color:var(--text);font-weight:600;"></span></div>
                 <button onclick="generateTableTopics()" style="width:100%;background:var(--accent);color:white;border:none;border-radius:10px;padding:12px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:12px;">Generate Table Topics</button>
                 <div id="tableTopicsResults"></div>
-                <div id="tableTopicsActions" style="display:none;margin-top:12px;display:none;gap:8px;">
-                    <button onclick="copyTableTopics()" style="flex:1;background:none;border:1px solid var(--border);border-radius:10px;padding:10px;font-size:14px;font-weight:600;cursor:pointer;">📋 Copy</button>
-                    <button onclick="shareTableTopics()" style="flex:1;background:var(--accent);color:white;border:none;border-radius:10px;padding:10px;font-size:14px;font-weight:600;cursor:pointer;">↑ Share</button>
+                <div id="tableTopicsActions" style="display:none;margin-top:12px;gap:8px;">
+                    <button onclick="copyTableTopics()" style="width:100%;background:none;border:1px solid var(--border);border-radius:10px;padding:10px;font-size:14px;font-weight:600;cursor:pointer;">📋 Copy Table Topics</button>
                 </div>
             </div>
         </div>
@@ -1391,7 +1407,7 @@ async function fetchWordDetails(word) {
 function saveSettings(){localStorage.setItem(pk(KEY_MD),document.getElementById('mdToggle').checked);const key=document.getElementById('openaiKey').value.trim();localStorage.setItem(pk(KEY_AI_KEY),key);autoSyncUp();}
 
 /* ============ ROSTER ============ */
-function refreshRoster(){const area=document.getElementById('speakerArea');if(!area)return;if(!allSpeakers.length){area.innerHTML=`<div style="padding:20px;opacity:0.3;text-align:center;">Empty Roster</div>`;return;}area.innerHTML=allSpeakers.map(n=>`<div style="padding:10px 18px;border-bottom:1px solid var(--bg);display:flex;justify-content:space-between;align-items:center;"><div style="font-size:22px;flex:1;color:var(--accent);font-weight:600;text-transform:uppercase;cursor:pointer;" onclick="selectSpeaker('${n}')">${n}</div><div style="padding:5px 12px;color:var(--red);font-weight:800;font-size:22px;cursor:pointer;" onclick="askDeleteSpeaker('${n}')">✕</div></div>`).join('');}
+function refreshRoster(){const area=document.getElementById('speakerArea');if(!area)return;if(!allSpeakers.length){area.innerHTML=`<div style="padding:20px;opacity:0.3;text-align:center;">Empty Roster</div>`;return;}area.innerHTML=allSpeakers.map(n=>`<div style="padding:14px 18px;border-bottom:1px solid var(--bg);display:flex;justify-content:space-between;align-items:center;"><div style="font-size:22px;flex:1;color:var(--accent);font-weight:600;text-transform:uppercase;cursor:pointer;" onclick="selectSpeaker('${n}')">${n}</div><div style="padding:5px 12px;color:var(--red);font-weight:800;font-size:22px;cursor:pointer;" onclick="askDeleteSpeaker('${n}')">✕</div></div>`).join('');}
 function saveSpeaker(){
     const n=document.getElementById('name').value.trim().toUpperCase();
     if(!n) return;
@@ -1435,7 +1451,7 @@ function clearNameInput(){
     if(btn)btn.style.display='none';
     refreshRoster();
 }
-function renderSpeakerListFiltered(f){const area=document.getElementById('speakerArea');area.innerHTML=f.map(n=>`<div style="padding:10px 18px;border-bottom:1px solid var(--bg);display:flex;justify-content:space-between;align-items:center;"><div style="font-size:22px;flex:1;color:var(--accent);font-weight:600;text-transform:uppercase;cursor:pointer;" onclick="selectSpeaker('${n}')">${n}</div><div style="padding:5px 12px;color:var(--red);font-weight:800;font-size:22px;cursor:pointer;" onclick="askDeleteSpeaker('${n}')">✕</div></div>`).join('');}
+function renderSpeakerListFiltered(f){const area=document.getElementById('speakerArea');area.innerHTML=f.map(n=>`<div style="padding:14px 18px;border-bottom:1px solid var(--bg);display:flex;justify-content:space-between;align-items:center;"><div style="font-size:22px;flex:1;color:var(--accent);font-weight:600;text-transform:uppercase;cursor:pointer;" onclick="selectSpeaker('${n}')">${n}</div><div style="padding:5px 12px;color:var(--red);font-weight:800;font-size:22px;cursor:pointer;" onclick="askDeleteSpeaker('${n}')">✕</div></div>`).join('');}
 function askDeleteSpeaker(n){openModal("Delete?",`Remove ${n}?`,()=>{allSpeakers=allSpeakers.filter(s=>s!==n);localStorage.setItem(clubKey('speakers'),JSON.stringify(allSpeakers));autoSyncUp();refreshRoster();const ac=getActiveClub();if(ac&&ac.syncKey)writeAudit(ac.syncKey,'Roster Member Deleted','Removed: '+n,localStorage.getItem(pk(KEY_DEVICE_NAME))||'Unknown');});}
 
 /* ============ NAVIGATION ============ */
@@ -3274,6 +3290,7 @@ function renderAuditRow(doc) {
 /* ============ MEETING PLANNER ============ */
 let selectedTheme = '';
 let selectedThemeReason = '';
+let generatedFacts = [];
 
 function initMeetingPlanner() {
     // Update WOD status label
@@ -3304,10 +3321,15 @@ async function suggestThemes() {
 
     const resultsEl = document.getElementById('themeResults');
     const ttSection = document.getElementById('tableTopicsSection');
+    const factsSection = document.getElementById('funFactsSection');
+    const copyThemeEl = document.getElementById('copyThemeActions');
     resultsEl.innerHTML = '<div style="text-align:center;padding:16px;color:#8E8E93;font-size:15px;">Thinking\u2026</div>';
     if (ttSection) ttSection.style.display = 'none';
+    if (factsSection) factsSection.style.display = 'none';
+    if (copyThemeEl) copyThemeEl.style.display = 'none';
     selectedTheme = '';
     selectedThemeReason = '';
+    generatedFacts = [];
 
     const dateObj = new Date(dateVal + 'T12:00:00');
     const formatted = dateObj.toLocaleDateString('en-US', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
@@ -3348,7 +3370,15 @@ function selectTheme(index, title, reason) {
         el.style.borderColor = i === index ? 'var(--accent)' : 'var(--border)';
         el.style.background = i === index ? 'var(--bg)' : '';
     });
-    // Show table topics section
+    // Show copy theme button
+    const copyThemeEl = document.getElementById('copyThemeActions');
+    if (copyThemeEl) copyThemeEl.style.display = 'block';
+    // Show and trigger fun facts
+    const factsSection = document.getElementById('funFactsSection');
+    if (factsSection) factsSection.style.display = 'block';
+    generatedFacts = [];
+    generateFacts();
+    // Show table topics section, reset results
     const ttSection = document.getElementById('tableTopicsSection');
     const label = document.getElementById('selectedThemeLabel');
     const ttResults = document.getElementById('tableTopicsResults');
@@ -3357,6 +3387,66 @@ function selectTheme(index, title, reason) {
     if (ttResults) ttResults.innerHTML = '';
     const actions = document.getElementById('tableTopicsActions');
     if (actions) actions.style.display = 'none';
+}
+
+async function generateFacts() {
+    if (!selectedTheme) return;
+    const aiKey = localStorage.getItem(clubKey('apiKey')) || localStorage.getItem(prefix + 'openai_key') || '';
+    if (!aiKey) return;
+
+    const resultsEl = document.getElementById('funFactsResults');
+    const actionsEl = document.getElementById('funFactsActions');
+    if (resultsEl) resultsEl.innerHTML = '<div style="text-align:center;padding:16px;color:#8E8E93;font-size:15px;">Generating\u2026</div>';
+    if (actionsEl) actionsEl.style.display = 'none';
+
+    const prompt = `You are a knowledgeable and engaging Toastmasters meeting facilitator. Generate 6 surprising, interesting, and conversation-sparking fun facts about the theme: "${selectedTheme}". Facts should be accurate, varied, and suitable for a professional public speaking audience. Return ONLY a JSON array of 6 strings, each being one fact. No preamble, no markdown, just the JSON array.`;
+
+    try {
+        const res = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + aiKey },
+            body: JSON.stringify({ model: 'gpt-4o-mini', messages: [{ role: 'user', content: prompt }], temperature: 0.85 })
+        });
+        if (!res.ok) throw new Error('API error ' + res.status);
+        const data = await res.json();
+        const raw = data.choices[0].message.content.trim().replace(/```json|```/g, '');
+        generatedFacts = JSON.parse(raw);
+        if (resultsEl) resultsEl.innerHTML = generatedFacts.map((f, i) =>
+            `<div style="padding:10px 0;border-bottom:1px solid var(--border);display:flex;gap:10px;">
+                <div style="font-size:15px;font-weight:700;color:var(--accent);flex-shrink:0;">${i+1}.</div>
+                <div style="font-size:15px;line-height:1.4;">${f}</div>
+            </div>`
+        ).join('');
+        if (actionsEl) actionsEl.style.display = 'flex';
+    } catch(e) {
+        if (resultsEl) resultsEl.innerHTML = '<div style="color:var(--red);font-size:14px;padding:8px 0;">Error: ' + e.message + '</div>';
+    }
+}
+
+function copyTheme() {
+    const md = localStorage.getItem(pk(KEY_MD)) === 'true';
+    const text = md
+        ? `## ${selectedTheme}\n> ${selectedThemeReason}`
+        : `${selectedTheme}\n${selectedThemeReason}`;
+    navigator.clipboard.writeText(text).then(() => {
+        openModal('Copied!', 'Theme copied to clipboard.', ()=>{});
+    }).catch(() => {
+        openModal('Copy Failed', 'Your browser blocked clipboard access.', ()=>{});
+    });
+}
+
+function copyFacts() {
+    if (!generatedFacts.length) return;
+    const md = localStorage.getItem(pk(KEY_MD)) === 'true';
+    const lines = generatedFacts.map((f, i) => `${i+1}. ${f}`);
+    const text = md
+        ? `### Fun Facts — ${selectedTheme}\n${lines.join('\n')}`
+        : `Fun Facts — ${selectedTheme}\n${'─'.repeat(30)}\n${lines.join('\n')}`;
+    navigator.clipboard.writeText(text).then(() => {
+        openModal('Copied!', 'Fun facts copied to clipboard.', ()=>{});
+    }).catch(() => {
+        openModal('Copy Failed', 'Your browser blocked clipboard access.', ()=>{});
+    });
 }
 
 async function generateTableTopics() {
@@ -3404,21 +3494,15 @@ function buildTableTopicsText() {
 
     if (md) {
         return [
-            `## ${selectedTheme}`,
-            selectedThemeReason ? `> ${selectedThemeReason}` : '',
-            '',
-            '### Table Topics',
+            `### Table Topics — ${selectedTheme}`,
             ...questions.map((q, i) => `${i+1}. ${q}`)
-        ].filter(Boolean).join('\n');
+        ].join('\n');
     } else {
         return [
-            selectedTheme,
-            selectedThemeReason || '',
-            '─'.repeat(30),
-            'Table Topics',
+            `Table Topics — ${selectedTheme}`,
             '─'.repeat(30),
             ...questions.map((q, i) => `${i+1}. ${q}`)
-        ].filter(Boolean).join('\n');
+        ].join('\n');
     }
 }
 
@@ -3430,17 +3514,6 @@ function copyTableTopics() {
     }).catch(() => {
         openModal('Copy Failed', 'Your browser blocked clipboard access.', ()=>{});
     });
-}
-
-function shareTableTopics() {
-    const text = buildTableTopicsText();
-    if (!text) return;
-    if (navigator.share) {
-        navigator.share({ title: 'Table Topics: ' + selectedTheme, text });
-    } else {
-        // Fallback to copy if Web Share API not available
-        copyTableTopics();
-    }
 }
 
 /* ============ SUPER ADMIN AUTH ============ */
