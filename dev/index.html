@@ -304,9 +304,10 @@
                 <button onclick="suggestThemes()" style="background:var(--accent);color:white;border:none;border-radius:10px;padding:9px 16px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;">Suggest</button>
             </div>
             <div id="themeResults"></div>
-            <div id="copyThemeActions" style="display:none;margin-top:10px;">
-                <button onclick="copyTheme()" style="width:100%;background:none;border:1px solid var(--border);border-radius:10px;padding:10px;font-size:14px;font-weight:600;cursor:pointer;">📋 Copy Theme</button>
-            </div>
+            <div id="copyThemeActions" style="display:none;margin-top:10px;gap:8px;">
+                    <button onclick="copyTheme()" style="flex:1;background:none;border:1px solid var(--border);border-radius:10px;padding:10px;font-size:14px;font-weight:600;cursor:pointer;">📋 Copy Theme</button>
+                    <button onclick="suggestThemes()" style="flex:1;background:none;border:1px solid var(--border);border-radius:10px;padding:10px;font-size:14px;font-weight:600;cursor:pointer;">↻ Regenerate</button>
+                </div>
         </div>
 
         <!-- Fun Facts -->
@@ -333,7 +334,8 @@
                 <button onclick="generateTableTopics()" style="width:100%;background:var(--accent);color:white;border:none;border-radius:10px;padding:12px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:12px;">Generate Table Topics</button>
                 <div id="tableTopicsResults"></div>
                 <div id="tableTopicsActions" style="display:none;margin-top:12px;gap:8px;">
-                    <button onclick="copyTableTopics()" style="width:100%;background:none;border:1px solid var(--border);border-radius:10px;padding:10px;font-size:14px;font-weight:600;cursor:pointer;">📋 Copy Table Topics</button>
+                    <button onclick="copyTableTopics()" style="flex:1;background:none;border:1px solid var(--border);border-radius:10px;padding:10px;font-size:14px;font-weight:600;cursor:pointer;">📋 Copy Table Topics</button>
+                    <button onclick="generateTableTopics()" style="flex:1;background:none;border:1px solid var(--border);border-radius:10px;padding:10px;font-size:14px;font-weight:600;cursor:pointer;">↻ Regenerate</button>
                 </div>
             </div>
         </div>
@@ -3372,7 +3374,7 @@ function selectTheme(index, title, reason) {
     });
     // Show copy theme button
     const copyThemeEl = document.getElementById('copyThemeActions');
-    if (copyThemeEl) copyThemeEl.style.display = 'block';
+    if (copyThemeEl) copyThemeEl.style.display = 'flex';
     // Show and trigger fun facts
     const factsSection = document.getElementById('funFactsSection');
     if (factsSection) factsSection.style.display = 'block';
