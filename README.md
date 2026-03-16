@@ -3,7 +3,7 @@
 
 Meeting Tools is a Progressive Web App built to run the working roles at a Toastmasters meeting — Timing, Verbal, and Club Tools — from a phone or tablet without installing anything from an app store. It started as a single-file HTML tool and has grown into a full multi-club, cloud-synced platform with AI-powered speech analysis and participation tracking.
 
-**Live app:** [kevinpshan.github.io/TMTools](https://kevinpshan.github.io/TMTools)
+**Live app:** [toastmaster-tools.site](https://toastmaster-tools.site/index.html)
 
 ---
 
@@ -20,6 +20,9 @@ Record a speaker directly in the app, transcribe via **OpenAI Whisper**, and get
 
 ### Word of the Day
 Powered by **ChatGPT (GPT-4o-mini)**. Pick from a library of over 1,000 sophisticated words or search any word for a custom public-speaking-flavored definition and usage sentence. Selecting a word pins it to the top of the Ah-Counter grid with a gold badge and highlights it in gold during transcription. The selected word is also written to Firestore so it appears at the top of the Cloud Meeting Report on every device.
+
+### Meeting Planner
+AI-powered meeting preparation screen on the Club tab. Includes a Meeting Theme Suggester (5 themed suggestions per date), Fun Facts auto-generation (6 facts per selected theme), and Table Topics Generator (8 questions per theme). All three sections have consistent 📋 Copy and ↻ Regenerate buttons. The Word of the Day card is also accessible from this screen.
 
 ### Meeting Report
 Two-tab report screen. **This Device** shows sessions recorded locally in the standard Name | Role | Result format. **☁ Cloud** queries Firestore for every session recorded across all club devices today, split into timing and counter sections, with a refresh button for meetings still in progress. Copy and Share work on whichever tab is active.
@@ -47,7 +50,7 @@ Multiple clubs can be managed on a single device. All data is scoped per club �
 | Layer | Technology |
 |---|---|
 | App | Single-file HTML/CSS/JS — no build step, no dependencies |
-| Hosting | GitHub Pages |
+| Hosting | Firebase Hosting |
 | Database | Firebase Firestore |
 | AI — Definitions | OpenAI GPT-4o-mini |
 | AI — Transcription | OpenAI Whisper |
@@ -92,6 +95,8 @@ Meeting Tools was originally built in collaboration with **Google Gemini**, reac
 | Claude | v3.1 | Firebase cloud sync, Progress screen, welcome flow, documentation suite |
 | Claude | v3.2 | Cloud Meeting Report, manual filler scoring, stale data warning, sync UX fixes |
 | Claude | v3.2.4 | PACE participation tracker, Club tab, Role Manager, embeddable widgets |
+| Claude | v3.3.0 | Meeting Planner, Fun Facts, Super Admin, Firebase Hosting migration |
+| Claude | v3.3.1 | Consistent Copy + Regenerate pattern, deploy pipeline fixes |
 
 ---
 
@@ -114,4 +119,4 @@ Full documentation is included in the repo and linked from the app footer.
 
 ---
 
-*Version 3.2.4 · Southern Dutchess Toastmasters*
+*Version 3.3.1 · Southern Dutchess Toastmasters*

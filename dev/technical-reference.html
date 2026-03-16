@@ -374,13 +374,15 @@ clubs/
             <table>
                 <tr><th>Function</th><th>What it does</th></tr>
                 <tr><td><code>initMeetingPlanner()</code></td><td>On screen show — updates WOD status label to show active word or "Tap to search or generate".</td></tr>
-                <tr><td><code>suggestThemes()</code></td><td>Reads meeting date input. Calls GPT-4o-mini with a prompt requesting 5 themed suggestions tied to that date. Parses JSON response, calls renderThemes().</td></tr>
+                <tr><td><code>suggestThemes()</code></td><td>Reads meeting date input. Calls GPT-4o-mini with a prompt requesting 5 themed suggestions tied to that date. Parses JSON response, calls renderThemes(). Resets funFactsSection, copyThemeActions, and generatedFacts on each call.</td></tr>
                 <tr><td><code>renderThemes(themes)</code></td><td>Renders 5 selectable theme cards. Each card onclick calls selectTheme().</td></tr>
-                <tr><td><code>selectTheme(index, title, reason)</code></td><td>Highlights selected card, sets selectedTheme and selectedThemeReason, reveals Table Topics section, clears previous questions and action buttons.</td></tr>
-                <tr><td><code>generateTableTopics()</code></td><td>Calls GPT-4o-mini with selected theme. Returns 8 numbered questions. Shows Copy/Share buttons on success.</td></tr>
-                <tr><td><code>buildTableTopicsText()</code></td><td>Assembles copy/share output: theme title, reason, divider, numbered questions. Applies markdown formatting if KEY_MD toggle is on.</td></tr>
+                <tr><td><code>selectTheme(index, title, reason)</code></td><td>Highlights selected card, sets selectedTheme and selectedThemeReason, shows copyThemeActions as flex, triggers generateFacts(), reveals Table Topics section, clears previous questions and action buttons.</td></tr>
+                <tr><td><code>copyTheme()</code></td><td>Copies theme title and one-sentence description to clipboard. Applies markdown formatting if KEY_MD toggle is on.</td></tr>
+                <tr><td><code>generateFacts()</code></td><td>Async. Called automatically by selectTheme(). Calls GPT-4o-mini requesting 6 surprising facts related to the selected theme. Stores results in generatedFacts[]. Shows funFactsActions on success.</td></tr>
+                <tr><td><code>copyFacts()</code></td><td>Copies numbered fun facts with header to clipboard. Applies markdown formatting if KEY_MD toggle is on.</td></tr>
+                <tr><td><code>generateTableTopics()</code></td><td>Calls GPT-4o-mini with selected theme. Returns 8 numbered questions. Shows tableTopicsActions (Copy + Regenerate) on success.</td></tr>
+                <tr><td><code>buildTableTopicsText()</code></td><td>Assembles copy output: numbered questions only. Applies markdown formatting if KEY_MD toggle is on.</td></tr>
                 <tr><td><code>copyTableTopics()</code></td><td>Calls buildTableTopicsText(), writes to clipboard via navigator.clipboard.</td></tr>
-                <tr><td><code>shareTableTopics()</code></td><td>Calls navigator.share() if available (mobile). Falls back to copyTableTopics() on desktop.</td></tr>
             </table>
 
             <h3>Roster</h3>

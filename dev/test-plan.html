@@ -425,47 +425,68 @@
             <td><span class="pass-box"></span></td>
             <td class="test-id">MP-03</td>
             <td><span class="priority p-critical">Critical</span></td>
-            <td>Theme selection reveals Table Topics section<br><ol class="steps"><li>Generate themes</li><li>Tap one theme card</li></ol></td>
-            <td class="expected">Selected card highlights in blue. Table Topics section appears below with the selected theme name and Generate button.</td>
+            <td>Theme selection reveals Copy, Regenerate, Fun Facts, and Table Topics<br><ol class="steps"><li>Generate themes</li><li>Tap one theme card</li></ol></td>
+            <td class="expected">Selected card highlights in blue. Copy Theme and ↻ Regenerate buttons appear. Fun Facts section appears and auto-generates. Table Topics section appears with Generate button.</td>
         </tr>
         <tr>
             <td><span class="pass-box"></span></td>
             <td class="test-id">MP-04</td>
             <td><span class="priority p-critical">Critical</span></td>
             <td>Table Topics generation<br><ol class="steps"><li>Select a theme</li><li>Tap Generate Table Topics</li></ol></td>
-            <td class="expected">8 numbered questions appear, varied in style. Copy and Share buttons appear below the list.</td>
+            <td class="expected">8 numbered questions appear, varied in style. 📋 Copy Table Topics and ↻ Regenerate buttons appear below the list.</td>
         </tr>
         <tr>
             <td><span class="pass-box"></span></td>
             <td class="test-id">MP-05</td>
             <td><span class="priority p-high">High</span></td>
-            <td>Copy button — plain text<br><ol class="steps"><li>Generate table topics</li><li>Ensure Markdown toggle is OFF</li><li>Tap Copy</li><li>Paste into any text field</li></ol></td>
-            <td class="expected">Pasted text shows theme title, one-sentence description, a divider line, "Table Topics" subheading, and 8 numbered questions. No markdown symbols.</td>
+            <td>Copy Theme button<br><ol class="steps"><li>Select a theme</li><li>Tap 📋 Copy Theme</li><li>Paste into any text field</li></ol></td>
+            <td class="expected">Pasted text shows theme title and one-sentence description.</td>
         </tr>
         <tr>
             <td><span class="pass-box"></span></td>
             <td class="test-id">MP-06</td>
             <td><span class="priority p-high">High</span></td>
-            <td>Copy button — markdown<br><ol class="steps"><li>Enable Markdown Export in Settings</li><li>Generate table topics</li><li>Tap Copy and paste</li></ol></td>
-            <td class="expected">Output uses <code>##</code> for theme title, <code>&gt;</code> for reason, <code>###</code> for Table Topics subheading, numbered list for questions.</td>
+            <td>Regenerate themes<br><ol class="steps"><li>Select a theme</li><li>Tap ↻ Regenerate under Theme</li></ol></td>
+            <td class="expected">Spinner shows briefly, then a fresh set of 5 theme cards appears. Fun Facts and Table Topics sections reset.</td>
         </tr>
         <tr>
             <td><span class="pass-box"></span></td>
             <td class="test-id">MP-07</td>
-            <td><span class="priority p-medium">Medium</span></td>
-            <td>Selecting new theme resets Table Topics<br><ol class="steps"><li>Generate topics for one theme</li><li>Tap a different theme card</li></ol></td>
-            <td class="expected">Table Topics results clear, Copy/Share buttons hide, selected theme label updates.</td>
+            <td><span class="priority p-high">High</span></td>
+            <td>Fun Facts auto-generation<br><ol class="steps"><li>Generate themes</li><li>Tap a theme card</li></ol></td>
+            <td class="expected">Fun Facts section appears and populates automatically with 6 numbered facts. 📋 Copy Facts and ↻ Regenerate buttons appear.</td>
         </tr>
         <tr>
             <td><span class="pass-box"></span></td>
             <td class="test-id">MP-08</td>
+            <td><span class="priority p-high">High</span></td>
+            <td>Regenerate fun facts<br><ol class="steps"><li>Select a theme (facts auto-generate)</li><li>Tap ↻ Regenerate under Fun Facts</li></ol></td>
+            <td class="expected">Fun Facts section refreshes with a new set of 6 facts for the same theme.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">MP-09</td>
+            <td><span class="priority p-high">High</span></td>
+            <td>Regenerate table topics<br><ol class="steps"><li>Generate table topics</li><li>Tap ↻ Regenerate under Table Topics</li></ol></td>
+            <td class="expected">Table Topics section refreshes with a new set of 8 questions for the same theme.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">MP-10</td>
+            <td><span class="priority p-medium">Medium</span></td>
+            <td>Selecting new theme resets all sections<br><ol class="steps"><li>Generate topics for one theme</li><li>Tap a different theme card</li></ol></td>
+            <td class="expected">Fun Facts regenerates for new theme. Table Topics results clear, action buttons hide, selected theme label updates.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">MP-11</td>
             <td><span class="priority p-medium">Medium</span></td>
             <td>No API key<br><ol class="steps"><li>Remove OpenAI key from Settings</li><li>Open Meeting Planner and tap Suggest</li></ol></td>
             <td class="expected">Error modal: directs user to add OpenAI key in Settings.</td>
         </tr>
         <tr>
             <td><span class="pass-box"></span></td>
-            <td class="test-id">MP-09</td>
+            <td class="test-id">MP-12</td>
             <td><span class="priority p-medium">Medium</span></td>
             <td>No date entered<br><ol class="steps"><li>Leave date field empty</li><li>Tap Suggest</li></ol></td>
             <td class="expected">Error modal: "Please select a meeting date."</td>
