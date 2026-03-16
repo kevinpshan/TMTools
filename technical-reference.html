@@ -81,7 +81,7 @@ const prefix = isTest ? 'test_' : 'prod_';</pre>
 
         <!-- FIREBASE -->
         <div class="card" id="firebase">
-            <h2>Firebase Integration <span class="new-badge">v3.1</span></h2>
+            <h2>Firebase Integration <span class="new-badge">v3.3</span></h2>
 
             <h3>Configuration</h3>
             <pre>const firebaseConfig = {
@@ -92,10 +92,24 @@ const prefix = isTest ? 'test_' : 'prod_';</pre>
   messagingSenderId: "429843202069",
   appId: "1:429843202069:web:eec66b741bc3fc90934e1c"
 };</pre>
-            <p>Uses Firebase compat API v9.23.0 loaded via CDN. No bundler required.</p>
+            <p>Uses Firebase compat API v9.23.0 loaded via CDN. No bundler required. Three services initialized:</p>
+            <pre>const db   = firebase.firestore();   // Firestore database
+const auth = firebase.auth();         // Google Authentication (v3.3.0+)</pre>
+
+            <h3>Firebase Auth (v3.3.0+)</h3>
+            <p>Google Sign-In via <code>signInWithPopup</code>. Auth state persists across sessions via Firebase's default local persistence.</p>
+            <pre>const provider = new firebase.auth.GoogleAuthProvider();
+await auth.signInWithPopup(provider);   // triggers Google popup
+auth.onAuthStateChanged(async (user) => { ... });  // fires on page load + sign-in/out
+auth.getRedirectResult();               // called on load to handle redirect flows</pre>
+            <p><strong>Whitelist check:</strong> on every sign-in, the app reads <code>superAdmins/{user.email}</code>. If the doc exists with <code>authorized: true</code>, <code>currentAdminUser</code> is set and the admin panel renders. Otherwise the user is signed out immediately.</p>
 
             <h3>Firestore Structure</h3>
-            <pre>clubs/
+            <pre>superAdmins/                          ← Root-level collection (v3.3.0+)
+  [email]/                             ← Document ID = Gmail address
+    authorized: boolean                ← Must be true
+
+clubs/
   [syncKey]/                     ← 8-char code e.g. "ABCD-EF3G"
     name: string
     speakers: string[]
@@ -233,6 +247,16 @@ const prefix = isTest ? 'test_' : 'prod_';</pre>
                 <tr><td><code>paceEntryReturnFn</code></td><td>function|null</td><td>Navigation callback — set when entering from history, null from entry screen</td></tr>
                 <tr><td><code>paceSpinnerTimer</code></td><td>timer|null</td><td>Module-level timeout for leaderboard spinner — prevents stale retry loop</td></tr>
             </table>
+
+            <h3>Admin &amp; Meeting Planner State Variables <span class="new-badge">v3.3.0</span></h3>
+            <table>
+                <tr><th>Variable</th><th>Type</th><th>Purpose</th></tr>
+                <tr><td><code>currentAdminUser</code></td><td>FirebaseUser|null</td><td>Signed-in admin user object. Null when not authenticated.</td></tr>
+                <tr><td><code>adminClubCache</code></td><td>array</td><td>Fetched club records for admin panel — <code>[{id, name, lastUpdated}]</code>. Client-side filtered without re-fetching.</td></tr>
+                <tr><td><code>selectedTheme</code></td><td>string</td><td>Title of the theme selected in Meeting Planner. Used in table topics prompt and copy/share output.</td></tr>
+                <tr><td><code>selectedThemeReason</code></td><td>string</td><td>One-sentence relevance description of the selected theme. Included in copy/share output.</td></tr>
+                <tr><td><code>rosterSelectedName</code></td><td>string</td><td>Full name locked when user taps a roster entry on setup screen. Guards against partial-backspace bug — cleared only when typed input diverges from this value.</td></tr>
+            </table>
         </div>
 
         <!-- SCREENS -->
@@ -266,6 +290,13 @@ const prefix = isTest ? 'test_' : 'prod_';</pre>
                 <tr><td><code>paceMemberEntry</code></td><td>Role selection for one member — checkbox grid, live tally, Save/Remove</td></tr>
                 <tr><td><code>paceMemberHistory</code></td><td>Member drill-down — summary card, chronological entry list</td></tr>
                 <tr><td><code>paceRoleManager</code></td><td>Add/edit/delete roles and point values — synced to cloud</td></tr>
+            </table>
+
+            <h3>Meeting Planner &amp; Admin Screens <span class="new-badge">v3.3.0</span></h3>
+            <table>
+                <tr><th>Screen ID</th><th>Purpose</th><th>On Show</th></tr>
+                <tr><td><code>meetingPlanner</code></td><td>Meeting prep hub — WOD card, Theme Suggester, Table Topics Generator</td><td><code>initMeetingPlanner()</code> — updates WOD status label</td></tr>
+                <tr><td><code>wod</code></td><td>Word of the Day — search/random/select. Back returns to meetingPlanner.</td><td>Clears input field</td></tr>
             </table>
         </div>
 
@@ -335,7 +366,21 @@ const prefix = isTest ? 'test_' : 'prod_';</pre>
                 <tr><td><code>nextWod()</code></td><td>Picks random word from WOD_LIBRARY, calls fetchWordDetails().</td></tr>
                 <tr><td><code>searchWod()</code></td><td>Reads manual input, calls fetchWordDetails().</td></tr>
                 <tr><td><code>fetchWordDetails(word)</code></td><td>Calls GPT-4o-mini for definition + example JSON. Renders to WOD card.</td></tr>
-                <tr><td><code>selectWod()</code></td><td>Pins active WOD to fillerList, saves to wod_full in localStorage. Also writes <code>wod</code> and <code>wodDate</code> fields to the Firestore club document for use by Cloud Meeting Report.</td></tr>
+                <tr><td><code>selectWod()</code></td><td>Pins active WOD to fillerList, saves to wod_full in localStorage. Writes <code>wod</code> and <code>wodDate</code> to Firestore club doc. Returns to meetingPlanner screen.</td></tr>
+                <tr><td><code>updateWodBanner()</code></td><td>Reads wod_full from localStorage. If set, shows word/definition/example in the Verbal tab gold banner. Hides banner if no word is active. Called when switching to Verbal tab.</td></tr>
+            </table>
+
+            <h3>Meeting Planner <span class="new-badge">v3.3.0</span></h3>
+            <table>
+                <tr><th>Function</th><th>What it does</th></tr>
+                <tr><td><code>initMeetingPlanner()</code></td><td>On screen show — updates WOD status label to show active word or "Tap to search or generate".</td></tr>
+                <tr><td><code>suggestThemes()</code></td><td>Reads meeting date input. Calls GPT-4o-mini with a prompt requesting 5 themed suggestions tied to that date. Parses JSON response, calls renderThemes().</td></tr>
+                <tr><td><code>renderThemes(themes)</code></td><td>Renders 5 selectable theme cards. Each card onclick calls selectTheme().</td></tr>
+                <tr><td><code>selectTheme(index, title, reason)</code></td><td>Highlights selected card, sets selectedTheme and selectedThemeReason, reveals Table Topics section, clears previous questions and action buttons.</td></tr>
+                <tr><td><code>generateTableTopics()</code></td><td>Calls GPT-4o-mini with selected theme. Returns 8 numbered questions. Shows Copy/Share buttons on success.</td></tr>
+                <tr><td><code>buildTableTopicsText()</code></td><td>Assembles copy/share output: theme title, reason, divider, numbered questions. Applies markdown formatting if KEY_MD toggle is on.</td></tr>
+                <tr><td><code>copyTableTopics()</code></td><td>Calls buildTableTopicsText(), writes to clipboard via navigator.clipboard.</td></tr>
+                <tr><td><code>shareTableTopics()</code></td><td>Calls navigator.share() if available (mobile). Falls back to copyTableTopics() on desktop.</td></tr>
             </table>
 
             <h3>Roster</h3>
@@ -344,11 +389,24 @@ const prefix = isTest ? 'test_' : 'prod_';</pre>
                 <tr><td><code>refreshRoster()</code></td><td>Renders full speaker list in speakerArea.</td></tr>
                 <tr><td><code>saveSpeaker()</code></td><td>Validates name, warns if single word, adds to roster, auto-pushes to cloud.</td></tr>
                 <tr><td><code>doAddSpeaker(n)</code></td><td>Performs the actual add after single-name warning is accepted.</td></tr>
-                <tr><td><code>selectSpeaker(n)</code></td><td>Fills name input when a roster name is tapped.</td></tr>
-                <tr><td><code>handleNameInput(el)</code></td><td>Uppercases input, filters roster live as user types.</td></tr>
+                <tr><td><code>selectSpeaker(n)</code></td><td>Fills name input and sets rosterSelectedName when a roster name is tapped.</td></tr>
+                <tr><td><code>handleNameInput(el)</code></td><td>Uppercases input, filters roster live. Clears rosterSelectedName only if typed value diverges from the locked name — backspacing alone preserves the lock.</td></tr>
                 <tr><td><code>renderSpeakerListFiltered(f)</code></td><td>Renders a filtered subset of the roster.</td></tr>
                 <tr><td><code>askDeleteSpeaker(n)</code></td><td>Modal to confirm deletion. Auto-pushes to cloud on confirm.</td></tr>
-                <tr><td><code>clearNameInput()</code></td><td>Clears the name input field and resets roster to full list. Called by the inline ✕ clear button.</td></tr>
+                <tr><td><code>clearNameInput()</code></td><td>Clears name input, resets roster to full list, clears rosterSelectedName.</td></tr>
+            </table>
+
+            <h3>Super Admin <span class="new-badge">v3.3.0</span></h3>
+            <table>
+                <tr><th>Function</th><th>What it does</th></tr>
+                <tr><td><code>handleAdminSignIn()</code></td><td>Opens Google Sign-In popup via GoogleAuthProvider. onAuthStateChanged handles result.</td></tr>
+                <tr><td><code>handleAdminSignOut()</code></td><td>Calls auth.signOut(). onAuthStateChanged fires and calls renderAdminSignedOut().</td></tr>
+                <tr><td><code>renderAdminSignedIn()</code></td><td>Hides login card, shows signed-in card with email, calls loadAdminClubs().</td></tr>
+                <tr><td><code>renderAdminSignedOut()</code></td><td>Shows login card, hides signed-in card and admin panel.</td></tr>
+                <tr><td><code>loadAdminClubs()</code></td><td>Fetches all docs from root <code>clubs</code> collection. Populates adminClubCache with id, name, lastUpdated. Calls renderAdminClubList().</td></tr>
+                <tr><td><code>renderAdminClubList(clubs)</code></td><td>Renders club rows with name, sync key, last updated date, and Delete button. Shows count footer.</td></tr>
+                <tr><td><code>filterAdminClubs(query)</code></td><td>Client-side filter on adminClubCache by name or ID. Re-renders list without Firestore call.</td></tr>
+                <tr><td><code>askDeleteAdminClub(id, name)</code></td><td>Confirmation modal showing club name. On confirm, deletes Firestore doc and removes from adminClubCache.</td></tr>
             </table>
 
             <h3>Navigation &amp; Setup</h3>

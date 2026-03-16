@@ -341,6 +341,204 @@
     </table>
 </div>
 
+<div class="section" id="wod">
+    <div class="section-header">
+        <h2>5. Word of the Day</h2>
+        <span class="count">Updated v3.3.0 — now accessed via Club tab → Meeting Planner</span>
+    </div>
+    <table>
+        <tr><th width="30">✓</th><th width="80">ID</th><th width="100">Priority</th><th>Test Description</th><th>Expected Result</th></tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">WD-01</td>
+            <td><span class="priority p-critical">Critical</span></td>
+            <td>WOD accessed from Meeting Planner<br><ol class="steps"><li>Club tab → Meeting Planner</li><li>Tap Word of the Day card</li></ol></td>
+            <td class="expected">WOD screen opens. Back button returns to Meeting Planner (not main menu).</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">WD-02</td>
+            <td><span class="priority p-critical">Critical</span></td>
+            <td>Random WOD with API key<br><ol class="steps"><li>Add valid OpenAI key in Settings</li><li>Club tab → Meeting Planner → Word of the Day</li><li>Tap Random</li></ol></td>
+            <td class="expected">Word displays with AI-generated definition and usage example. "● CHATGPT READY" indicator visible.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">WD-03</td>
+            <td><span class="priority p-high">High</span></td>
+            <td>Search custom word<br><ol class="steps"><li>Type "Perspicacity" in search field</li><li>Tap 🔍</li></ol></td>
+            <td class="expected">Definition and example shown for "Perspicacity" specifically.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">WD-04</td>
+            <td><span class="priority p-critical">Critical</span></td>
+            <td>Select WOD activates in tally<br><ol class="steps"><li>Random or search a word</li><li>Tap Select</li><li>Go to Start Tracking → pick speaker and role</li><li>Tap START</li></ol></td>
+            <td class="expected">Returns to Meeting Planner. Tally grid shows word at top with gold "WORD OF DAY" badge.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">WD-05</td>
+            <td><span class="priority p-critical">Critical</span></td>
+            <td>WOD banner appears on Verbal tab<br><ol class="steps"><li>Select a WOD via Meeting Planner</li><li>Switch to Verbal tab</li></ol></td>
+            <td class="expected">Gold banner appears at top of Verbal tab showing word, definition, and usage example. Banner absent if no WOD is set.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">WD-06</td>
+            <td><span class="priority p-medium">Medium</span></td>
+            <td>WOD without API key<br><ol class="steps"><li>Clear API key in Settings</li><li>Go to WOD screen, tap Random</li></ol></td>
+            <td class="expected">Word displays but no definition. Prompt to add API key in Settings.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">WD-07</td>
+            <td><span class="priority p-high">High</span></td>
+            <td>Select WOD writes to Firestore<br><ol class="steps"><li>Select a WOD</li><li>Open Firebase Console → club doc</li></ol></td>
+            <td class="expected">Club document has <code>wod</code> field with word/definition/example and <code>wodDate</code> matching today's date string.</td>
+        </tr>
+    </table>
+</div>
+
+<!-- ============ MEETING PLANNER ============ -->
+<div class="section" id="meeting-planner">
+    <div class="section-header">
+        <h2>5b. Meeting Planner <span style="font-size:13px;font-weight:400;color:#8E8E93;">v3.3.0</span></h2>
+    </div>
+    <table>
+        <tr><th width="30">✓</th><th width="80">ID</th><th width="100">Priority</th><th>Test Description</th><th>Expected Result</th></tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">MP-01</td>
+            <td><span class="priority p-critical">Critical</span></td>
+            <td>Meeting Planner accessible from Club tab<br><ol class="steps"><li>Switch to Club tab</li><li>Tap Meeting Planner card</li></ol></td>
+            <td class="expected">Meeting Planner screen opens showing WOD card, date input with instruction text, and Suggest button.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">MP-02</td>
+            <td><span class="priority p-critical">Critical</span></td>
+            <td>Theme generation<br><ol class="steps"><li>Open Meeting Planner</li><li>Enter a meeting date</li><li>Tap Suggest</li></ol></td>
+            <td class="expected">Spinner shows briefly, then 5 theme cards appear each with a title and one-sentence relevance explanation.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">MP-03</td>
+            <td><span class="priority p-critical">Critical</span></td>
+            <td>Theme selection reveals Table Topics section<br><ol class="steps"><li>Generate themes</li><li>Tap one theme card</li></ol></td>
+            <td class="expected">Selected card highlights in blue. Table Topics section appears below with the selected theme name and Generate button.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">MP-04</td>
+            <td><span class="priority p-critical">Critical</span></td>
+            <td>Table Topics generation<br><ol class="steps"><li>Select a theme</li><li>Tap Generate Table Topics</li></ol></td>
+            <td class="expected">8 numbered questions appear, varied in style. Copy and Share buttons appear below the list.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">MP-05</td>
+            <td><span class="priority p-high">High</span></td>
+            <td>Copy button — plain text<br><ol class="steps"><li>Generate table topics</li><li>Ensure Markdown toggle is OFF</li><li>Tap Copy</li><li>Paste into any text field</li></ol></td>
+            <td class="expected">Pasted text shows theme title, one-sentence description, a divider line, "Table Topics" subheading, and 8 numbered questions. No markdown symbols.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">MP-06</td>
+            <td><span class="priority p-high">High</span></td>
+            <td>Copy button — markdown<br><ol class="steps"><li>Enable Markdown Export in Settings</li><li>Generate table topics</li><li>Tap Copy and paste</li></ol></td>
+            <td class="expected">Output uses <code>##</code> for theme title, <code>&gt;</code> for reason, <code>###</code> for Table Topics subheading, numbered list for questions.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">MP-07</td>
+            <td><span class="priority p-medium">Medium</span></td>
+            <td>Selecting new theme resets Table Topics<br><ol class="steps"><li>Generate topics for one theme</li><li>Tap a different theme card</li></ol></td>
+            <td class="expected">Table Topics results clear, Copy/Share buttons hide, selected theme label updates.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">MP-08</td>
+            <td><span class="priority p-medium">Medium</span></td>
+            <td>No API key<br><ol class="steps"><li>Remove OpenAI key from Settings</li><li>Open Meeting Planner and tap Suggest</li></ol></td>
+            <td class="expected">Error modal: directs user to add OpenAI key in Settings.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">MP-09</td>
+            <td><span class="priority p-medium">Medium</span></td>
+            <td>No date entered<br><ol class="steps"><li>Leave date field empty</li><li>Tap Suggest</li></ol></td>
+            <td class="expected">Error modal: "Please select a meeting date."</td>
+        </tr>
+    </table>
+</div>
+
+<!-- ============ SUPER ADMIN ============ -->
+<div class="section" id="super-admin">
+    <div class="section-header">
+        <h2>5c. Super Admin <span style="font-size:13px;font-weight:400;color:#8E8E93;">v3.3.0</span></h2>
+    </div>
+    <table>
+        <tr><th width="30">✓</th><th width="80">ID</th><th width="100">Priority</th><th>Test Description</th><th>Expected Result</th></tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">SA-01</td>
+            <td><span class="priority p-critical">Critical</span></td>
+            <td>Admin section visible in Settings<br><ol class="steps"><li>Open Settings</li><li>Scroll to bottom</li></ol></td>
+            <td class="expected">Administrator section visible with "Admin Sign In" card. No signed-in state visible.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">SA-02</td>
+            <td><span class="priority p-critical">Critical</span></td>
+            <td>Authorized sign-in<br><ol class="steps"><li>Tap Admin Sign In</li><li>Sign in with authorized Google account</li></ol></td>
+            <td class="expected">Popup completes. Settings shows green "Signed In" card with email address. Active Clubs list loads below.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">SA-03</td>
+            <td><span class="priority p-critical">Critical</span></td>
+            <td>Unauthorized sign-in rejected<br><ol class="steps"><li>Tap Admin Sign In</li><li>Sign in with a Google account NOT in superAdmins collection</li></ol></td>
+            <td class="expected">"Not Authorized" modal. User is signed out immediately. Login card reappears.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">SA-04</td>
+            <td><span class="priority p-high">High</span></td>
+            <td>Active Clubs list loads<br><ol class="steps"><li>Sign in as admin</li><li>Observe club list</li></ol></td>
+            <td class="expected">All clubs from Firestore listed with name, sync key ID, and last updated date.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">SA-05</td>
+            <td><span class="priority p-high">High</span></td>
+            <td>Club filter<br><ol class="steps"><li>Sign in as admin</li><li>Type a club name fragment in filter</li></ol></td>
+            <td class="expected">List narrows in real time to matching clubs. Clear filter restores full list.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">SA-06</td>
+            <td><span class="priority p-critical">Critical</span></td>
+            <td>Delete club with confirmation<br><ol class="steps"><li>Sign in as admin</li><li>Tap Delete on a test club</li><li>Confirm in modal</li></ol></td>
+            <td class="expected">Club removed from Firestore. Row disappears from list immediately without reload. Count footer updates.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">SA-07</td>
+            <td><span class="priority p-high">High</span></td>
+            <td>Sign out<br><ol class="steps"><li>Sign in as admin</li><li>Tap Sign Out</li></ol></td>
+            <td class="expected">Green signed-in card disappears. Login card reappears. Admin panel hidden.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">SA-08</td>
+            <td><span class="priority p-high">High</span></td>
+            <td>Auth persists on page reload<br><ol class="steps"><li>Sign in as admin</li><li>Reload the page</li><li>Navigate to Settings</li></ol></td>
+            <td class="expected">Admin panel shows signed-in state automatically without re-authenticating.</td>
+        </tr>
+    </table>
+</div>
+
 <!-- ============ TIMER ============ -->
 <div class="section" id="timer">
     <div class="section-header">
