@@ -99,7 +99,7 @@
             <div class="toc">
                 <div class="toc-title">Contents</div>
                 <a href="#firstrun">1. First Time Setup</a>
-                <a href="#wod">2. Word of the Day</a>
+                <a href="#meeting-planner">2. Meeting Planner</a>
                 <a href="#timer">3. Timer</a>
                 <a href="#counter">4. Verbal &amp; Filler Words</a>
                 <a href="#report">5. Meeting Report</a>
@@ -121,12 +121,33 @@
                 <strong>Already a member?</strong> Choose <em>Join Existing Club</em> and enter your club's sync code. Roster, filler words, and the shared AI key will be ready in seconds.
             </div>
 
-            <h2 id="wod">2. Word of the Day</h2>
+            <h2 id="meeting-planner">2. Meeting Planner</h2>
+            <p>Access via the <strong>Club tab → Meeting Planner</strong>. This screen consolidates all AI-powered meeting preparation tools in one place. An OpenAI API key is required for all AI features — if your officer has set up cloud sync, the key is shared automatically.</p>
+
+            <h3>Word of the Day</h3>
             <p>The W.O.D. feature uses <strong>ChatGPT (GPT-4o-mini)</strong> to provide intelligent, public-speaking flavored definitions.</p>
             <ul>
                 <li><strong>Random:</strong> Tap <em>Random</em> to pick from a library of over 1,000 sophisticated words.</li>
                 <li><strong>Search:</strong> Type any word and tap 🔍 to fetch a custom AI definition and usage sentence.</li>
                 <li><strong>Select:</strong> Tap <em>Select</em> to activate the word. It pins to the top of the Ah-Counter tally grid with a gold <strong>WORD OF DAY</strong> badge and is highlighted in gold during transcription. The word is also written to Firestore so it appears automatically at the top of the Cloud Meeting Report for any device that opens it today.</li>
+            </ul>
+            <div class="alert-blue">
+                <strong>Verbal tab banner:</strong> When a Word of the Day is active, the Verbal tab displays a subtle gold banner at the top showing the word, definition, and usage example — no interaction needed, visible to all ah-counters at a glance.
+            </div>
+
+            <h3>Meeting Theme Suggester</h3>
+            <p>Enter the date of your upcoming meeting and tap <strong>Suggest</strong>. The app sends the date to ChatGPT and returns 5 theme cards, each with a short title and one sentence explaining its relevance to events, holidays, or observances near that date.</p>
+            <ul>
+                <li>Tap any theme card to select it — the card highlights in blue.</li>
+                <li>Selecting a theme reveals the Table Topics section below.</li>
+                <li>Tapping Suggest again clears the previous results and starts fresh.</li>
+            </ul>
+
+            <h3>Table Topics Generator</h3>
+            <p>Once a theme is selected, tap <strong>Generate Table Topics</strong> to receive 8 thought-provoking questions tailored to the theme — varied in style (personal, hypothetical, and reflective) and appropriate for all ages.</p>
+            <ul>
+                <li><strong>Copy:</strong> copies the theme title, one-sentence description, and all 8 numbered questions to the clipboard. If the Markdown Export toggle is on in Settings, the output uses <code>##</code> and <code>###</code> headings for Slack and email formatting.</li>
+                <li><strong>Share:</strong> opens the system share sheet on mobile (iOS/Android) to send directly to Messages, email, or any app. Falls back to Copy on desktop.</li>
             </ul>
             <div class="alert">
                 <strong>AI Key Required.</strong> If your club officer has set up cloud sync, the key is shared automatically — you don't need to do anything.
@@ -286,7 +307,8 @@
                 <a href="#onboarding">4. Onboarding New Members</a>
                 <a href="#filler-mgmt">5. Managing Filler Words</a>
                 <a href="#data-mgmt">6. Data Management</a>
-                <a href="#dev-resources">7. Developer Resources</a>
+                <a href="#super-admin">7. Super Admin</a>
+                <a href="#dev-resources">8. Developer Resources</a>
             </div>
 
             <h2 id="setup-club">1. Setting Up Your Club</h2>
@@ -365,7 +387,24 @@
             <h3>Clear Meeting Data</h3>
             <p>Resets all logs, transcripts, and the selected W.O.D. for the next meeting. Does <em>not</em> delete the roster, filler words, or cloud session history.</p>
 
-            <h2 id="dev-resources">7. Developer Resources</h2>
+            <h2 id="super-admin">7. Super Admin</h2>
+            <p>The Super Admin panel provides backend management tools accessible only to pre-authorized Google accounts. It is separate from club-level officer functions — club officers do not need to log in for any regular app features.</p>
+            <h3>Signing In</h3>
+            <ol>
+                <li>Go to <strong>Settings</strong> and scroll to the bottom.</li>
+                <li>Tap <strong>Admin Sign In</strong> under the Administrator section.</li>
+                <li>Sign in with your authorized Google account. A popup appears — complete the Google sign-in flow.</li>
+                <li>The app checks your email against the <code>superAdmins</code> Firestore collection. If authorized, the panel expands showing your email and the Active Clubs list.</li>
+            </ol>
+            <div class="alert">
+                <strong>Not authorized?</strong> Only Google accounts listed in the <code>superAdmins</code> Firestore collection can access the admin panel. Unauthorized accounts are signed out immediately. Contact the app developer to be added.
+            </div>
+            <h3>Active Clubs</h3>
+            <p>Shows every club document in Firestore with its name, sync key ID, and last updated date. Use the filter input to search by name or ID.</p>
+            <h3>Deleting a Club</h3>
+            <p>Tap <strong>Delete</strong> on any club row. A confirmation modal shows the club name before proceeding. Deletion removes only the Firestore cloud record — local data on member devices is not affected. This is intended for removing inactive or test clubs from the backend.</p>
+
+            <h2 id="dev-resources">8. Developer Resources</h2>
             <p>Full technical documentation, test cases, and release history are available below. These are intended for the developer maintaining the codebase.</p>
 
             <div class="resource-grid">

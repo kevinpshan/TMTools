@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Meeting Tools v3.2.3</title>
+    <title>Meeting Tools v3.3.0</title>
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="TMTools">
@@ -11,6 +11,7 @@
     <link rel="apple-touch-icon" href="icon-timer.png">
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <style>
         :root { --bg:#F2F2F7; --card:#FFFFFF; --accent:#007AFF; --text:#000000; --subtext:#3A3A3C; --red:#FF3B30; --green:#34C759; --yellow:#FFCC00; --gold:#BF941A; --border:#D1D1D6; }
         html { height:-webkit-fill-available; }
@@ -231,7 +232,12 @@
         <div class="main-menu-card" onclick="showScreen('report')"><div class="card-content"><h3>Meeting Report</h3><p>View recorded times</p></div><div class="icon">☰</div></div>
     </div>
     <div id="counterMode" class="container" style="display:none;flex:1;min-height:0;overflow-y:auto;">
-        <div class="main-menu-card" onclick="showScreen('wod')"><div class="card-content"><h3 style="color:var(--gold);">Word of the Day</h3><p>AI Definition &amp; Search</p></div><div class="icon" style="color:var(--gold);">★</div></div>
+        <div id="wodBanner" style="display:none;background:#FFF9E6;border:1px solid var(--gold);border-radius:12px;padding:10px 14px;margin-bottom:4px;flex-shrink:0;">
+            <span style="font-size:11px;font-weight:800;color:var(--gold);text-transform:uppercase;letter-spacing:0.8px;">Word of the Day</span>
+            <div style="font-size:15px;font-weight:700;color:var(--text);margin-top:2px;" id="wodBannerWord"></div>
+            <div style="font-size:13px;color:var(--subtext);margin-top:2px;" id="wodBannerDef"></div>
+            <div style="font-size:13px;color:#8E8E93;font-style:italic;margin-top:2px;" id="wodBannerEx"></div>
+        </div>
         <div class="main-menu-card" onclick="showScreen('setup')"><div class="card-content"><h3>Start Tracking</h3><p>Count filler words</p></div><div class="icon">✍</div></div>
         <div class="main-menu-card" onclick="showScreen('transcriptList')"><div class="card-content"><h3>Transcripts</h3><p>Share with speakers</p></div><div class="icon">📋</div></div>
         <div class="main-menu-card" onclick="showScreen('progress')"><div class="card-content"><h3>Progress</h3><p>Speaker improvement over time</p></div><div class="icon">📈</div></div>
@@ -240,6 +246,7 @@
     <div id="clubMode" class="container" style="display:none;flex:1;min-height:0;overflow-y:auto;">
         <div class="main-menu-card" onclick="showScreen('pace')"><div class="card-content"><h3 style="color:var(--green);">PACE</h3><p>Participating and Achieving Competence and Excellence</p></div><div class="icon" style="color:var(--green);">🏆</div></div>
         <div class="main-menu-card" onclick="showDCPScreen()"><div class="card-content"><h3 style="color:var(--accent);">DCP Dashboard</h3><p>Club standing &amp; district ranking</p></div><div class="icon" style="color:var(--accent);">🏛</div></div>
+        <div class="main-menu-card" onclick="showScreen('meetingPlanner')"><div class="card-content"><h3 style="color:var(--gold);">Meeting Planner</h3><p>WOD, themes &amp; table topics</p></div><div class="icon" style="font-size:28px;">🗓</div></div>
         <div class="main-menu-card" onclick="showBroadcastCompose()"><div class="card-content"><h3 style="color:#f59e0b;">📢 Broadcast</h3><p>Send a message to all club members</p></div><div class="icon" style="color:#f59e0b;">✉</div></div>
     </div>
     <div class="credit-footer">
@@ -263,10 +270,78 @@
         </div>
     </div>
     <div class="button-row">
-        <button class="footer-btn secondary-btn" onclick="showScreen('menu')">Back</button>
+        <button class="footer-btn secondary-btn" onclick="showScreen('meetingPlanner')">Back</button>
         <button class="footer-btn secondary-btn" onclick="nextWod()">Random</button>
         <button class="footer-btn" style="background:var(--green);" onclick="selectWod()">Select</button>
     </div>
+</div>
+
+<!-- MEETING PLANNER -->
+<div id="meetingPlanner" class="screen">
+    <div class="header"><h1>Meeting Planner</h1><div class="subtitle">AI-powered meeting prep</div></div>
+    <div class="container">
+
+        <!-- Word of the Day -->
+        <div style="margin-bottom:6px;padding:0 4px;">
+            <div style="font-size:13px;font-weight:700;color:#8E8E93;text-transform:uppercase;letter-spacing:0.8px;">Word of the Day</div>
+        </div>
+        <div class="main-menu-card settings-card" onclick="showScreen('wod')">
+            <div class="card-content">
+                <h3 style="color:var(--gold);">Word of the Day</h3>
+                <p id="plannerWodStatus">Tap to search or generate</p>
+            </div>
+            <div class="icon" style="color:var(--gold);font-size:28px;">★</div>
+        </div>
+
+        <!-- Meeting Theme -->
+        <div style="margin-top:20px;margin-bottom:6px;padding:0 4px;">
+            <div style="font-size:13px;font-weight:700;color:#8E8E93;text-transform:uppercase;letter-spacing:0.8px;">Meeting Theme</div>
+        </div>
+        <div style="background:var(--card);border-radius:16px;border:1px solid var(--border);padding:16px 18px;">
+            <div style="font-size:13px;color:#8E8E93;margin-bottom:8px;">Enter the date of your meeting to get AI-suggested themes based on events, holidays, and observances near that date.</div>
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
+                <input type="date" id="themeDateInput" placeholder="Enter date of meeting" style="flex:1;padding:8px 10px;border-radius:8px;border:1px solid var(--border);font-size:15px;background:var(--bg);color:var(--text);">
+                <button onclick="suggestThemes()" style="background:var(--accent);color:white;border:none;border-radius:10px;padding:9px 16px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;">Suggest</button>
+            </div>
+            <div id="themeResults"></div>
+            <div id="copyThemeActions" style="display:none;margin-top:10px;gap:8px;">
+                    <button onclick="copyTheme()" style="flex:1;background:none;border:1px solid var(--border);border-radius:10px;padding:10px;font-size:14px;font-weight:600;cursor:pointer;">📋 Copy Theme</button>
+                    <button onclick="suggestThemes()" style="flex:1;background:none;border:1px solid var(--border);border-radius:10px;padding:10px;font-size:14px;font-weight:600;cursor:pointer;">↻ Regenerate</button>
+                </div>
+        </div>
+
+        <!-- Fun Facts -->
+        <div id="funFactsSection" style="display:none;margin-top:20px;">
+            <div style="margin-bottom:6px;padding:0 4px;">
+                <div style="font-size:13px;font-weight:700;color:#8E8E93;text-transform:uppercase;letter-spacing:0.8px;">Fun Facts</div>
+            </div>
+            <div style="background:var(--card);border-radius:16px;border:1px solid var(--border);padding:16px 18px;">
+                <div id="funFactsResults"></div>
+                <div id="funFactsActions" style="display:none;margin-top:12px;gap:8px;">
+                    <button onclick="copyFacts()" style="flex:1;background:none;border:1px solid var(--border);border-radius:10px;padding:10px;font-size:14px;font-weight:600;cursor:pointer;">📋 Copy Facts</button>
+                    <button onclick="generateFacts()" style="flex:1;background:none;border:1px solid var(--border);border-radius:10px;padding:10px;font-size:14px;font-weight:600;cursor:pointer;">↻ Regenerate</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table Topics -->
+        <div id="tableTopicsSection" style="display:none;margin-top:20px;">
+            <div style="margin-bottom:6px;padding:0 4px;">
+                <div style="font-size:13px;font-weight:700;color:#8E8E93;text-transform:uppercase;letter-spacing:0.8px;">Table Topics</div>
+            </div>
+            <div style="background:var(--card);border-radius:16px;border:1px solid var(--border);padding:16px 18px;">
+                <div style="font-size:14px;color:#8E8E93;margin-bottom:10px;">Theme: <span id="selectedThemeLabel" style="color:var(--text);font-weight:600;"></span></div>
+                <button onclick="generateTableTopics()" style="width:100%;background:var(--accent);color:white;border:none;border-radius:10px;padding:12px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:12px;">Generate Table Topics</button>
+                <div id="tableTopicsResults"></div>
+                <div id="tableTopicsActions" style="display:none;margin-top:12px;gap:8px;">
+                    <button onclick="copyTableTopics()" style="flex:1;background:none;border:1px solid var(--border);border-radius:10px;padding:10px;font-size:14px;font-weight:600;cursor:pointer;">📋 Copy Table Topics</button>
+                    <button onclick="generateTableTopics()" style="flex:1;background:none;border:1px solid var(--border);border-radius:10px;padding:10px;font-size:14px;font-weight:600;cursor:pointer;">↻ Regenerate</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <div class="button-row"><button class="footer-btn" onclick="switchMode('club');showScreen('menu')">Done</button></div>
 </div>
 
 <!-- SETUP -->
@@ -343,6 +418,31 @@
         <div class="main-menu-card settings-card" onclick="showScreen('auditLog')"><div class="card-content"><h3>Audit Log</h3><p>Club activity history</p></div><div class="icon" style="font-size:30px;">&#128269;</div></div>
         <div class="main-menu-card settings-card" onclick="askClearLogs()" style="background:#FFF5F5;border:2px solid var(--red);"><div class="card-content"><h3 style="color:var(--red);">Clear Meeting Data</h3><p>Reset logs, WOD, transcripts</p></div><div class="icon">⚠</div></div>
         <input type="file" id="importFile" style="display:none" onchange="handleImportFile(this)">
+
+        <!-- ADMINISTRATOR SECTION -->
+        <div style="margin-top:24px;margin-bottom:6px;padding:0 4px;">
+            <div style="font-size:13px;font-weight:700;color:#8E8E93;text-transform:uppercase;letter-spacing:0.8px;">Administrator</div>
+        </div>
+        <div id="adminLoginCard" class="main-menu-card settings-card" onclick="handleAdminSignIn()" style="background:var(--card);border:1px solid var(--border);">
+            <div class="card-content"><h3>Admin Sign In</h3><p>Sign in with Google to access admin tools</p></div>
+            <div class="icon" style="font-size:28px;">🔐</div>
+        </div>
+        <div id="adminSignedInCard" style="display:none;">
+            <div class="main-menu-card settings-card" style="cursor:default;background:#F0FFF4;border:1px solid var(--green);">
+                <div class="card-content"><h3 style="color:var(--green);">Signed In</h3><p id="adminEmailLabel" style="font-size:13px;"></p></div>
+                <button onclick="handleAdminSignOut()" style="background:none;border:1px solid #8E8E93;border-radius:10px;padding:6px 14px;font-size:14px;color:#8E8E93;cursor:pointer;white-space:nowrap;">Sign Out</button>
+            </div>
+            <div style="margin-top:8px;background:var(--card);border-radius:16px;border:1px solid var(--border);overflow:hidden;">
+                <div style="padding:14px 18px;border-bottom:1px solid var(--border);">
+                    <div style="font-size:17px;font-weight:700;">Active Clubs</div>
+                    <div style="font-size:13px;color:#8E8E93;margin-top:2px;">All clubs registered in Firestore</div>
+                    <input id="adminClubFilter" type="text" placeholder="Filter by name or ID…" oninput="filterAdminClubs(this.value)" style="margin-top:10px;width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--border);font-size:14px;background:var(--bg);color:var(--text);box-sizing:border-box;">
+                </div>
+                <div id="adminClubList" style="padding:10px 18px 14px;">
+                    <div style="color:#8E8E93;font-size:15px;padding:8px 0;">Loading…</div>
+                </div>
+            </div>
+        </div>
     </div>
     <div class="button-row"><button class="footer-btn" onclick="showScreen('menu')">Done</button></div>
 </div>
@@ -618,7 +718,7 @@
             </div>
         </div>
     </div>
-    <div style="padding:20px;text-align:center;opacity:0.4;font-size:13px;">Meeting Tools v3.2.3 · Southern Dutchess Toastmasters</div>
+    <div style="padding:20px;text-align:center;opacity:0.4;font-size:13px;">Meeting Tools v3.3.0 · Southern Dutchess Toastmasters</div>
 </div>
 
 <script>
@@ -633,6 +733,7 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+const auth = firebase.auth();
 
 /* ============ KEY ARCHITECTURE v3.1.0 ============ */
 const isDev  = window.location.pathname.toLowerCase().includes('/dev/');
@@ -716,13 +817,13 @@ function initApp() {
         document.getElementById('welcome').classList.add('active');
         document.getElementById('mdToggle').checked = false;
         document.getElementById('openaiKey').value = '';
-        document.getElementById('versionLabel').innerText = 'Version 3.2.3'+(isDev?' (DEV)':isTest?' (TEST)':'');
+        document.getElementById('versionLabel').innerText = 'Version 3.3.0'+(isDev?' (DEV)':isTest?' (TEST)':'');
         return;
     }
     loadClubData(); updateClubUI();
     document.getElementById('mdToggle').checked = (localStorage.getItem(pk(KEY_MD))==='true');
     document.getElementById('openaiKey').value = localStorage.getItem(pk(KEY_AI_KEY))||'';
-    document.getElementById('versionLabel').innerText = 'Version 3.2.3'+(isDev?' (DEV)':isTest?' (TEST)':'');
+    document.getElementById('versionLabel').innerText = 'Version 3.3.0'+(isDev?' (DEV)':isTest?' (TEST)':'');
     refreshRoster(); nextWod();
     autoSyncDown();
     checkStaleBanner();
@@ -1364,6 +1465,8 @@ function showScreen(id){
     if(id==='menu')checkStaleBanner();
     if(id==='transcriptList')loadTranscriptList();
     if(id==='wod'){const wi=document.getElementById('wodManualInput');if(wi)wi.value='';}
+    if(id==='meetingPlanner'){initMeetingPlanner();}
+    if(id==='menu'){updateWodBanner();}
     if(id==='fillerManager')renderFillerManager();
     if(id==='clubManager')renderClubManager();
     if(id==='progress')loadProgress();
@@ -1371,7 +1474,7 @@ function showScreen(id){
     if(id==='paceRoleManager')renderPaceRoleManager();
     if(id==='dcp')loadDCPData(false);
     if(id==='auditLog')loadAuditLog();
-    if(id==='settings'){const n=localStorage.getItem(pk(KEY_DEVICE_NAME));document.getElementById('settingsDeviceName').innerText=n||'Tap to set your name';}
+    if(id==='settings'){const n=localStorage.getItem(pk(KEY_DEVICE_NAME));document.getElementById('settingsDeviceName').innerText=n||'Tap to set your name'; if(currentAdminUser){renderAdminSignedIn();}else{renderAdminSignedOut();}}
 }
 
 /* ============ SETUP GRID ============ */
@@ -1404,7 +1507,7 @@ function selectWod(){
             wodDate:new Date().toDateString()
         }).catch(e=>console.warn('WOD cloud write failed:',e.message));
     }
-    openModal("WOD Selected",`${wu} is active.`,()=>{showScreen('menu');});
+    openModal("WOD Selected",`${wu} is active.`,()=>{showScreen('meetingPlanner');});
 }
 
 /* ============ TALLY ============ */
@@ -1566,7 +1669,7 @@ function openModal(t,b,c,cancelLabel,confirmLabel){
     document.getElementById('modalConfirm').onclick=()=>{c();document.getElementById('customModal').style.display='none';};
     document.getElementById('modalCancel').onclick=()=>{document.getElementById('customModal').style.display='none';};
 }function askCustomTime(el){const saved=JSON.parse(localStorage.getItem(clubKey('custom_limits'))||'{"g":5,"cy":6,"r":7}');const title=currentMode==='timer'?"Thresholds":"Enter Custom Role";const body=currentMode==='timer'?`<label>Green (Min):</label><input type="number" id="cg" value="${saved.g}"><label>Yellow (Target):</label><input type="number" id="cy" value="${saved.cy}"><label>Red (Max):</label><input type="number" id="cr" value="${saved.r}">`:`<label>Role Name:</label><input type="text" id="customRole" placeholder="e.g. JOKE MASTER" style="text-transform:uppercase">`;openModal(title,body,()=>{if(currentMode==='timer'){const g=document.getElementById('cg').value,y=document.getElementById('cy').value,r=document.getElementById('cr').value;lims={g:g*60,y:y*60,r:r*60};localStorage.setItem(clubKey('custom_limits'),JSON.stringify({g,cy:y,r}));document.getElementById('customLabel').innerText=`${g}-${r}m`;selectedTypeLabel='CUSTOM';}else{selectedTypeLabel=document.getElementById('customRole').value.toUpperCase();document.getElementById('customLabel').innerText=selectedTypeLabel;}document.querySelectorAll('.role-card').forEach(c=>c.classList.remove('selected'));el.classList.add('selected');});}
-function switchMode(m){currentMode=m;document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));const tabId=m==='timer'?'tabTimer':m==='counter'?'tabCounter':'tabClub';document.getElementById(tabId).classList.add('active');const titles={'timer':'Timing','counter':'Verbal','club':'Club Tools'};document.getElementById('modeTitle').innerText=titles[m]||'Meeting Timer';document.getElementById('timerMode').style.display=m==='timer'?'flex':'none';document.getElementById('counterMode').style.display=m==='counter'?'flex':'none';document.getElementById('clubMode').style.display=m==='club'?'flex':'none';}
+function switchMode(m){currentMode=m;document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));const tabId=m==='timer'?'tabTimer':m==='counter'?'tabCounter':'tabClub';document.getElementById(tabId).classList.add('active');const titles={'timer':'Timing','counter':'Verbal','club':'Club Tools'};document.getElementById('modeTitle').innerText=titles[m]||'Meeting Timer';document.getElementById('timerMode').style.display=m==='timer'?'flex':'none';document.getElementById('counterMode').style.display=m==='counter'?'flex':'none';document.getElementById('clubMode').style.display=m==='club'?'flex':'none';if(m==='counter')updateWodBanner();}
 
 /* ============ START HANDLER ============ */
 function handleStart(){
@@ -3184,6 +3287,391 @@ function renderAuditRow(doc) {
         + '<div style="font-size:14px;color:var(--text);margin-top:2px;">'+(d.target||'')+'</div>'
         + '<div style="font-size:12px;color:var(--label);margin-top:4px;">By: '+(d.by||'Unknown')+' &middot; '+dateStr+' '+timeStr+'</div>'
         + '</div></div>';
+}
+
+/* ============ MEETING PLANNER ============ */
+let selectedTheme = '';
+let selectedThemeReason = '';
+let generatedFacts = [];
+
+function initMeetingPlanner() {
+    // Update WOD status label
+    const wod = JSON.parse(localStorage.getItem(clubKey('wod_full')) || 'null');
+    const statusEl = document.getElementById('plannerWodStatus');
+    if (statusEl) statusEl.innerText = wod ? wod.word.toUpperCase() + ' — active' : 'Tap to search or generate';
+}
+
+function updateWodBanner() {
+    const wod = JSON.parse(localStorage.getItem(clubKey('wod_full')) || 'null');
+    const banner = document.getElementById('wodBanner');
+    if (!banner) return;
+    if (wod && wod.word) {
+        document.getElementById('wodBannerWord').innerText = wod.word.toUpperCase();
+        document.getElementById('wodBannerDef').innerText = wod.definition || '';
+        document.getElementById('wodBannerEx').innerText = wod.example ? '\u201c' + wod.example + '\u201d' : '';
+        banner.style.display = 'block';
+    } else {
+        banner.style.display = 'none';
+    }
+}
+
+async function suggestThemes() {
+    const dateVal = document.getElementById('themeDateInput').value;
+    if (!dateVal) { openModal('No Date', 'Please select a meeting date.', ()=>{}); return; }
+    const aiKey = localStorage.getItem(clubKey('apiKey')) || localStorage.getItem(prefix + 'openai_key') || '';
+    if (!aiKey) { openModal('No API Key', 'Add your OpenAI key in Settings \u2192 ChatGPT API Key.', ()=>{}); return; }
+
+    const resultsEl = document.getElementById('themeResults');
+    const ttSection = document.getElementById('tableTopicsSection');
+    const factsSection = document.getElementById('funFactsSection');
+    const copyThemeEl = document.getElementById('copyThemeActions');
+    resultsEl.innerHTML = '<div style="text-align:center;padding:16px;color:#8E8E93;font-size:15px;">Thinking\u2026</div>';
+    if (ttSection) ttSection.style.display = 'none';
+    if (factsSection) factsSection.style.display = 'none';
+    if (copyThemeEl) copyThemeEl.style.display = 'none';
+    selectedTheme = '';
+    selectedThemeReason = '';
+    generatedFacts = [];
+
+    const dateObj = new Date(dateVal + 'T12:00:00');
+    const formatted = dateObj.toLocaleDateString('en-US', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+
+    const prompt = `You are a Toastmasters meeting planner. Given the meeting date of ${formatted}, suggest exactly 5 compelling meeting themes based on historical events, holidays, cultural observances, seasonal themes, or notable anniversaries occurring on or near that date. Return ONLY a JSON array of 5 objects, each with "title" (short theme name, max 6 words) and "reason" (one sentence explaining its relevance to this date). No preamble, no markdown, just the JSON array.`;
+
+    try {
+        const res = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + aiKey },
+            body: JSON.stringify({ model: 'gpt-4o-mini', messages: [{ role: 'user', content: prompt }], temperature: 0.8 })
+        });
+        if (!res.ok) throw new Error('API error ' + res.status);
+        const data = await res.json();
+        const raw = data.choices[0].message.content.trim().replace(/```json|```/g, '');
+        const themes = JSON.parse(raw);
+        renderThemes(themes);
+    } catch(e) {
+        resultsEl.innerHTML = '<div style="color:var(--red);font-size:14px;padding:8px 0;">Error: ' + e.message + '</div>';
+    }
+}
+
+function renderThemes(themes) {
+    const resultsEl = document.getElementById('themeResults');
+    resultsEl.innerHTML = themes.map((t, i) => `
+        <div id="themeCard${i}" onclick="selectTheme(${i}, '${t.title.replace(/'/g, "\\'")}', '${t.reason.replace(/'/g, "\\'")}')"
+            style="padding:12px 14px;border-radius:10px;border:2px solid var(--border);margin-bottom:8px;cursor:pointer;transition:border-color 0.15s;">
+            <div style="font-size:15px;font-weight:700;">${t.title}</div>
+            <div style="font-size:13px;color:#8E8E93;margin-top:3px;">${t.reason}</div>
+        </div>`).join('');
+}
+
+function selectTheme(index, title, reason) {
+    selectedTheme = title;
+    selectedThemeReason = reason || '';
+    // Highlight selected card
+    document.querySelectorAll('[id^="themeCard"]').forEach((el, i) => {
+        el.style.borderColor = i === index ? 'var(--accent)' : 'var(--border)';
+        el.style.background = i === index ? 'var(--bg)' : '';
+    });
+    // Show copy theme button
+    const copyThemeEl = document.getElementById('copyThemeActions');
+    if (copyThemeEl) copyThemeEl.style.display = 'flex';
+    // Show and trigger fun facts
+    const factsSection = document.getElementById('funFactsSection');
+    if (factsSection) factsSection.style.display = 'block';
+    generatedFacts = [];
+    generateFacts();
+    // Show table topics section, reset results
+    const ttSection = document.getElementById('tableTopicsSection');
+    const label = document.getElementById('selectedThemeLabel');
+    const ttResults = document.getElementById('tableTopicsResults');
+    if (ttSection) ttSection.style.display = 'block';
+    if (label) label.innerText = title;
+    if (ttResults) ttResults.innerHTML = '';
+    const actions = document.getElementById('tableTopicsActions');
+    if (actions) actions.style.display = 'none';
+}
+
+async function generateFacts() {
+    if (!selectedTheme) return;
+    const aiKey = localStorage.getItem(clubKey('apiKey')) || localStorage.getItem(prefix + 'openai_key') || '';
+    if (!aiKey) return;
+
+    const resultsEl = document.getElementById('funFactsResults');
+    const actionsEl = document.getElementById('funFactsActions');
+    if (resultsEl) resultsEl.innerHTML = '<div style="text-align:center;padding:16px;color:#8E8E93;font-size:15px;">Generating\u2026</div>';
+    if (actionsEl) actionsEl.style.display = 'none';
+
+    const prompt = `You are a knowledgeable and engaging Toastmasters meeting facilitator. Generate 6 surprising, interesting, and conversation-sparking fun facts about the theme: "${selectedTheme}". Facts should be accurate, varied, and suitable for a professional public speaking audience. Return ONLY a JSON array of 6 strings, each being one fact. No preamble, no markdown, just the JSON array.`;
+
+    try {
+        const res = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + aiKey },
+            body: JSON.stringify({ model: 'gpt-4o-mini', messages: [{ role: 'user', content: prompt }], temperature: 0.85 })
+        });
+        if (!res.ok) throw new Error('API error ' + res.status);
+        const data = await res.json();
+        const raw = data.choices[0].message.content.trim().replace(/```json|```/g, '');
+        generatedFacts = JSON.parse(raw);
+        if (resultsEl) resultsEl.innerHTML = generatedFacts.map((f, i) =>
+            `<div style="padding:10px 0;border-bottom:1px solid var(--border);display:flex;gap:10px;">
+                <div style="font-size:15px;font-weight:700;color:var(--accent);flex-shrink:0;">${i+1}.</div>
+                <div style="font-size:15px;line-height:1.4;">${f}</div>
+            </div>`
+        ).join('');
+        if (actionsEl) actionsEl.style.display = 'flex';
+    } catch(e) {
+        if (resultsEl) resultsEl.innerHTML = '<div style="color:var(--red);font-size:14px;padding:8px 0;">Error: ' + e.message + '</div>';
+    }
+}
+
+function copyTheme() {
+    const md = localStorage.getItem(pk(KEY_MD)) === 'true';
+    const text = md
+        ? `## ${selectedTheme}\n> ${selectedThemeReason}`
+        : `${selectedTheme}\n${selectedThemeReason}`;
+    navigator.clipboard.writeText(text).then(() => {
+        openModal('Copied!', 'Theme copied to clipboard.', ()=>{});
+    }).catch(() => {
+        openModal('Copy Failed', 'Your browser blocked clipboard access.', ()=>{});
+    });
+}
+
+function copyFacts() {
+    if (!generatedFacts.length) return;
+    const md = localStorage.getItem(pk(KEY_MD)) === 'true';
+    const lines = generatedFacts.map((f, i) => `${i+1}. ${f}`);
+    const text = md
+        ? `### Fun Facts — ${selectedTheme}\n${lines.join('\n')}`
+        : `Fun Facts — ${selectedTheme}\n${'─'.repeat(30)}\n${lines.join('\n')}`;
+    navigator.clipboard.writeText(text).then(() => {
+        openModal('Copied!', 'Fun facts copied to clipboard.', ()=>{});
+    }).catch(() => {
+        openModal('Copy Failed', 'Your browser blocked clipboard access.', ()=>{});
+    });
+}
+
+async function generateTableTopics() {
+    if (!selectedTheme) return;
+    const aiKey = localStorage.getItem(clubKey('apiKey')) || localStorage.getItem(prefix + 'openai_key') || '';
+    if (!aiKey) { openModal('No API Key', 'Add your OpenAI key in Settings \u2192 ChatGPT API Key.', ()=>{}); return; }
+
+    const resultsEl = document.getElementById('tableTopicsResults');
+    resultsEl.innerHTML = '<div style="text-align:center;padding:16px;color:#8E8E93;font-size:15px;">Generating\u2026</div>';
+
+    const prompt = `You are a Toastmasters Table Topics Master. Generate exactly 8 thought-provoking Table Topics questions for a Toastmasters meeting with the theme: "${selectedTheme}". Questions should encourage personal reflection and storytelling, be appropriate for all ages, and vary in style (some personal, some hypothetical, some reflective). Return ONLY a JSON array of 8 strings, each being one question. No preamble, no markdown, just the JSON array.`;
+
+    try {
+        const res = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + aiKey },
+            body: JSON.stringify({ model: 'gpt-4o-mini', messages: [{ role: 'user', content: prompt }], temperature: 0.9 })
+        });
+        if (!res.ok) throw new Error('API error ' + res.status);
+        const data = await res.json();
+        const raw = data.choices[0].message.content.trim().replace(/```json|```/g, '');
+        const questions = JSON.parse(raw);
+        resultsEl.innerHTML = questions.map((q, i) =>
+            `<div style="padding:10px 0;border-bottom:1px solid var(--border);display:flex;gap:10px;">
+                <div style="font-size:15px;font-weight:700;color:var(--accent);flex-shrink:0;">${i+1}.</div>
+                <div style="font-size:15px;line-height:1.4;">${q}</div>
+            </div>`
+        ).join('');
+        // Show copy/share buttons
+        const actions = document.getElementById('tableTopicsActions');
+        if (actions) actions.style.display = 'flex';
+    } catch(e) {
+        resultsEl.innerHTML = '<div style="color:var(--red);font-size:14px;padding:8px 0;">Error: ' + e.message + '</div>';
+    }
+}
+
+function buildTableTopicsText() {
+    const items = document.querySelectorAll('#tableTopicsResults > div');
+    if (!items.length) return '';
+    const md = localStorage.getItem(pk(KEY_MD)) === 'true';
+    const questions = Array.from(items).map(el => {
+        const q = el.querySelector('div:last-child');
+        return q ? q.innerText : '';
+    }).filter(Boolean);
+
+    if (md) {
+        return [
+            `### Table Topics — ${selectedTheme}`,
+            ...questions.map((q, i) => `${i+1}. ${q}`)
+        ].join('\n');
+    } else {
+        return [
+            `Table Topics — ${selectedTheme}`,
+            '─'.repeat(30),
+            ...questions.map((q, i) => `${i+1}. ${q}`)
+        ].join('\n');
+    }
+}
+
+function copyTableTopics() {
+    const text = buildTableTopicsText();
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+        openModal('Copied!', 'Table topics copied to clipboard.', ()=>{});
+    }).catch(() => {
+        openModal('Copy Failed', 'Your browser blocked clipboard access.', ()=>{});
+    });
+}
+
+/* ============ SUPER ADMIN AUTH ============ */
+let currentAdminUser = null;
+
+auth.onAuthStateChanged(async (user) => {
+    if (user) {
+        console.log('Auth state: signed in as', user.email);
+        // Verify against whitelist
+        try {
+            const doc = await db.collection('superAdmins').doc(user.email).get();
+            console.log('Whitelist doc exists:', doc.exists);
+            if (doc.exists && doc.data().authorized === true) {
+                currentAdminUser = user;
+                renderAdminSignedIn();
+            } else {
+                // Not on whitelist — sign out silently
+                await auth.signOut();
+                currentAdminUser = null;
+                renderAdminSignedOut();
+                openModal('Not Authorized','Your Google account is not on the admin whitelist.',()=>{});
+            }
+        } catch(e) {
+            console.error('Whitelist check failed:', e.code, e.message);
+            // Don't sign out — Firestore rule may be blocking, keep user signed in
+            // but show error
+            openModal('Admin Error', 'Could not verify authorization: ' + e.message, ()=>{});
+        }
+    } else {
+        console.log('Auth state: signed out');
+        currentAdminUser = null;
+        renderAdminSignedOut();
+    }
+});
+
+async function handleAdminSignIn() {
+    try {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        await auth.signInWithPopup(provider);
+        // onAuthStateChanged handles the rest
+    } catch(e) {
+        console.error('Popup sign in error:', e.code, e.message);
+        if (e.code !== 'auth/popup-closed-by-user') {
+            openModal('Sign In Failed', e.code + ': ' + (e.message || 'Please try again.'), ()=>{});
+        }
+    }
+}
+
+// Handle return from Google redirect sign-in
+auth.getRedirectResult().then(result => {
+    if (result && result.user) {
+        console.log('Redirect result user:', result.user.email);
+    } else {
+        console.log('Redirect result: no user in result', result);
+    }
+}).catch(e => {
+    console.error('Redirect error code:', e.code, 'message:', e.message);
+    if (e.code && e.code !== 'auth/no-auth-event') {
+        openModal('Sign In Failed', e.code + ': ' + e.message, ()=>{});
+    }
+});
+
+async function handleAdminSignOut() {
+    await auth.signOut();
+    // signed out
+}
+
+function renderAdminSignedIn() {
+    const loginCard = document.getElementById('adminLoginCard');
+    const signedInCard = document.getElementById('adminSignedInCard');
+    const emailLabel = document.getElementById('adminEmailLabel');
+    if (loginCard) loginCard.style.display = 'none';
+    if (signedInCard) signedInCard.style.display = 'block';
+    if (emailLabel && currentAdminUser) emailLabel.innerText = currentAdminUser.email;
+    loadAdminClubs();
+}
+
+function renderAdminSignedOut() {
+    const loginCard = document.getElementById('adminLoginCard');
+    const signedInCard = document.getElementById('adminSignedInCard');
+    if (loginCard) loginCard.style.display = '';
+    if (signedInCard) signedInCard.style.display = 'none';
+}
+
+let adminClubCache = []; // store fetched clubs for client-side filtering
+
+async function loadAdminClubs() {
+    const list = document.getElementById('adminClubList');
+    if (!list) return;
+    list.innerHTML = '<div style="color:#8E8E93;font-size:15px;padding:8px 0;">Loading\u2026</div>';
+    try {
+        const snap = await db.collection('clubs').get();
+        if (snap.empty) {
+            list.innerHTML = '<div style="color:#8E8E93;font-size:15px;padding:8px 0;">No clubs found.</div>';
+            return;
+        }
+        adminClubCache = snap.docs.map(doc => {
+            const d = doc.data();
+            let lastUpdated = '';
+            if (d.lastUpdated && d.lastUpdated.toDate) {
+                const dt = d.lastUpdated.toDate();
+                lastUpdated = dt.toLocaleDateString('en-US', {year:'numeric', month:'short', day:'numeric'});
+            }
+            return { id: doc.id, name: d.name || '(Unnamed)', lastUpdated };
+        });
+        renderAdminClubList(adminClubCache);
+    } catch(e) {
+        list.innerHTML = '<div style="color:var(--red);font-size:15px;padding:8px 0;">Error loading clubs.</div>';
+    }
+}
+
+function renderAdminClubList(clubs) {
+    const list = document.getElementById('adminClubList');
+    if (!list) return;
+    if (!clubs.length) {
+        list.innerHTML = '<div style="color:#8E8E93;font-size:15px;padding:8px 0;">No matching clubs.</div>';
+        return;
+    }
+    list.innerHTML = clubs.map(c => `
+        <div style="padding:12px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:10px;">
+            <div style="flex:1;min-width:0;">
+                <div style="font-size:16px;font-weight:600;">${c.name}</div>
+                <div style="font-size:12px;color:#8E8E93;margin-top:2px;font-family:monospace;">${c.id}</div>
+                <div style="font-size:12px;color:#8E8E93;margin-top:2px;">Last updated: ${c.lastUpdated || 'Unknown'}</div>
+            </div>
+            <button onclick="askDeleteAdminClub('${c.id}','${c.name.replace(/'/g,"\\'")}')"
+                style="flex-shrink:0;background:none;border:1px solid var(--red);border-radius:8px;padding:6px 12px;font-size:13px;color:var(--red);cursor:pointer;font-weight:600;">
+                Delete
+            </button>
+        </div>`).join('') +
+        `<div style="font-size:12px;color:#8E8E93;padding-top:10px;">${clubs.length} club${clubs.length !== 1 ? 's' : ''}</div>`;
+}
+
+function filterAdminClubs(query) {
+    const q = query.trim().toUpperCase();
+    if (!q) { renderAdminClubList(adminClubCache); return; }
+    renderAdminClubList(adminClubCache.filter(c =>
+        c.name.toUpperCase().includes(q) || c.id.toUpperCase().includes(q)
+    ));
+}
+
+function askDeleteAdminClub(id, name) {
+    openModal(
+        'Delete Club?',
+        `Permanently delete "<strong>${name}</strong>" from Firestore?<br><br>This cannot be undone. Local data on member devices will not be affected.`,
+        async () => {
+            try {
+                await db.collection('clubs').doc(id).delete();
+                adminClubCache = adminClubCache.filter(c => c.id !== id);
+                const filterVal = (document.getElementById('adminClubFilter') || {}).value || '';
+                filterAdminClubs(filterVal);
+            } catch(e) {
+                openModal('Delete Failed', 'Could not delete club: ' + e.message, ()=>{});
+            }
+        }
+    );
 }
 </script>
 </body>

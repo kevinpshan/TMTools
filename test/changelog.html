@@ -91,12 +91,52 @@
 
 <div id="panel-released" class="tab-panel active">
 
-```
+<!-- v3.3.0 -->
+<div class="release">
+    <div class="release-header">
+        <div><div class="version-num">v3.3.0</div><div class="release-date">March 2026 &middot; Production</div></div>
+        <span class="release-tag tag-current">Current</span>
+        <span class="release-tag tag-feature">Feature</span>
+    </div>
+    <div class="release-body">
+        <div class="change-group">
+            <div class="change-group-label">New &mdash; Meeting Planner</div>
+            <ul>
+                <li>New <strong>Meeting Planner</strong> card on the Club tab — consolidates AI-powered meeting prep tools in one screen</li>
+                <li><strong>Meeting Theme Suggester:</strong> enter a meeting date, tap Suggest — GPT-4o-mini returns 5 theme cards with title and relevance sentence based on holidays, historical events, cultural observances, and seasonal themes near that date</li>
+                <li><strong>Table Topics Generator:</strong> tap any theme to select it, then Generate Table Topics — returns 8 varied, age-appropriate questions tailored to the chosen theme</li>
+                <li><strong>Copy &amp; Share:</strong> after generating table topics, Copy and Share buttons appear — output includes theme title, one-sentence description, and all 8 numbered questions. Markdown toggle applies: plain text with dividers or <code>##</code>/<code>###</code> headings for Slack/email</li>
+                <li><strong>Word of the Day</strong> moved into Meeting Planner — card shows active word if one is set, taps through to the existing WOD screen</li>
+                <li>WOD card removed from Verbal tab; replaced by a subtle gold banner at the top of the Verbal screen showing word, definition, and usage — only visible when a word is active</li>
+            </ul>
+        </div>
+        <div class="change-group">
+            <div class="change-group-label">New &mdash; Super Admin Login</div>
+            <ul>
+                <li>New <strong>Administrator</strong> section at the bottom of Settings — Sign In with Google button, invisible until tapped</li>
+                <li>Google Sign-In via Firebase Auth (compat v9.23.0) — popup flow, no redirect</li>
+                <li>Whitelist check against <code>superAdmins/{email}</code> Firestore collection — unauthorized accounts are signed out immediately with a "Not Authorized" message</li>
+                <li>Authorized admins see a green signed-in card with their email, a Sign Out button, and the Admin panel below</li>
+                <li><strong>Active Clubs panel:</strong> loads all club documents from Firestore showing club name, sync key ID, and last updated date</li>
+                <li>Live filter searches by club name or sync key ID</li>
+                <li>Delete button per club row — confirmation modal before permanent Firestore deletion; list updates immediately without reload</li>
+                <li>All existing features and screens completely unchanged — admin system is purely additive</li>
+            </ul>
+        </div>
+        <div class="change-group">
+            <div class="change-group-label">Bug Fixes</div>
+            <ul>
+                <li><strong>Partial name on backspace fixed:</strong> tapping a roster name now locks <code>rosterSelectedName</code>; backspacing preserves the lock. <code>handleStart</code> restores the full name if the field value is a prefix of the locked name — applies to both timer and counter modes</li>
+                <li><strong>DCP sync fixed:</strong> club number and district number now sync to new devices via all Firestore paths (<code>autoSyncUp</code>, <code>syncUp</code>, <code>enableSync</code>, <code>autoSyncDown</code>, <code>syncDown</code>, <code>askJoinByCode</code>); DCP cache busted on cloud pull</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
 <!-- v3.2.4 -->
 <div class="release">
     <div class="release-header">
         <div><div class="version-num">v3.2.4</div><div class="release-date">February 2026 &middot; Production</div></div>
-        <span class="release-tag tag-current">Current</span>
         <span class="release-tag tag-feature">Feature</span>
     </div>
     <div class="release-body">
@@ -396,7 +436,6 @@
         </div>
     </div>
 </div>
-```
 
 </div><!-- end panel-released -->
 
@@ -408,37 +447,6 @@
 
 <div id="panel-roadmap" class="tab-panel">
 
-<!-- DCP In Development -->
-<div class="release">
-    <div class="release-header">
-        <div><div class="version-num">DCP Dashboard</div><div class="release-date">In Development &middot; Target: v3.3.0</div></div>
-        <span class="release-tag tag-high">In Dev</span>
-        <span class="release-tag tag-feature">Feature</span>
-    </div>
-    <div class="release-body">
-        <div class="change-group">
-            <div class="change-group-label">Distinguished Club Program Dashboard</div>
-            <ul>
-                <li>New card in the Club tab: club DCP standing, recognition level, and progress on all 10 goals</li>
-                <li>Membership stats: current members vs goal, new members, charter strength</li>
-                <li>District ranking: club position within area and division</li>
-                <li>Data sourced from TI's dashboard via Firebase Cloud Function proxy (CORS bypass)</li>
-                <li>Local cache with daily refresh &mdash; Cloud Function not called if data is under 24 hours old</li>
-                <li>Responsive CSS Grid layout with iPhone / iPad / iPad Pro breakpoints</li>
-            </ul>
-        </div>
-        <div class="change-group">
-            <div class="change-group-label">Infrastructure Status</div>
-            <ul>
-                <li><strong>&#10003; Done:</strong> Firebase Cloud Function <code>fetchDCPData</code> deployed and tested (Node.js 20, us-central1)</li>
-                <li><strong>&#10003; Done:</strong> UI mockup built and validated across all device sizes</li>
-                <li><strong>Pending:</strong> Integration into main <code>index.html</code> and HTML parser for TI data</li>
-            </ul>
-        </div>
-    </div>
-</div>
-
-```
 <div class="release">
     <div class="release-body" style="padding:24px 25px;">
         <p style="font-size:16px;margin:0 0 16px;">Feature requests, bugs, and backlog items are tracked in GitHub Issues.</p>
@@ -446,7 +454,6 @@
         <a href="https://github.com/kevinpshan/TMTools/issues?q=is%3Aissue+state%3Aopen+label%3Abacklog" target="_blank" style="display:inline-block;background:#F0F0FF;color:#330099;font-weight:700;padding:12px 20px;border-radius:12px;text-decoration:none;margin-bottom:10px;">View backlog →</a>
     </div>
 </div>
-```
 
 </div><!-- end panel-roadmap -->
 
