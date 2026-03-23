@@ -411,7 +411,7 @@
         <div class="main-menu-card settings-card" onclick="showScreen('fillerManager')"><div class="card-content"><h3>Filler Words</h3><p>Add, edit, delete</p></div><div class="icon" style="font-size:30px;">💬</div></div>
         <div class="main-menu-card settings-card" style="cursor:default;"><div class="card-content"><h3>Markdown Export</h3><p>Enable Slack/Email tables</p></div><label class="switch"><input type="checkbox" id="mdToggle" onchange="saveSettings()"><span class="slider"></span></label></div>
         <div class="main-menu-card settings-card" style="cursor:default;flex-direction:column;align-items:flex-start;"><div class="card-content"><h3>ChatGPT API Key</h3><p id="apiKeySubtext">Shared with club via sync</p></div><input type="password" id="openaiKey" placeholder="Paste Key Here" onchange="saveSettings()" style="margin-top:12px;font-size:16px;"></div>
-        <div class="main-menu-card settings-card" onclick="editYourName()"><div class="card-content"><h3>Your Name</h3><p id="settingsDeviceName">Loading...</p></div><div class="icon" style="font-size:30px;">👤</div></div>
+        <div class="main-menu-card settings-card" onclick="showIdentitySettings()"><div class="card-content"><h3>Your Identity</h3><p id="settingsDeviceName">Loading...</p></div><div class="icon" style="font-size:30px;">👤</div></div>
         <div class="main-menu-card settings-card" onclick="exportData()"><div class="card-content"><h3>Backup Data</h3><p>Export JSON</p></div><div class="icon">⤓</div></div>
         <div class="main-menu-card settings-card" onclick="document.getElementById('importFile').click()"><div class="card-content"><h3>Restore Data</h3><p>Import JSON</p></div><div class="icon">⤒</div></div>
         <div class="main-menu-card settings-card" onclick="manageClubAdmin()"><div class="card-content"><h3>Club Admin</h3><p id="broadcastSendersSubtext">Broadcasts &amp; admin settings</p></div><div class="icon" style="font-size:30px;">🔐</div></div>
@@ -1345,20 +1345,99 @@ async function writeSession(sessionData) {
     } catch(e) { console.warn('Session cloud write failed:',e.message); }
 }
 
-/* Prompt for device name if not set, then run callback */
-function editYourName() {
-    const current = localStorage.getItem(pk(KEY_DEVICE_NAME)) || '';
-    openModal(
-        'Your Name',
-        '<div style="font-size:15px;color:var(--subtext);margin-bottom:12px;">Your name appears on session records so you can be identified as the recorder.</div>' +
-        '<input type="text" id="deviceNameInput" placeholder="First Last" value="' + current + '" style="text-transform:uppercase;width:100%;padding:10px;border:2px solid var(--border);border-radius:10px;font-size:16px;box-sizing:border-box;">',
+/* ---- Identity Settings — name + phone ---- */
+function showIdentitySettings() {
+    const currentName = localStorage.getItem(pk(KEY_DEVICE_NAME)) || '';
+    const currentPhone = localStorage.getItem(pk('verified_phone')) || '';
+    const phoneDisplay = currentPhone || 'Not verified';
+    openModal('Your Identity',
+        '<div style="font-size:13px;font-weight:700;color:var(--label);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Name</div>'
+        + '<input type="text" id="identityNameInput" placeholder="First Last" value="' + currentName + '" '
+        + 'style="text-transform:uppercase;width:100%;box-sizing:border-box;padding:10px;border:2px solid var(--border);border-radius:10px;font-size:16px;margin-bottom:16px;">'
+        + '<div style="font-size:13px;font-weight:700;color:var(--label);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Phone</div>'
+        + '<div style="display:flex;align-items:center;justify-content:space-between;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:4px;">'
+        + '<span style="font-size:15px;color:var(--text);">' + phoneDisplay + '</span>'
+        + '<button onclick="startChangePhone();document.getElementById(\'customModal\').style.display=\'none\';" '
+        + 'style="background:var(--accent);color:white;border:none;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;">Change</button>'
+        + '</div>'
+        + '<div style="font-size:12px;color:var(--label);margin-bottom:4px;">Changing your phone requires SMS verification.</div>',
         () => {
-            const val = document.getElementById('deviceNameInput').value.trim().toUpperCase();
-            if (!val) return;
-            localStorage.setItem(pk(KEY_DEVICE_NAME), val);
-            document.getElementById('settingsDeviceName').innerText = val;
+            const val = (document.getElementById('identityNameInput') || {}).value || '';
+            const name = val.trim().toUpperCase();
+            if (!name) return;
+            localStorage.setItem(pk(KEY_DEVICE_NAME), name);
+            // Update Firestore member record if verified
+            const phone = localStorage.getItem(pk('verified_phone'));
+            const club = getActiveClub();
+            if (phone && club && club.syncKey) {
+                db.collection('clubs').doc(club.syncKey).collection('members').doc(phone)
+                    .update({ name }).catch(() => {});
+            }
+            const ph = localStorage.getItem(pk('verified_phone')) || '';
+            document.getElementById('settingsDeviceName').innerText = name + (ph ? ' · ' + ph : ' · No phone verified');
         },
-        'Cancel', 'Save'
+        'Cancel', 'Save Name'
+    );
+}
+
+function startChangePhone() {
+    const club = getActiveClub();
+    if (!club || !club.syncKey || club.practiceOnly) {
+        openModal('Cloud Sync Required', 'Phone verification requires cloud sync.', () => {}); return;
+    }
+    openModal('Change Phone Number',
+        '<div style="font-size:14px;color:var(--label);margin-bottom:14px;">Enter your new mobile number. We\'ll send a verification code to confirm.</div>'
+        + '<input type="tel" id="changePhoneInput" placeholder="Mobile number (e.g. 845-555-1234)" '
+        + 'style="width:100%;box-sizing:border-box;font-size:18px;padding:12px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);text-align:center;">',
+        async () => {
+            const raw = ((document.getElementById('changePhoneInput') || {}).value || '').trim();
+            if (!raw) { openModal('Phone Required', 'Please enter your mobile number.', () => startChangePhone()); return; }
+            openModal('Sending Code', 'Sending verification code...', () => {}, null, null);
+            document.getElementById('modalConfirm').style.display = 'none';
+            document.getElementById('modalCancel').style.display = 'none';
+            sendPhoneVerification(raw,
+                (phoneE164) => {
+                    pendingJoinState = { code: club.syncKey, phone: phoneE164, changingPhone: true };
+                    showChangeSmsCodeEntry();
+                },
+                (e) => {
+                    openModal('Send Failed', 'Could not send SMS. Check your number and try again.', () => startChangePhone());
+                }
+            );
+        }, 'Cancel', 'Send Code'
+    );
+}
+
+function showChangeSmsCodeEntry() {
+    const phone = pendingJoinState.phone;
+    openModal('Enter Verification Code',
+        `<div style="font-size:14px;color:var(--label);margin-bottom:14px;">Enter the 6-digit code sent to ${phone}.</div>`
+        + '<input type="text" id="changeSmsCode" inputmode="numeric" maxlength="6" placeholder="------" '
+        + 'style="width:100%;box-sizing:border-box;font-size:28px;padding:14px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);text-align:center;letter-spacing:8px;">',
+        async () => {
+            const code = ((document.getElementById('changeSmsCode') || {}).value || '').trim();
+            if (code.length < 6) { openModal('Invalid Code', 'Please enter the full 6-digit code.', () => showChangeSmsCodeEntry()); return; }
+            verifyPhoneCode(code,
+                async () => {
+                    const { code: syncKey, phone } = pendingJoinState;
+                    const name = localStorage.getItem(pk(KEY_DEVICE_NAME)) || '';
+                    // Remove old phone record if exists
+                    const oldPhone = localStorage.getItem(pk('verified_phone'));
+                    if (oldPhone && oldPhone !== phone) {
+                        db.collection('clubs').doc(syncKey).collection('members').doc(oldPhone)
+                            .delete().catch(() => {});
+                    }
+                    // Save new phone record
+                    await saveMember(syncKey, phone, name);
+                    localStorage.setItem(pk('verified_phone'), phone);
+                    pendingJoinState = null;
+                    const ph = phone;
+                    document.getElementById('settingsDeviceName').innerText = name + ' · ' + ph;
+                    openModal('Phone Updated', 'Your phone number has been verified and updated.', () => {});
+                },
+                () => { openModal('Wrong Code', 'That code is incorrect or has expired.', () => showChangeSmsCodeEntry()); }
+            );
+        }, 'Cancel', 'Verify'
     );
 }
 
@@ -1703,7 +1782,12 @@ function showScreen(id){
     if(id==='paceRoleManager')renderPaceRoleManager();
     if(id==='dcp')loadDCPData(false);
     if(id==='auditLog')loadAuditLog();
-    if(id==='settings'){const n=localStorage.getItem(pk(KEY_DEVICE_NAME));document.getElementById('settingsDeviceName').innerText=n||'Tap to set your name'; if(currentAdminUser){renderAdminSignedIn();}else{renderAdminSignedOut();}}
+    if(id==='settings'){
+        const n=localStorage.getItem(pk(KEY_DEVICE_NAME));
+        const ph=localStorage.getItem(pk('verified_phone'));
+        document.getElementById('settingsDeviceName').innerText=(n||'Tap to set') + (ph ? ' · ' + ph : ' · No phone verified');
+        if(currentAdminUser){renderAdminSignedIn();}else{renderAdminSignedOut();}
+    }
 }
 
 /* ============ SETUP GRID ============ */
