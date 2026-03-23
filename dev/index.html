@@ -2199,6 +2199,14 @@ async function changePaceYear(dir) {
 
 /* ---- Entry screen ---- */
 async function showPaceEntryScreen() {
+    const club = getActiveClub();
+    if (!club || !club.syncKey || club.practiceOnly) {
+        openModal('Cloud Sync Required', 'PACE entry requires cloud sync to be enabled for this club.', () => {}); return;
+    }
+    if (!isAdminSession) {
+        requireAdmin(club, () => showPaceEntryScreen());
+        return;
+    }
     const today = new Date();
     const m = String(today.getMonth()+1).padStart(2,'0');
     const d = String(today.getDate()).padStart(2,'0');
