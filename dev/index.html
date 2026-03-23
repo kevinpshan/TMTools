@@ -1357,7 +1357,7 @@ function showIdentitySettings() {
         + '<div style="font-size:13px;font-weight:700;color:var(--label);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Phone</div>'
         + '<div style="display:flex;align-items:center;justify-content:space-between;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:4px;">'
         + '<span style="font-size:15px;color:var(--text);">' + phoneDisplay + '</span>'
-        + '<button onclick="startChangePhone();document.getElementById(\'customModal\').style.display=\'none\';" '
+        + '<button onclick="document.getElementById(\'customModal\').style.display=\'none\';setTimeout(startChangePhone,50);" '
         + 'style="background:var(--accent);color:white;border:none;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;">Change</button>'
         + '</div>'
         + '<div style="font-size:12px;color:var(--label);margin-bottom:4px;">Changing your phone requires SMS verification.</div>',
