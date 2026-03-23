@@ -3700,6 +3700,11 @@ let currentAdminUser = null;
 
 auth.onAuthStateChanged(async (user) => {
     if (user) {
+        // Phone auth users are not Super Admins — skip whitelist check entirely
+        if (!user.email) {
+            currentAdminUser = null;
+            return;
+        }
         console.log('Auth state: signed in as', user.email);
         // Verify against whitelist
         try {
