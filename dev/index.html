@@ -792,8 +792,96 @@ async function saveMember(syncKey, phoneE164, name) {
     });
 }
 
+/* ---- One-time phone verification prompt for existing members ---- */
+async function checkPhoneVerification() {
+    const club = getActiveClub();
+    if (!club || !club.syncKey || club.practiceOnly) return;
+    // Check if this device already has a verified phone on record
+    const verifiedPhone = localStorage.getItem(pk('verified_phone'));
+    if (verifiedPhone) return; // already verified on this device
+    // Delay slightly so the app finishes loading before prompting
+    setTimeout(() => {
+        openModal('One-Time Verification',
+            '<div style="font-size:15px;font-weight:700;margin-bottom:8px;">Verify your phone number</div>'
+            + '<div style="font-size:14px;color:var(--label);margin-bottom:16px;">We\'ve added identity verification to improve club security. This is a one-time step — you won\'t be asked again on this device.</div>'
+            + '<input type="tel" id="phoneInputVerify" placeholder="Mobile number (e.g. 845-555-1234)" '
+            + 'style="width:100%;box-sizing:border-box;font-size:18px;padding:12px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);text-align:center;">',
+            async () => {
+                const raw = (document.getElementById('phoneInputVerify') || {}).value || '';
+                if (!raw.trim()) { openModal('Phone Required', 'Please enter your mobile number.', () => checkPhoneVerification()); return; }
+                openModal('Sending Code', 'Sending verification code...', () => {}, null, null);
+                document.getElementById('modalConfirm').style.display = 'none';
+                document.getElementById('modalCancel').style.display = 'none';
+                sendPhoneVerification(raw.trim(),
+                    (phoneE164) => {
+                        pendingJoinState = { code: club.syncKey, clubData: { name: club.name }, clubId: null, phone: phoneE164, existingDevice: true };
+                        showExistingMemberSmsEntry();
+                    },
+                    (e) => {
+                        openModal('Send Failed', 'Could not send SMS. Check your number and try again.', () => checkPhoneVerification());
+                    }
+                );
+            }, 'Skip for Now', 'Send Code'
+        );
+    }, 1200);
+}
 
-const isDev  = window.location.pathname.toLowerCase().includes('/dev/');
+function showExistingMemberSmsEntry() {
+    const phone = pendingJoinState.phone;
+    const syncKey = pendingJoinState.code;
+    openModal('Enter Verification Code',
+        `<div style="font-size:14px;color:var(--label);margin-bottom:14px;">Enter the 6-digit code sent to ${phone}.</div>`
+        + '<input type="text" id="smsCodeExisting" inputmode="numeric" maxlength="6" placeholder="------" '
+        + 'style="width:100%;box-sizing:border-box;font-size:28px;padding:14px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);text-align:center;letter-spacing:8px;">',
+        async () => {
+            const code = ((document.getElementById('smsCodeExisting') || {}).value || '').trim();
+            if (code.length < 6) { openModal('Invalid Code', 'Please enter the full 6-digit code.', () => showExistingMemberSmsEntry()); return; }
+            verifyPhoneCode(code,
+                async () => {
+                    // Check if phone already in members collection
+                    const existing = await lookupMemberByPhone(syncKey, phone);
+                    if (existing) {
+                        // Already registered — just mark this device as verified
+                        localStorage.setItem(pk('verified_phone'), phone);
+                        // Update device name to match stored name
+                        localStorage.setItem(pk(KEY_DEVICE_NAME), existing.name);
+                        pendingJoinState = null;
+                        openModal('Verified!', 'Welcome back, ' + existing.name + '. Your identity has been confirmed.', () => {});
+                    } else {
+                        // Not in members yet — ask for name
+                        showExistingMemberNameEntry(syncKey, phone);
+                    }
+                },
+                () => { openModal('Wrong Code', 'That code is incorrect or has expired. Please try again.', () => showExistingMemberSmsEntry()); }
+            );
+        }, 'Skip for Now', 'Verify'
+    );
+}
+
+function showExistingMemberNameEntry(syncKey, phone) {
+    const currentName = localStorage.getItem(pk(KEY_DEVICE_NAME)) || '';
+    openModal('Confirm Your Name',
+        '<div style="font-size:14px;color:var(--label);margin-bottom:14px;">Confirm your name as it should appear in the club roster.</div>'
+        + `<input type="text" id="existingMemberName" value="${currentName}" maxlength="40" `
+        + 'style="width:100%;box-sizing:border-box;font-size:20px;padding:12px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);text-transform:uppercase;">',
+        async () => {
+            const name = ((document.getElementById('existingMemberName') || {}).value || '').trim().toUpperCase();
+            if (!name) { openModal('Name Required', 'Please enter your name.', () => showExistingMemberNameEntry(syncKey, phone)); return; }
+            try {
+                await saveMember(syncKey, phone, name);
+                localStorage.setItem(pk('verified_phone'), phone);
+                localStorage.setItem(pk(KEY_DEVICE_NAME), name);
+                pendingJoinState = null;
+                openModal('Verified!', 'Welcome, ' + name + '. Your identity has been confirmed.', () => {});
+            } catch(e) {
+                openModal('Error', 'Could not save your verification. Check your connection.', () => {});
+            }
+        }, null, 'Confirm'
+    );
+    document.getElementById('modalCancel').style.display = 'none';
+}
+
+
 const isTest = window.location.pathname.toLowerCase().includes('/test/');
 const prefix = isDev ? 'dev_' : isTest ? 'test_' : 'prod_';
 const KEY_CLUBS='clubs',KEY_ACTIVE_CLUB='active_club',KEY_MD='md_toggle',KEY_AI_KEY='openai_key',KEY_DEVICE_NAME='device_name',KEY_LAST_SESSION='last_session_ts';
@@ -885,6 +973,7 @@ function initApp() {
     autoSyncDown();
     checkStaleBanner();
     checkBroadcasts();
+    checkPhoneVerification();
 }
 
 /* ============ WELCOME SCREEN ============ */
