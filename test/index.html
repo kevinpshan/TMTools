@@ -411,10 +411,10 @@
         <div class="main-menu-card settings-card" onclick="showScreen('fillerManager')"><div class="card-content"><h3>Filler Words</h3><p>Add, edit, delete</p></div><div class="icon" style="font-size:30px;">💬</div></div>
         <div class="main-menu-card settings-card" style="cursor:default;"><div class="card-content"><h3>Markdown Export</h3><p>Enable Slack/Email tables</p></div><label class="switch"><input type="checkbox" id="mdToggle" onchange="saveSettings()"><span class="slider"></span></label></div>
         <div class="main-menu-card settings-card" style="cursor:default;flex-direction:column;align-items:flex-start;"><div class="card-content"><h3>ChatGPT API Key</h3><p id="apiKeySubtext">Shared with club via sync</p></div><input type="password" id="openaiKey" placeholder="Paste Key Here" onchange="saveSettings()" style="margin-top:12px;font-size:16px;"></div>
-        <div class="main-menu-card settings-card" onclick="editYourName()"><div class="card-content"><h3>Your Name</h3><p id="settingsDeviceName">Loading...</p></div><div class="icon" style="font-size:30px;">👤</div></div>
+        <div class="main-menu-card settings-card" onclick="showIdentitySettings()"><div class="card-content"><h3>Your Identity</h3><p id="settingsDeviceName">Loading...</p></div><div class="icon" style="font-size:30px;">👤</div></div>
         <div class="main-menu-card settings-card" onclick="exportData()"><div class="card-content"><h3>Backup Data</h3><p>Export JSON</p></div><div class="icon">⤓</div></div>
         <div class="main-menu-card settings-card" onclick="document.getElementById('importFile').click()"><div class="card-content"><h3>Restore Data</h3><p>Import JSON</p></div><div class="icon">⤒</div></div>
-        <div class="main-menu-card settings-card" onclick="manageBroadcastSenders()"><div class="card-content"><h3>Broadcast Senders</h3><p id="broadcastSendersSubtext">Manage who can send club messages</p></div><div class="icon" style="font-size:30px;">📢</div></div>
+        <div class="main-menu-card settings-card" onclick="manageClubAdmin()"><div class="card-content"><h3>Club Admin</h3><p id="broadcastSendersSubtext">Broadcasts &amp; admin settings</p></div><div class="icon" style="font-size:30px;">🔐</div></div>
         <div class="main-menu-card settings-card" onclick="showScreen('auditLog')"><div class="card-content"><h3>Audit Log</h3><p>Club activity history</p></div><div class="icon" style="font-size:30px;">&#128269;</div></div>
         <div class="main-menu-card settings-card" onclick="askClearLogs()" style="background:#FFF5F5;border:2px solid var(--red);"><div class="card-content"><h3 style="color:var(--red);">Clear Meeting Data</h3><p>Reset logs, WOD, transcripts</p></div><div class="icon">⚠</div></div>
         <input type="file" id="importFile" style="display:none" onchange="handleImportFile(this)">
@@ -529,7 +529,7 @@
         <button class="pace-year-btn" onclick="changePaceYear(1)">&#8249;</button>
         <span class="pace-year-label" id="paceYearLabel">2025-26</span>
         <button class="pace-year-btn" onclick="changePaceYear(-1)">&#8250;</button>
-        <button onclick="showScreen('paceRoleManager')" style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:8px 14px;font-size:14px;font-weight:700;color:var(--accent);cursor:pointer;margin-left:8px;">Roles &#9881;</button>
+        <button onclick="requireAdmin(getActiveClub(), () => showScreen('paceRoleManager'))" style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:8px 14px;font-size:14px;font-weight:700;color:var(--accent);cursor:pointer;margin-left:8px;">Roles &#9881;</button>
         <button onclick="showPaceEmbedModal()" style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:8px 14px;font-size:14px;font-weight:700;color:var(--accent);cursor:pointer;margin-left:8px;">Embed &#8599;</button>
     </div>
     <div class="container">
@@ -735,13 +735,161 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
 
-/* ============ KEY ARCHITECTURE v3.1.0 ============ */
+
 const isDev  = window.location.pathname.toLowerCase().includes('/dev/');
 const isTest = window.location.pathname.toLowerCase().includes('/test/');
 const prefix = isDev ? 'dev_' : isTest ? 'test_' : 'prod_';
 const KEY_CLUBS='clubs',KEY_ACTIVE_CLUB='active_club',KEY_MD='md_toggle',KEY_AI_KEY='openai_key',KEY_DEVICE_NAME='device_name',KEY_LAST_SESSION='last_session_ts';
 const pk = k => prefix + k;
 const DEFAULT_FILLERS = ["AH","UH","UM","ER","SO","LIKE","YOU KNOW","WORD OF DAY"];
+
+/* ============ PHONE AUTH ============ */
+let phoneConfirmationResult = null;
+let pendingJoinState = null; // holds { code, clubData, clubId } during phone verification
+
+function getRecaptchaVerifier() {
+    if (window._recaptchaVerifier) return window._recaptchaVerifier;
+    window._recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', { size: 'invisible' });
+    return window._recaptchaVerifier;
+}
+
+function formatPhoneE164(raw) {
+    // Strip everything except digits and leading +
+    const digits = raw.replace(/\D/g, '');
+    if (digits.length === 10) return '+1' + digits; // assume US
+    if (digits.length === 11 && digits[0] === '1') return '+' + digits;
+    return '+' + digits;
+}
+
+async function sendPhoneVerification(phoneRaw, onSuccess, onError) {
+    const phone = formatPhoneE164(phoneRaw);
+    try {
+        const verifier = getRecaptchaVerifier();
+        phoneConfirmationResult = await auth.signInWithPhoneNumber(phone, verifier);
+        onSuccess(phone);
+    } catch(e) {
+        // Reset recaptcha on error so it can be retried
+        window._recaptchaVerifier = null;
+        onError(e);
+    }
+}
+
+async function verifyPhoneCode(code, onSuccess, onError) {
+    if (!phoneConfirmationResult) { onError(new Error('No pending verification')); return; }
+    try {
+        await phoneConfirmationResult.confirm(code);
+        onSuccess();
+    } catch(e) {
+        onError(e);
+    }
+}
+
+async function lookupMemberByPhone(syncKey, phoneE164) {
+    try {
+        const doc = await db.collection('clubs').doc(syncKey).collection('members').doc(phoneE164).get();
+        if (doc.exists) return doc.data();
+    } catch(e) {}
+    return null;
+}
+
+async function saveMember(syncKey, phoneE164, name) {
+    await db.collection('clubs').doc(syncKey).collection('members').doc(phoneE164).set({
+        name: name,
+        joinedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        blocked: false
+    });
+}
+
+/* ---- One-time phone verification prompt for existing members ---- */
+async function checkPhoneVerification() {
+    const club = getActiveClub();
+    if (!club || !club.syncKey || club.practiceOnly) return;
+    // Check if this device already has a verified phone on record
+    const verifiedPhone = localStorage.getItem(pk('verified_phone'));
+    if (verifiedPhone) return; // already verified on this device
+    // Delay slightly so the app finishes loading before prompting
+    setTimeout(() => {
+        openModal('One-Time Verification',
+            '<div style="font-size:15px;font-weight:700;margin-bottom:8px;">Verify your phone number</div>'
+            + '<div style="font-size:14px;color:var(--label);margin-bottom:16px;">We\'ve added identity verification to improve club security. This is a one-time step — you won\'t be asked again on this device.</div>'
+            + '<input type="tel" id="phoneInputVerify" placeholder="Mobile number (e.g. 845-555-1234)" '
+            + 'style="width:100%;box-sizing:border-box;font-size:18px;padding:12px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);text-align:center;">',
+            async () => {
+                const raw = (document.getElementById('phoneInputVerify') || {}).value || '';
+                if (!raw.trim()) { openModal('Phone Required', 'Please enter your mobile number.', () => checkPhoneVerification()); return; }
+                openModal('Sending Code', 'Sending verification code...', () => {}, null, null);
+                document.getElementById('modalConfirm').style.display = 'none';
+                document.getElementById('modalCancel').style.display = 'none';
+                sendPhoneVerification(raw.trim(),
+                    (phoneE164) => {
+                        pendingJoinState = { code: club.syncKey, clubData: { name: club.name }, clubId: null, phone: phoneE164, existingDevice: true };
+                        showExistingMemberSmsEntry();
+                    },
+                    (e) => {
+                        openModal('Send Failed', 'Could not send SMS. Check your number and try again.', () => checkPhoneVerification());
+                    }
+                );
+            }, 'Skip for Now', 'Send Code'
+        );
+    }, 1200);
+}
+
+function showExistingMemberSmsEntry() {
+    const phone = pendingJoinState.phone;
+    const syncKey = pendingJoinState.code;
+    openModal('Enter Verification Code',
+        `<div style="font-size:14px;color:var(--label);margin-bottom:14px;">Enter the 6-digit code sent to ${phone}.</div>`
+        + '<input type="text" id="smsCodeExisting" inputmode="numeric" maxlength="6" placeholder="------" '
+        + 'style="width:100%;box-sizing:border-box;font-size:28px;padding:14px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);text-align:center;letter-spacing:8px;">',
+        async () => {
+            const code = ((document.getElementById('smsCodeExisting') || {}).value || '').trim();
+            if (code.length < 6) { openModal('Invalid Code', 'Please enter the full 6-digit code.', () => showExistingMemberSmsEntry()); return; }
+            verifyPhoneCode(code,
+                async () => {
+                    // Check if phone already in members collection
+                    const existing = await lookupMemberByPhone(syncKey, phone);
+                    if (existing) {
+                        // Already registered — just mark this device as verified
+                        localStorage.setItem(pk('verified_phone'), phone);
+                        // Update device name to match stored name
+                        localStorage.setItem(pk(KEY_DEVICE_NAME), existing.name);
+                        pendingJoinState = null;
+                        openModal('Verified!', 'Welcome back, ' + existing.name + '. Your identity has been confirmed.', () => {});
+                    } else {
+                        // Not in members yet — ask for name
+                        showExistingMemberNameEntry(syncKey, phone);
+                    }
+                },
+                () => { openModal('Wrong Code', 'That code is incorrect or has expired. Please try again.', () => showExistingMemberSmsEntry()); }
+            );
+        }, 'Skip for Now', 'Verify'
+    );
+}
+
+function showExistingMemberNameEntry(syncKey, phone) {
+    const currentName = localStorage.getItem(pk(KEY_DEVICE_NAME)) || '';
+    openModal('Confirm Your Name',
+        '<div style="font-size:14px;color:var(--label);margin-bottom:14px;">Confirm your name as it should appear in the club roster.</div>'
+        + `<input type="text" id="existingMemberName" value="${currentName}" maxlength="40" `
+        + 'style="width:100%;box-sizing:border-box;font-size:20px;padding:12px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);text-transform:uppercase;">',
+        async () => {
+            const name = ((document.getElementById('existingMemberName') || {}).value || '').trim().toUpperCase();
+            if (!name) { openModal('Name Required', 'Please enter your name.', () => showExistingMemberNameEntry(syncKey, phone)); return; }
+            try {
+                await saveMember(syncKey, phone, name);
+                localStorage.setItem(pk('verified_phone'), phone);
+                localStorage.setItem(pk(KEY_DEVICE_NAME), name);
+                pendingJoinState = null;
+                openModal('Verified!', 'Welcome, ' + name + '. Your identity has been confirmed.', () => {});
+            } catch(e) {
+                openModal('Error', 'Could not save your verification. Check your connection.', () => {});
+            }
+        }, null, 'Confirm'
+    );
+    document.getElementById('modalCancel').style.display = 'none';
+}
+
+
 
 let clubs=[], activeClubId='';
 function clubKey(s) { return prefix+'club_'+activeClubId+'_'+s; }
@@ -828,37 +976,133 @@ function initApp() {
     autoSyncDown();
     checkStaleBanner();
     checkBroadcasts();
+    checkPhoneVerification();
 }
 
 /* ============ WELCOME SCREEN ============ */
 function showWelcomeJoin() {
     openModal("Join Club by Code",
-        `<div style="font-size:16px;color:var(--subtext);margin-bottom:12px;">Ask your club officer for the sync code.</div>
+        `<div style="font-size:14px;color:var(--subtext);margin-bottom:12px;">Ask your club officer for the sync code.</div>
         <input type="text" id="joinCode" placeholder="XXXX-XXXX" style="text-transform:uppercase;letter-spacing:2px;text-align:center;" maxlength="9">`,
-        async ()=>{
-            const code=document.getElementById('joinCode').value.trim().toUpperCase();
-            if(code.length<8){openModal("Invalid Code","Please enter a valid 8-character sync code.",()=>{});return;}
+        async () => {
+            const code = document.getElementById('joinCode').value.trim().toUpperCase();
+            if (code.length < 8) { openModal("Invalid Code","Please enter a valid 8-character sync code.",()=>{}); return; }
             try {
-                const doc=await db.collection('clubs').doc(code).get();
-                if(!doc.exists){openModal("Not Found","No club found with that code. Please check and try again.",()=>{});return;}
-                const data=doc.data();
-                const clubId='c'+Date.now();
-                clubs=JSON.parse(localStorage.getItem(pk(KEY_CLUBS))||'[]');
-                clubs.push({id:clubId,name:data.name,syncKey:code,practiceOnly:false});
-                localStorage.setItem(pk(KEY_CLUBS),JSON.stringify(clubs));
-                localStorage.setItem(pk(KEY_ACTIVE_CLUB),clubId);
-                if(data.speakers) localStorage.setItem(prefix+'club_'+clubId+'_speakers',JSON.stringify(data.speakers));
-                if(data.fillers)   localStorage.setItem(prefix+'club_'+clubId+'_fillers',JSON.stringify(data.fillers));
-                if(data.apiKey)    localStorage.setItem(pk(KEY_AI_KEY),data.apiKey);
-                loadClubData(); updateClubUI();
-                const keyEl=document.getElementById('openaiKey'); if(keyEl){keyEl.value=data.apiKey||''; if(data.apiKey)keyEl.placeholder='Shared by club ☁';}
-                refreshRoster(); nextWod(); autoSyncDown();
-                showScreen('menu');
+                const doc = await db.collection('clubs').doc(code).get();
+                if (!doc.exists) { openModal("Not Found","No club found with that code. Please check and try again.",()=>{}); return; }
+                pendingJoinState = { code, clubData: doc.data(), clubId: 'c'+Date.now() };
+                showPhoneEntry();
             } catch(e) {
                 openModal("Connection Error","Could not connect. Check your internet and try again.",()=>{});
             }
         }
     );
+}
+
+function showPhoneEntry() {
+    const clubName = pendingJoinState ? pendingJoinState.clubData.name : 'the club';
+    openModal("Verify Your Identity",
+        `<div style="font-size:14px;color:var(--label);margin-bottom:14px;">We'll send a verification code to your mobile number to confirm your identity before joining <strong>${clubName}</strong>.</div>
+        <input type="tel" id="phoneInput" placeholder="Mobile number (e.g. 845-555-1234)"
+        style="width:100%;box-sizing:border-box;font-size:18px;padding:12px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);text-align:center;">`,
+        async () => {
+            const raw = (document.getElementById('phoneInput').value || '').trim();
+            if (!raw) { openModal("Phone Required","Please enter your mobile number.",()=>{}); return; }
+            openModal("Sending Code","Sending verification code...",()=>{}, null, null);
+            document.getElementById('modalConfirm').style.display = 'none';
+            document.getElementById('modalCancel').style.display = 'none';
+            sendPhoneVerification(raw,
+                (phoneE164) => {
+                    pendingJoinState.phone = phoneE164;
+                    showSmsCodeEntry();
+                },
+                (e) => {
+                    openModal("Send Failed","Could not send SMS. Check your number and try again. (" + (e.message||'unknown error') + ")",()=>showPhoneEntry());
+                }
+            );
+        }, 'Cancel', 'Send Code'
+    );
+}
+
+function showSmsCodeEntry() {
+    openModal("Enter Verification Code",
+        `<div style="font-size:14px;color:var(--label);margin-bottom:14px;">Enter the 6-digit code sent to ${pendingJoinState.phone}.</div>
+        <input type="text" id="smsCode" inputmode="numeric" maxlength="6" placeholder="------"
+        style="width:100%;box-sizing:border-box;font-size:28px;padding:14px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);text-align:center;letter-spacing:8px;">`,
+        async () => {
+            const code = (document.getElementById('smsCode').value || '').trim();
+            if (code.length < 6) { openModal("Invalid Code","Please enter the full 6-digit code.",()=>showSmsCodeEntry()); return; }
+            verifyPhoneCode(code,
+                async () => {
+                    // Verified — look up member record
+                    const { code: syncKey, clubData, clubId, phone } = pendingJoinState;
+                    const existing = await lookupMemberByPhone(syncKey, phone);
+                    if (existing && existing.blocked) {
+                        openModal("Access Denied","Your access to this club has been removed. Please contact your club officer.",()=>{});
+                        pendingJoinState = null;
+                        return;
+                    }
+                    if (existing) {
+                        // Returning member — auto-fill name
+                        completeJoin(syncKey, clubData, clubId, existing.name);
+                    } else {
+                        // New member — ask for name
+                        showNameEntry(syncKey, clubData, clubId, phone);
+                    }
+                },
+                (e) => {
+                    openModal("Wrong Code","That code is incorrect or has expired. Please try again.",()=>showSmsCodeEntry());
+                }
+            );
+        }, 'Back', 'Verify'
+    );
+    // Back button re-shows phone entry
+    setTimeout(() => {
+        const cancelBtn = document.getElementById('modalCancel');
+        if (cancelBtn) cancelBtn.onclick = () => { document.getElementById('customModal').style.display='none'; showPhoneEntry(); };
+    }, 100);
+}
+
+function showNameEntry(syncKey, clubData, clubId, phone) {
+    openModal("One Last Thing",
+        `<div style="font-size:14px;color:var(--label);margin-bottom:14px;">Enter your name as it should appear in the club roster.</div>
+        <input type="text" id="memberName" placeholder="First Last" maxlength="40"
+        style="width:100%;box-sizing:border-box;font-size:20px;padding:12px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);text-transform:uppercase;">`,
+        async () => {
+            const name = (document.getElementById('memberName').value || '').trim().toUpperCase();
+            if (!name) { openModal("Name Required","Please enter your name.",()=>showNameEntry(syncKey,clubData,clubId,phone)); return; }
+            try {
+                await saveMember(syncKey, phone, name);
+                completeJoin(syncKey, clubData, clubId, name);
+            } catch(e) {
+                openModal("Error","Could not save your membership. Check your connection.",()=>{});
+            }
+        }, null, 'Join Club'
+    );
+    document.getElementById('modalCancel').style.display = 'none';
+}
+
+function completeJoin(syncKey, clubData, clubId, name) {
+    clubs = JSON.parse(localStorage.getItem(pk(KEY_CLUBS)) || '[]');
+    clubs.push({ id: clubId, name: clubData.name, syncKey, practiceOnly: false });
+    localStorage.setItem(pk(KEY_CLUBS), JSON.stringify(clubs));
+    localStorage.setItem(pk(KEY_ACTIVE_CLUB), clubId);
+    // Set device name to verified member name
+    localStorage.setItem(pk(KEY_DEVICE_NAME), name);
+    if (clubData.speakers) localStorage.setItem(prefix+'club_'+clubId+'_speakers', JSON.stringify(clubData.speakers));
+    if (clubData.fillers)  localStorage.setItem(prefix+'club_'+clubId+'_fillers',   JSON.stringify(clubData.fillers));
+    if (clubData.apiKey)   localStorage.setItem(pk(KEY_AI_KEY), clubData.apiKey);
+    if (clubData.dcpClubId && clubData.dcpDistrictId) {
+        localStorage.setItem(DCP_CONFIG_KEY, JSON.stringify({ clubId: clubData.dcpClubId, districtId: clubData.dcpDistrictId }));
+    }
+    activeClubId = clubId;
+    pendingJoinState = null;
+    loadClubData(); updateClubUI();
+    const keyEl = document.getElementById('openaiKey');
+    if (keyEl) { keyEl.value = clubData.apiKey || ''; if (clubData.apiKey) keyEl.placeholder = 'Shared by club ☁'; }
+    refreshRoster(); nextWod(); autoSyncDown();
+    showScreen('menu');
+    openModal("Welcome, " + name + "!","You've joined " + clubData.name + ". Your identity has been verified.",()=>{});
 }
 
 function showWelcomeCreate() {
@@ -1027,36 +1271,21 @@ function reconnectSync(clubId) {
 
 /* ============ FIREBASE — JOIN BY CODE ============ */
 function askJoinByCode() {
-    openModal("Join Club by Code",`<input type="text" id="joinCode" placeholder="XXXX-XXXX" style="text-transform:uppercase;letter-spacing:2px;text-align:center;" maxlength="9">`,async ()=>{
-        const code=document.getElementById('joinCode').value.trim().toUpperCase();
-        if(code.length<8){openModal("Invalid Code","Please enter a valid 8-character sync code.",()=>{});return;}
-        try {
-            const doc=await db.collection('clubs').doc(code).get();
-            if(!doc.exists){openModal("Not Found","No club found with that code. Please check and try again.",()=>{});return;}
-            const data=doc.data();
-            const clubId='c'+Date.now();
-            clubs.push({id:clubId,name:data.name,syncKey:code});
-            localStorage.setItem(pk(KEY_CLUBS),JSON.stringify(clubs));
-            if(data.speakers) localStorage.setItem(prefix+'club_'+clubId+'_speakers',JSON.stringify(data.speakers));
-            if(data.fillers) localStorage.setItem(prefix+'club_'+clubId+'_fillers',JSON.stringify(data.fillers));
-            if(data.apiKey) {
-                localStorage.setItem(pk(KEY_AI_KEY), data.apiKey);
-                const el=document.getElementById('openaiKey');
-                if(el){ el.value=data.apiKey; el.placeholder='Shared by club ☁'; }
+    openModal("Join Club by Code",
+        `<input type="text" id="joinCode" placeholder="XXXX-XXXX" style="text-transform:uppercase;letter-spacing:2px;text-align:center;" maxlength="9">`,
+        async () => {
+            const code = document.getElementById('joinCode').value.trim().toUpperCase();
+            if (code.length < 8) { openModal("Invalid Code","Please enter a valid 8-character sync code.",()=>{}); return; }
+            try {
+                const doc = await db.collection('clubs').doc(code).get();
+                if (!doc.exists) { openModal("Not Found","No club found with that code. Please check and try again.",()=>{}); return; }
+                pendingJoinState = { code, clubData: doc.data(), clubId: 'c'+Date.now() };
+                showPhoneEntry();
+            } catch(e) {
+                openModal("Connection Error","Could not connect to cloud. Check your internet and try again.",()=>{});
             }
-            // DCP config: populate from cloud on join so new device gets club/district numbers
-            if(data.dcpClubId && data.dcpDistrictId) {
-                localStorage.setItem(DCP_CONFIG_KEY, JSON.stringify({ clubId: data.dcpClubId, districtId: data.dcpDistrictId }));
-            }
-            activeClubId=clubId;
-            localStorage.setItem(pk(KEY_ACTIVE_CLUB),clubId);
-            loadClubData(); updateClubUI(); renderClubManager();
-            const keyMsg = data.apiKey ? ' Roster, filler words, and AI key synced.' : ' Roster and filler words synced. No AI key found in cloud.';
-            openModal("Joined!",`Welcome to ${data.name}.${keyMsg}`,()=>{});
-        } catch(e) {
-            openModal("Connection Error","Could not connect to cloud. Check your internet and try again.",()=>{});
         }
-    });
+    );
 }
 
 /* ============ FIREBASE — SYNC UP ============ */
@@ -1116,44 +1345,138 @@ async function writeSession(sessionData) {
     } catch(e) { console.warn('Session cloud write failed:',e.message); }
 }
 
-/* Prompt for device name if not set, then run callback */
-function editYourName() {
-    const current = localStorage.getItem(pk(KEY_DEVICE_NAME)) || '';
-    openModal(
-        'Your Name',
-        '<div style="font-size:15px;color:var(--subtext);margin-bottom:12px;">Your name appears on session records so you can be identified as the recorder.</div>' +
-        '<input type="text" id="deviceNameInput" placeholder="First Last" value="' + current + '" style="text-transform:uppercase;width:100%;padding:10px;border:2px solid var(--border);border-radius:10px;font-size:16px;box-sizing:border-box;">',
+/* ---- Identity Settings — name + phone ---- */
+function showIdentitySettings() {
+    const currentName = localStorage.getItem(pk(KEY_DEVICE_NAME)) || '';
+    const currentPhone = localStorage.getItem(pk('verified_phone')) || '';
+    const phoneDisplay = currentPhone || 'Not verified';
+    openModal('Your Identity',
+        '<div style="font-size:13px;font-weight:700;color:var(--label);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Name</div>'
+        + '<input type="text" id="identityNameInput" placeholder="First Last" value="' + currentName + '" '
+        + 'style="text-transform:uppercase;width:100%;box-sizing:border-box;padding:10px;border:2px solid var(--border);border-radius:10px;font-size:16px;margin-bottom:16px;">'
+        + '<div style="font-size:13px;font-weight:700;color:var(--label);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Phone</div>'
+        + '<div style="display:flex;align-items:center;justify-content:space-between;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:4px;">'
+        + '<span style="font-size:15px;color:var(--text);">' + phoneDisplay + '</span>'
+        + '<button onclick="document.getElementById(\'customModal\').style.display=\'none\';setTimeout(startChangePhone,50);" '
+        + 'style="background:var(--accent);color:white;border:none;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;">Change</button>'
+        + '</div>'
+        + '<div style="font-size:12px;color:var(--label);margin-bottom:4px;">Changing your phone requires SMS verification.</div>',
         () => {
-            const val = document.getElementById('deviceNameInput').value.trim().toUpperCase();
-            if (!val) return;
-            localStorage.setItem(pk(KEY_DEVICE_NAME), val);
-            document.getElementById('settingsDeviceName').innerText = val;
+            const val = (document.getElementById('identityNameInput') || {}).value || '';
+            const name = val.trim().toUpperCase();
+            if (!name) return;
+            localStorage.setItem(pk(KEY_DEVICE_NAME), name);
+            // Update Firestore member record if verified
+            const phone = localStorage.getItem(pk('verified_phone'));
+            const club = getActiveClub();
+            if (phone && club && club.syncKey) {
+                db.collection('clubs').doc(club.syncKey).collection('members').doc(phone)
+                    .update({ name }).catch(() => {});
+            }
+            const ph = localStorage.getItem(pk('verified_phone')) || '';
+            document.getElementById('settingsDeviceName').innerText = name + (ph ? ' · ' + ph : ' · No phone verified');
         },
-        'Cancel', 'Save'
+        'Cancel', 'Save Name'
+    );
+}
+
+function startChangePhone() {
+    const club = getActiveClub();
+    if (!club || !club.syncKey || club.practiceOnly) {
+        openModal('Cloud Sync Required', 'Phone verification requires cloud sync.', () => {}); return;
+    }
+    openModal('Change Phone Number',
+        '<div style="font-size:14px;color:var(--label);margin-bottom:14px;">Enter your new mobile number. We\'ll send a verification code to confirm.</div>'
+        + '<input type="tel" id="changePhoneInput" placeholder="Mobile number (e.g. 845-555-1234)" '
+        + 'style="width:100%;box-sizing:border-box;font-size:18px;padding:12px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);text-align:center;">',
+        async () => {
+            const raw = ((document.getElementById('changePhoneInput') || {}).value || '').trim();
+            if (!raw) { openModal('Phone Required', 'Please enter your mobile number.', () => startChangePhone()); return; }
+            openModal('Sending Code', 'Sending verification code...', () => {}, null, null);
+            document.getElementById('modalConfirm').style.display = 'none';
+            document.getElementById('modalCancel').style.display = 'none';
+            sendPhoneVerification(raw,
+                (phoneE164) => {
+                    pendingJoinState = { code: club.syncKey, phone: phoneE164, changingPhone: true };
+                    showChangeSmsCodeEntry();
+                },
+                (e) => {
+                    openModal('Send Failed', 'Could not send SMS. Check your number and try again.', () => startChangePhone());
+                }
+            );
+        }, 'Cancel', 'Send Code'
+    );
+}
+
+function showChangeSmsCodeEntry() {
+    const phone = pendingJoinState.phone;
+    openModal('Enter Verification Code',
+        `<div style="font-size:14px;color:var(--label);margin-bottom:14px;">Enter the 6-digit code sent to ${phone}.</div>`
+        + '<input type="text" id="changeSmsCode" inputmode="numeric" maxlength="6" placeholder="------" '
+        + 'style="width:100%;box-sizing:border-box;font-size:28px;padding:14px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);text-align:center;letter-spacing:8px;">',
+        async () => {
+            const code = ((document.getElementById('changeSmsCode') || {}).value || '').trim();
+            if (code.length < 6) { openModal('Invalid Code', 'Please enter the full 6-digit code.', () => showChangeSmsCodeEntry()); return; }
+            verifyPhoneCode(code,
+                async () => {
+                    const { code: syncKey, phone } = pendingJoinState;
+                    const name = localStorage.getItem(pk(KEY_DEVICE_NAME)) || '';
+                    // Remove old phone record if exists
+                    const oldPhone = localStorage.getItem(pk('verified_phone'));
+                    if (oldPhone && oldPhone !== phone) {
+                        db.collection('clubs').doc(syncKey).collection('members').doc(oldPhone)
+                            .delete().catch(() => {});
+                    }
+                    // Save new phone record
+                    await saveMember(syncKey, phone, name);
+                    localStorage.setItem(pk('verified_phone'), phone);
+                    pendingJoinState = null;
+                    const ph = phone;
+                    document.getElementById('settingsDeviceName').innerText = name + ' · ' + ph;
+                    openModal('Phone Updated', 'Your phone number has been verified and updated.', () => {});
+                },
+                () => { openModal('Wrong Code', 'That code is incorrect or has expired.', () => showChangeSmsCodeEntry()); }
+            );
+        }, 'Cancel', 'Verify'
     );
 }
 
 function getDeviceName(callback) {
-    const stored = localStorage.getItem(pk(KEY_DEVICE_NAME));
-    if (stored) { callback(stored); return; }
-    openModal(
-        "Your Name",
-        `<div style="font-size:15px;color:var(--subtext);margin-bottom:12px;">Enter your full name so sessions you record can be identified. This is stored on this device only.</div>
-        <input type="text" id="deviceNameInput" placeholder="First Last" style="text-transform:uppercase;">`,
-        () => {
-            const val = document.getElementById('deviceNameInput').value.trim().toUpperCase();
-            if (!val) { getDeviceName(callback); return; }
-            const parts = val.split(' ').filter(p=>p.length>0);
-            if (parts.length < 2) {
-                openModal("Full Name Required", "Please enter both your first and last name so your sessions can be identified.", () => getDeviceName(callback), "OK", "");
-                return;
-            }
-            localStorage.setItem(pk(KEY_DEVICE_NAME), val);
-            callback(val);
-        },
-        "Cancel", "Save"
+    const club = getActiveClub();
+    const isPractice = !club || club.practiceOnly || !club.syncKey;
+
+    const storedName = localStorage.getItem(pk(KEY_DEVICE_NAME));
+    const verifiedPhone = localStorage.getItem(pk('verified_phone'));
+
+    // Practice/test clubs — name only required, no phone
+    if (isPractice) {
+        if (storedName) { callback(storedName); return; }
+        openModal('Your Name',
+            '<div style="font-size:15px;color:var(--subtext);margin-bottom:12px;">Enter your full name so sessions you record can be identified.</div>'
+            + '<input type="text" id="deviceNameInput" placeholder="First Last" style="text-transform:uppercase;">',
+            () => {
+                const val = (document.getElementById('deviceNameInput').value || '').trim().toUpperCase();
+                if (!val) { getDeviceName(callback); return; }
+                localStorage.setItem(pk(KEY_DEVICE_NAME), val);
+                callback(val);
+            }, 'Cancel', 'Save'
+        );
+        return;
+    }
+
+    // Cloud club — both name AND verified phone required
+    if (storedName && verifiedPhone) { callback(storedName); return; }
+
+    // Missing one or both — send through identity verification
+    openModal('Identity Required',
+        '<div style="font-size:15px;color:var(--subtext);margin-bottom:12px;">You need to verify your identity before recording sessions for this club.</div>'
+        + '<div style="font-size:14px;font-weight:700;color:var(--text);">Go to Settings → Your Identity to set your name and verify your phone number.</div>',
+        () => { showScreen('settings'); },
+        null, 'Go to Settings'
     );
+    document.getElementById('modalCancel').style.display = 'none';
 }
+
 
 /* ============ CLUB SWITCHER ============ */
 function showClubSwitcher() {
@@ -1474,7 +1797,12 @@ function showScreen(id){
     if(id==='paceRoleManager')renderPaceRoleManager();
     if(id==='dcp')loadDCPData(false);
     if(id==='auditLog')loadAuditLog();
-    if(id==='settings'){const n=localStorage.getItem(pk(KEY_DEVICE_NAME));document.getElementById('settingsDeviceName').innerText=n||'Tap to set your name'; if(currentAdminUser){renderAdminSignedIn();}else{renderAdminSignedOut();}}
+    if(id==='settings'){
+        const n=localStorage.getItem(pk(KEY_DEVICE_NAME));
+        const ph=localStorage.getItem(pk('verified_phone'));
+        document.getElementById('settingsDeviceName').innerText=(n||'Tap to set') + (ph ? ' · ' + ph : ' · No phone verified');
+        if(currentAdminUser){renderAdminSignedIn();}else{renderAdminSignedOut();}
+    }
 }
 
 /* ============ SETUP GRID ============ */
@@ -2057,7 +2385,7 @@ const PACE_ROLES = [
     {name:'EVALUATOR',           points:10},
     {name:'GENERAL EVALUATOR',   points:7},
     {name:'JOKE MASTER',         points:5},
-    {name:'TABLE TOPICS MASTER', points:3},
+    {name:'TABLE TOPICS',        points:3},
     {name:'TIMER',               points:2},
     {name:'AH COUNTER',          points:2},
 ];
@@ -2199,6 +2527,14 @@ async function changePaceYear(dir) {
 
 /* ---- Entry screen ---- */
 async function showPaceEntryScreen() {
+    const club = getActiveClub();
+    if (!club || !club.syncKey || club.practiceOnly) {
+        openModal('Cloud Sync Required', 'PACE entry requires cloud sync to be enabled for this club.', () => {}); return;
+    }
+    if (!isAdminSession) {
+        requireAdmin(club, () => showPaceEntryScreen());
+        return;
+    }
     const today = new Date();
     const m = String(today.getMonth()+1).padStart(2,'0');
     const d = String(today.getDate()).padStart(2,'0');
@@ -2905,6 +3241,7 @@ function markBroadcastSeen(id) {
 }
 
 let broadcastQueue = [];
+let isAdminSession = false;  // true after successful PIN entry — lasts until app is closed
 let currentBroadcastId = null;
 
 async function checkBroadcasts() {
@@ -2953,9 +3290,7 @@ async function getClubAdminData(syncKey) {
     const doc = await db.collection('clubs').doc(syncKey).get();
     const data = doc.data() || {};
     return {
-        adminDevices:     data.adminDevices     || [],
-        adminPinHash:     data.adminPinHash     || null,
-        broadcastSenders: data.broadcastSenders || []
+        adminPinHash: data.adminPinHash || null
     };
 }
 
@@ -2990,9 +3325,10 @@ function showClaimAdmin() {
             getDeviceName(async (deviceName) => {
                 try {
                     const pinHash = await hashPin(pin);
-                    await db.collection('clubs').doc(club.syncKey).update({ adminDevices: [deviceName], adminPinHash: pinHash });
+                    await db.collection('clubs').doc(club.syncKey).update({ adminPinHash: pinHash });
                     await writeAudit(club.syncKey, 'Admin Claimed', 'By: ' + deviceName, deviceName);
-                    openModal('Admin Claimed', 'You (' + deviceName + ') are now the admin. Share your PIN with anyone you want to give admin access.', () => manageBroadcastSenders());
+                    isAdminSession = true;
+                    openModal('Admin Set', 'Admin PIN has been set. Share it with anyone you want to give admin access.', () => manageClubAdmin());
                 } catch(e) { openModal('Error', 'Could not save admin data. Check your connection.', () => {}); }
             });
         }, 'Cancel', 'Claim Admin'
@@ -3001,21 +3337,19 @@ function showClaimAdmin() {
 
 /* ============ ADMIN - REQUIRE AUTH ============ */
 function requireAdmin(club, onSuccess) {
-    getDeviceName(async (deviceName) => {
-        let adminData;
-        try { adminData = await getClubAdminData(club.syncKey); }
-        catch(e) { openModal('Error', 'Could not load club data. Check your connection.', () => {}); return; }
+    if (!club || !club.syncKey || club.practiceOnly) {
+        openModal('Cloud Sync Required', 'Admin features require cloud sync to be enabled for this club.', () => {}); return;
+    }
+    if (isAdminSession) { onSuccess(); return; }
+    getClubAdminData(club.syncKey).then(adminData => {
         if (!adminData.adminPinHash) { showClaimAdmin(); return; }
         promptPin('Admin PIN', 'Enter the club admin PIN to continue.', async (pin) => {
             const ok = await verifyPin(pin, adminData.adminPinHash);
             if (!ok) { openModal('Wrong PIN', 'That PIN is incorrect. Please try again.', () => {}); return; }
-            if (!adminData.adminDevices.includes(deviceName)) {
-                adminData.adminDevices.push(deviceName);
-                await db.collection('clubs').doc(club.syncKey).update({ adminDevices: adminData.adminDevices });
-            }
-            onSuccess(adminData, deviceName);
+            isAdminSession = true;
+            onSuccess();
         });
-    });
+    }).catch(() => openModal('Error', 'Could not load club data. Check your connection.', () => {}));
 }
 
 /* ============ BROADCAST - COMPOSE ============ */
@@ -3024,18 +3358,11 @@ function showBroadcastCompose() {
     if (!club || !club.syncKey || club.practiceOnly) {
         openModal('Cloud Sync Required', 'Broadcast messages require cloud sync to be enabled for this club.', () => {}); return;
     }
+    if (!isAdminSession) {
+        requireAdmin(club, () => showBroadcastCompose());
+        return;
+    }
     getDeviceName(async (deviceName) => {
-        let authorized = false;
-        try {
-            const d = await getClubAdminData(club.syncKey);
-            const isAdmin    = d.adminDevices.includes(deviceName);
-            const isSender   = d.broadcastSenders.includes(deviceName);
-            const openAccess = !d.adminPinHash && d.broadcastSenders.length === 0;
-            authorized = isAdmin || isSender || openAccess;
-        } catch(e) {}
-        if (!authorized) {
-            openModal('Not Authorized', 'You are not authorized to send broadcasts. Ask your club admin to add you.', () => {}); return;
-        }
         openModal('Send Broadcast',
             '<div style="font-size:14px;color:var(--label);margin-bottom:10px;">This message will appear on all synced club members devices the next time they open the app.</div>' +
             '<textarea id="broadcastText" placeholder="Type your message here..." style="width:100%;box-sizing:border-box;height:120px;font-size:16px;padding:12px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);resize:none;font-family:inherit;"></textarea>',
@@ -3057,42 +3384,21 @@ function showBroadcastCompose() {
 }
 
 /* ============ ADMIN - MANAGEMENT PANEL ============ */
-function manageBroadcastSenders() {
+function manageClubAdmin() {
     const club = clubs.find(c => c.id === activeClubId);
     if (!club || !club.syncKey || club.practiceOnly) {
-        openModal('Cloud Sync Required', 'Broadcast management requires cloud sync.', () => {}); return;
+        openModal('Cloud Sync Required', 'Admin features require cloud sync.', () => {}); return;
     }
-    requireAdmin(club, (adminData, deviceName) => renderAdminPanel(club, adminData, deviceName));
+    requireAdmin(club, () => renderAdminPanel(club));
 }
 
-function renderAdminPanel(club, adminData, deviceName) {
-    const adminsHtml = adminData.adminDevices.map(a => {
-        const isSelf = a === deviceName;
-        const canRemove = adminData.adminDevices.length > 1 && !isSelf;
-        const badge = canRemove
-            ? '<button onclick="removeAdmin(\'' + a.replace(/'/g,"\\'") + '\'" )" style="background:var(--red);color:white;border:none;border-radius:8px;padding:4px 12px;font-size:13px;cursor:pointer;">Remove</button>'
-            : '<span style="font-size:12px;color:var(--label);">' + (isSelf ? 'You' : 'Last admin') + '</span>';
-        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);"><span style="font-size:15px;">Admin: ' + a + '</span>' + badge + '</div>';
-    }).join('');
-
-    const sendersHtml = adminData.broadcastSenders.length
-        ? adminData.broadcastSenders.map(s =>
-            '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">'
-            + '<span style="font-size:15px;">Sender: ' + s + '</span>'
-            + '<button onclick="removeBroadcastSender(\'' + s.replace(/'/g,"\\'") + '\')" style="background:var(--red);color:white;border:none;border-radius:8px;padding:4px 12px;font-size:13px;cursor:pointer;">Remove</button></div>'
-          ).join('')
-        : '<div style="font-size:13px;color:var(--label);padding:6px 0;">Only admins can send (add names below to allow others)</div>';
-
-    openModal('Broadcast Admin',
-        '<div style="font-size:12px;font-weight:700;color:var(--label);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Admins</div>'
-        + '<div style="margin-bottom:14px;">' + adminsHtml + '</div>'
-        + '<div style="font-size:12px;font-weight:700;color:var(--label);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Broadcast Senders</div>'
-        + '<div style="margin-bottom:14px;">' + sendersHtml + '</div>'
-        + '<div style="font-size:12px;font-weight:700;color:var(--label);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Add Person</div>'
-        + '<input id="newAdminName" placeholder="Device name" style="width:100%;box-sizing:border-box;font-size:15px;padding:10px 12px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);margin-bottom:8px;">'
-        + '<div style="display:flex;gap:8px;margin-bottom:18px;">'
-        + '<button onclick="addAdmin()" style="flex:1;background:#7c3aed;color:white;border:none;border-radius:10px;padding:10px;font-size:14px;font-weight:700;cursor:pointer;">+ Co-Admin</button>'
-        + '<button onclick="addBroadcastSender()" style="flex:1;background:var(--accent);color:white;border:none;border-radius:10px;padding:10px;font-size:14px;font-weight:700;cursor:pointer;">+ Sender Only</button></div>'
+function renderAdminPanel(club) {
+    openModal('Club Admin',
+        '<div style="font-size:14px;color:var(--label);margin-bottom:16px;">You are authenticated as admin for this session.</div>'
+        + '<div style="display:flex;gap:8px;margin-bottom:20px;">'
+        + '<button onclick="showBroadcastCompose();document.getElementById(\'customModal\').style.display=\'none\';" style="flex:1;background:var(--accent);color:white;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;">📢 Send Broadcast</button>'
+        + '<button onclick="showChangePin();" style="flex:1;background:none;border:1.5px solid var(--border);border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;color:var(--text);">🔑 Change PIN</button>'
+        + '</div>'
         + '<div style="font-size:12px;font-weight:700;color:var(--label);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Posted Messages</div>'
         + '<div id="broadcastMsgList" style="font-size:13px;color:var(--label);">Loading...</div>',
         () => {}, 'Close', null
@@ -3132,68 +3438,38 @@ async function deleteBroadcast(docId) {
         const bdBy = localStorage.getItem(pk(KEY_DEVICE_NAME)) || 'Unknown';
         await db.collection('clubs').doc(club.syncKey).collection('broadcasts').doc(docId).delete();
         await writeAudit(club.syncKey, 'Broadcast Deleted', 'Msg ID: ' + docId.slice(0,8), bdBy);
-        // Remove from local seen list too so it doesn't leave a ghost entry
         const seen = getBroadcastSeenIds().filter(id => id !== docId);
         localStorage.setItem(BROADCAST_SEEN_KEY, JSON.stringify(seen));
         loadBroadcastMessageList(club);
     } catch(e) { openModal('Error', 'Could not delete message. Check your connection.', () => {}); }
 }
 
-async function addAdmin() {
-    const name = ((document.getElementById('newAdminName') || {}).value || '').trim();
-    if (!name) { openModal('Name Required', 'Enter the device name of the person to make admin.', () => {}); return; }
+function showChangePin() {
     const club = clubs.find(c => c.id === activeClubId);
     if (!club || !club.syncKey) return;
-    try {
-        const d = await getClubAdminData(club.syncKey);
-        if (!d.adminDevices.includes(name)) d.adminDevices.push(name);
-        await db.collection('clubs').doc(club.syncKey).update({ adminDevices: d.adminDevices });
-        await writeAudit(club.syncKey, 'Co-Admin Added', 'Added: ' + name, localStorage.getItem(pk(KEY_DEVICE_NAME))||'Unknown');
-        document.getElementById('customModal').style.display = 'none';
-        openModal('Co-Admin Added', name + ' is now an admin. Share the club PIN with them so they can authenticate.', () => manageBroadcastSenders());
-    } catch(e) { openModal('Error', 'Could not update admin list.', () => {}); }
+    openModal('Change Admin PIN',
+        '<div style="font-size:14px;color:var(--label);margin-bottom:14px;">Set a new PIN for club admin access. Share the new PIN with anyone who needs admin access.</div>'
+        + '<input type="password" id="pinNew" inputmode="numeric" maxlength="8" placeholder="New PIN (4-8 digits)" '
+        + 'style="width:100%;box-sizing:border-box;font-size:20px;padding:12px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);text-align:center;letter-spacing:4px;margin-bottom:10px;">'
+        + '<input type="password" id="pinConfirm" inputmode="numeric" maxlength="8" placeholder="Confirm new PIN" '
+        + 'style="width:100%;box-sizing:border-box;font-size:20px;padding:12px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);text-align:center;letter-spacing:4px;">',
+        async () => {
+            const pin  = ((document.getElementById('pinNew')     || {}).value || '').trim();
+            const pin2 = ((document.getElementById('pinConfirm') || {}).value || '').trim();
+            if (!pin || pin.length < 4) { openModal('PIN Too Short', 'Please choose a PIN of at least 4 digits.', () => showChangePin()); return; }
+            if (pin !== pin2) { openModal('PINs Do Not Match', 'The two PINs are different. Please try again.', () => showChangePin()); return; }
+            try {
+                const pinHash = await hashPin(pin);
+                const byName = localStorage.getItem(pk(KEY_DEVICE_NAME)) || 'Unknown';
+                await db.collection('clubs').doc(club.syncKey).update({ adminPinHash: pinHash });
+                await writeAudit(club.syncKey, 'Admin PIN Changed', '', byName);
+                isAdminSession = false;
+                openModal('PIN Changed', 'Admin PIN has been updated. All existing sessions will need to re-authenticate.', () => {});
+            } catch(e) { openModal('Error', 'Could not update PIN. Check your connection.', () => {}); }
+        }, 'Cancel', 'Save New PIN'
+    );
 }
 
-async function removeAdmin(name) {
-    const club = clubs.find(c => c.id === activeClubId);
-    if (!club || !club.syncKey) return;
-    try {
-        const d = await getClubAdminData(club.syncKey);
-        d.adminDevices = d.adminDevices.filter(a => a !== name);
-        await db.collection('clubs').doc(club.syncKey).update({ adminDevices: d.adminDevices });
-        await writeAudit(club.syncKey, 'Co-Admin Removed', 'Removed: ' + name, localStorage.getItem(pk(KEY_DEVICE_NAME))||'Unknown');
-        document.getElementById('customModal').style.display = 'none';
-        manageBroadcastSenders();
-    } catch(e) { openModal('Error', 'Could not update admin list.', () => {}); }
-}
-
-async function addBroadcastSender() {
-    const name = ((document.getElementById('newAdminName') || {}).value || '').trim();
-    if (!name) { openModal('Name Required', 'Enter the device name of the person to add as sender.', () => {}); return; }
-    const club = clubs.find(c => c.id === activeClubId);
-    if (!club || !club.syncKey) return;
-    try {
-        const d = await getClubAdminData(club.syncKey);
-        if (!d.broadcastSenders.includes(name)) d.broadcastSenders.push(name);
-        await db.collection('clubs').doc(club.syncKey).update({ broadcastSenders: d.broadcastSenders });
-        await writeAudit(club.syncKey, 'Broadcast Sender Added', 'Added: ' + name, localStorage.getItem(pk(KEY_DEVICE_NAME))||'Unknown');
-        document.getElementById('customModal').style.display = 'none';
-        manageBroadcastSenders();
-    } catch(e) { openModal('Error', 'Could not update senders list.', () => {}); }
-}
-
-async function removeBroadcastSender(name) {
-    const club = clubs.find(c => c.id === activeClubId);
-    if (!club || !club.syncKey) return;
-    try {
-        const d = await getClubAdminData(club.syncKey);
-        d.broadcastSenders = d.broadcastSenders.filter(s => s !== name);
-        await db.collection('clubs').doc(club.syncKey).update({ broadcastSenders: d.broadcastSenders });
-        await writeAudit(club.syncKey, 'Broadcast Sender Removed', 'Removed: ' + name, localStorage.getItem(pk(KEY_DEVICE_NAME))||'Unknown');
-        document.getElementById('customModal').style.display = 'none';
-        manageBroadcastSenders();
-    } catch(e) { openModal('Error', 'Could not update senders list.', () => {}); }
-}
 /* ============ AUDIT LOG ============ */
 
 async function writeAudit(syncKey, action, target, byName) {
@@ -3523,6 +3799,11 @@ let currentAdminUser = null;
 
 auth.onAuthStateChanged(async (user) => {
     if (user) {
+        // Phone auth users are not Super Admins — skip whitelist check entirely
+        if (!user.email) {
+            currentAdminUser = null;
+            return;
+        }
         console.log('Auth state: signed in as', user.email);
         // Verify against whitelist
         try {
@@ -3674,5 +3955,6 @@ function askDeleteAdminClub(id, name) {
     );
 }
 </script>
+<div id="recaptcha-container"></div>
 </body>
 </html>

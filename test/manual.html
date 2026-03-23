@@ -139,15 +139,22 @@
             <p>Enter the date of your upcoming meeting and tap <strong>Suggest</strong>. The app sends the date to ChatGPT and returns 5 theme cards, each with a short title and one sentence explaining its relevance to events, holidays, or observances near that date.</p>
             <ul>
                 <li>Tap any theme card to select it — the card highlights in blue.</li>
-                <li>Selecting a theme reveals the Table Topics section below.</li>
-                <li>Tapping Suggest again clears the previous results and starts fresh.</li>
+                <li>After selecting a theme, <strong>📋 Copy Theme</strong> and <strong>↻ Regenerate</strong> buttons appear. Copy Theme copies the title and description to the clipboard. Regenerate fetches a fresh set of 5 themes.</li>
+                <li>Selecting a theme also auto-generates Fun Facts and reveals the Table Topics section below.</li>
+            </ul>
+
+            <h3>Fun Facts</h3>
+            <p>When a theme is selected, the app automatically generates 6 surprising, conversation-sparking facts related to the theme — no button tap required.</p>
+            <ul>
+                <li><strong>📋 Copy Facts</strong> copies all 6 numbered facts with a header to the clipboard.</li>
+                <li><strong>↻ Regenerate</strong> fetches a fresh set of facts for the same theme.</li>
             </ul>
 
             <h3>Table Topics Generator</h3>
             <p>Once a theme is selected, tap <strong>Generate Table Topics</strong> to receive 8 thought-provoking questions tailored to the theme — varied in style (personal, hypothetical, and reflective) and appropriate for all ages.</p>
             <ul>
-                <li><strong>Copy:</strong> copies the theme title, one-sentence description, and all 8 numbered questions to the clipboard. If the Markdown Export toggle is on in Settings, the output uses <code>##</code> and <code>###</code> headings for Slack and email formatting.</li>
-                <li><strong>Share:</strong> opens the system share sheet on mobile (iOS/Android) to send directly to Messages, email, or any app. Falls back to Copy on desktop.</li>
+                <li><strong>📋 Copy Table Topics</strong> copies all 8 numbered questions to the clipboard. If the Markdown Export toggle is on in Settings, the output uses <code>##</code> and <code>###</code> headings for Slack and email formatting.</li>
+                <li><strong>↻ Regenerate</strong> generates a fresh set of 8 questions for the same theme.</li>
             </ul>
             <div class="alert">
                 <strong>AI Key Required.</strong> If your club officer has set up cloud sync, the key is shared automatically — you don't need to do anything.
@@ -285,7 +292,7 @@
 
             <h2 id="settings-member">10. Settings</h2>
             <ul>
-                <li><strong>Your Name</strong> — the name recorded on session reports and PACE entries. Set once on first use; tap to edit at any time.</li>
+                <li><strong>Your Identity</strong> — your name and verified phone number. Tap to update your name or change your phone number (phone changes require SMS re-verification). Both name and a verified phone number are required before recording sessions in a cloud-synced club.</li>
                 <li><strong>Markdown Export</strong> — reports and transcripts use markdown formatting for Slack and email.</li>
                 <li><strong>ChatGPT API Key</strong> — pre-filled automatically if your officer set one up via cloud sync.</li>
                 <li><strong>Backup Data</strong> — downloads a JSON file as an emergency restore.</li>
@@ -306,8 +313,9 @@
                 <a href="#apikey-setup">3. Setting Up the AI Key</a>
                 <a href="#onboarding">4. Onboarding New Members</a>
                 <a href="#filler-mgmt">5. Managing Filler Words</a>
-                <a href="#data-mgmt">6. Data Management</a>
-                <a href="#super-admin">7. Super Admin</a>
+                <a href="#club-admin">6. Club Admin &amp; Broadcasts</a>
+                <a href="#data-mgmt">7. Data Management</a>
+                <a href="#super-admin">8. Super Admin</a>
                 <a href="#dev-resources">8. Developer Resources</a>
             </div>
 
@@ -350,12 +358,19 @@
             <p>If needed you can delete the key at <a href="https://platform.openai.com/" target="_blank">platform.openai.com</a> at any time and generate a new one. Update the new key in Settings and it will sync to all members.</p>
 
             <h2 id="onboarding">4. Onboarding New Members</h2>
-            <p>The process is simple — members need only two things:</p>
+            <p>Members need two things to join:</p>
             <ol>
-                <li>The URL: <strong>kevinpshan.github.io/TMTools</strong></li>
+                <li>The URL: <strong><a href="https://toastmaster-tools.site/index.html" target="_blank">toastmaster-tools.site</a></strong></li>
                 <li>The sync code from you</li>
             </ol>
-            <p>They open the app, tap <strong>Join Existing Club</strong>, enter the code, and everything downloads automatically — roster, fillers, and AI key. They are ready to use the app immediately.</p>
+            <p>The join flow walks them through identity verification:</p>
+            <ol>
+                <li>Tap <strong>Join Existing Club</strong> and enter the sync code</li>
+                <li>Enter their mobile phone number</li>
+                <li>Enter the 6-digit SMS verification code sent to that number</li>
+                <li>Enter their name — this becomes their identity in the club roster</li>
+            </ol>
+            <p>After verification, roster, fillers, and AI key download automatically. Their phone number is stored securely in Firestore and tied to their club membership. On a new device, they go through the same flow and their name auto-fills from their verified phone number.</p>
             <div class="alert-green">
                 <strong>Tip:</strong> On iOS, members can add the app to their home screen via Safari → Share → Add to Home Screen. This installs it as a PWA with a full-screen experience and no browser chrome.
             </div>
@@ -369,7 +384,29 @@
             </ul>
             <p>The default list is: <code>AH</code>, <code>UH</code>, <code>UM</code>, <code>ER</code>, <code>SO</code>, <code>LIKE</code>, <code>YOU KNOW</code>. Customize it to match what your Toastmaster chapter tracks.</p>
 
-            <h2 id="data-mgmt">6. Data Management</h2>
+                        <h2 id="club-admin">6. Club Admin &amp; Broadcasts</h2>
+            <p>The Club Admin feature gives trusted members elevated access to protected features using a shared PIN. Anyone who knows the PIN is an admin for their session — no account or login required.</p>
+
+            <h3>Setting the Admin PIN</h3>
+            <p>Go to <strong>Settings → Club Admin</strong>. If no PIN has been set for the club yet, you'll be prompted to create one (4–8 digits). Share the PIN with anyone else you want to give admin access. The PIN is hashed before being stored in Firestore — it cannot be retrieved, only reset.</p>
+
+            <h3>Admin Session</h3>
+            <p>Once you enter the correct PIN, you're authenticated as admin for the rest of that app session. You won't be prompted again until you close the app or the PIN is changed.</p>
+
+            <h3>Admin-Only Features</h3>
+            <ul>
+                <li><strong>Send Broadcast</strong> — send a message to all club members. It appears as a modal the next time each member opens the app.</li>
+                <li><strong>PACE Entry</strong> — record meeting role participation (+ New Entry button on the PACE leaderboard).</li>
+                <li><strong>PACE Role Manager</strong> — customize role names and point values (Roles ⚙ button).</li>
+            </ul>
+
+            <h3>Changing the PIN</h3>
+            <p>From the Club Admin panel, tap <strong>🔑 Change PIN</strong>. After saving the new PIN, all existing admin sessions are invalidated — everyone will need to re-authenticate with the new PIN. Change the PIN annually at officer transitions or whenever you need to revoke access.</p>
+
+            <h3>Forgotten PIN</h3>
+            <p>If the PIN is lost, contact your Super Admin — the PIN can be reset via the Super Admin club manager panel without losing any club data.</p>
+
+<h2 id="data-mgmt">7. Data Management</h2>
             <h3>What Lives Where</h3>
             <table>
                 <tr><th>Data</th><th>Local</th><th>Cloud</th></tr>
@@ -387,7 +424,7 @@
             <h3>Clear Meeting Data</h3>
             <p>Resets all logs, transcripts, and the selected W.O.D. for the next meeting. Does <em>not</em> delete the roster, filler words, or cloud session history.</p>
 
-            <h2 id="super-admin">7. Super Admin</h2>
+            <h2 id="super-admin">8. Super Admin</h2>
             <p>The Super Admin panel provides backend management tools accessible only to pre-authorized Google accounts. It is separate from club-level officer functions — club officers do not need to log in for any regular app features.</p>
             <h3>Signing In</h3>
             <ol>

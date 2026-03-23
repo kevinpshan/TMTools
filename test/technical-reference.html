@@ -254,6 +254,9 @@ clubs/
                 <tr><td><code>currentAdminUser</code></td><td>FirebaseUser|null</td><td>Signed-in admin user object. Null when not authenticated.</td></tr>
                 <tr><td><code>adminClubCache</code></td><td>array</td><td>Fetched club records for admin panel — <code>[{id, name, lastUpdated}]</code>. Client-side filtered without re-fetching.</td></tr>
                 <tr><td><code>selectedTheme</code></td><td>string</td><td>Title of the theme selected in Meeting Planner. Used in table topics prompt and copy/share output.</td></tr>
+                <tr><td><code>isAdminSession</code></td><td>boolean</td><td>True after successful PIN entry. Persists until app is closed or PIN is changed. Gates PACE entry, PACE Role Manager, and broadcasts.</td></tr>
+                <tr><td><code>phoneConfirmationResult</code></td><td>object|null</td><td>Firebase ConfirmationResult from signInWithPhoneNumber. Used by verifyPhoneCode() to confirm SMS code.</td></tr>
+                <tr><td><code>pendingJoinState</code></td><td>object|null</td><td>Holds { code, clubData, clubId, phone } during multi-step phone verification join flow. Cleared on completion or cancellation.</td></tr>
                 <tr><td><code>selectedThemeReason</code></td><td>string</td><td>One-sentence relevance description of the selected theme. Included in copy/share output.</td></tr>
                 <tr><td><code>rosterSelectedName</code></td><td>string</td><td>Full name locked when user taps a roster entry on setup screen. Guards against partial-backspace bug — cleared only when typed input diverges from this value.</td></tr>
             </table>
@@ -327,7 +330,7 @@ clubs/
                 <tr><th>Function</th><th>What it does</th></tr>
                 <tr><td><code>generateSyncCode()</code></td><td>Returns an 8-char sync code (format XXXX-XXXX) using unambiguous characters.</td></tr>
                 <tr><td><code>enableSync(clubId)</code></td><td>Generates code, creates Firestore document with roster/fillers/apiKey, saves code to club object.</td></tr>
-                <tr><td><code>askJoinByCode()</code></td><td>Modal prompts for sync code, fetches club from Firestore, creates local club, pulls all data.</td></tr>
+                <tr><td><code>askJoinByCode()</code></td><td>Validates sync code, then hands off to showPhoneEntry() for phone verification.</td></tr>
                 <tr><td><code>autoSyncDown()</code></td><td>Silent pull on app open/club switch. Merges roster (union), cloud wins on fillers and apiKey.</td></tr>
                 <tr><td><code>autoSyncUp()</code></td><td>Silent push on any roster or filler change. Skips if no syncKey or practiceOnly.</td></tr>
                 <tr><td><code>syncUp(clubId)</code></td><td>Manual push — sends speakers, fillers, apiKey to Firestore. Updates status label.</td></tr>
@@ -339,7 +342,7 @@ clubs/
             <h3>Welcome Screen</h3>
             <table>
                 <tr><th>Function</th><th>What it does</th></tr>
-                <tr><td><code>showWelcomeJoin()</code></td><td>Modal for sync code entry. Joins club, pulls all data, proceeds to menu.</td></tr>
+                <tr><td><code>showWelcomeJoin()</code></td><td>Step 1 of join flow — validates sync code, then hands off to showPhoneEntry().</td></tr>
                 <tr><td><code>showWelcomeCreate()</code></td><td>Modal for new club name + Practice Only toggle. Creates club, proceeds to menu.</td></tr>
                 <tr><td><code>showWelcomePractice()</code></td><td>Sets active club to TEST CLUB and proceeds directly to menu.</td></tr>
             </table>
@@ -374,16 +377,57 @@ clubs/
             <table>
                 <tr><th>Function</th><th>What it does</th></tr>
                 <tr><td><code>initMeetingPlanner()</code></td><td>On screen show — updates WOD status label to show active word or "Tap to search or generate".</td></tr>
-                <tr><td><code>suggestThemes()</code></td><td>Reads meeting date input. Calls GPT-4o-mini with a prompt requesting 5 themed suggestions tied to that date. Parses JSON response, calls renderThemes().</td></tr>
+                <tr><td><code>suggestThemes()</code></td><td>Reads meeting date input. Calls GPT-4o-mini with a prompt requesting 5 themed suggestions tied to that date. Parses JSON response, calls renderThemes(). Resets funFactsSection, copyThemeActions, and generatedFacts on each call.</td></tr>
                 <tr><td><code>renderThemes(themes)</code></td><td>Renders 5 selectable theme cards. Each card onclick calls selectTheme().</td></tr>
-                <tr><td><code>selectTheme(index, title, reason)</code></td><td>Highlights selected card, sets selectedTheme and selectedThemeReason, reveals Table Topics section, clears previous questions and action buttons.</td></tr>
-                <tr><td><code>generateTableTopics()</code></td><td>Calls GPT-4o-mini with selected theme. Returns 8 numbered questions. Shows Copy/Share buttons on success.</td></tr>
-                <tr><td><code>buildTableTopicsText()</code></td><td>Assembles copy/share output: theme title, reason, divider, numbered questions. Applies markdown formatting if KEY_MD toggle is on.</td></tr>
+                <tr><td><code>selectTheme(index, title, reason)</code></td><td>Highlights selected card, sets selectedTheme and selectedThemeReason, shows copyThemeActions as flex, triggers generateFacts(), reveals Table Topics section, clears previous questions and action buttons.</td></tr>
+                <tr><td><code>copyTheme()</code></td><td>Copies theme title and one-sentence description to clipboard. Applies markdown formatting if KEY_MD toggle is on.</td></tr>
+                <tr><td><code>generateFacts()</code></td><td>Async. Called automatically by selectTheme(). Calls GPT-4o-mini requesting 6 surprising facts related to the selected theme. Stores results in generatedFacts[]. Shows funFactsActions on success.</td></tr>
+                <tr><td><code>copyFacts()</code></td><td>Copies numbered fun facts with header to clipboard. Applies markdown formatting if KEY_MD toggle is on.</td></tr>
+                <tr><td><code>generateTableTopics()</code></td><td>Calls GPT-4o-mini with selected theme. Returns 8 numbered questions. Shows tableTopicsActions (Copy + Regenerate) on success.</td></tr>
+                <tr><td><code>buildTableTopicsText()</code></td><td>Assembles copy output: numbered questions only. Applies markdown formatting if KEY_MD toggle is on.</td></tr>
                 <tr><td><code>copyTableTopics()</code></td><td>Calls buildTableTopicsText(), writes to clipboard via navigator.clipboard.</td></tr>
-                <tr><td><code>shareTableTopics()</code></td><td>Calls navigator.share() if available (mobile). Falls back to copyTableTopics() on desktop.</td></tr>
             </table>
 
-            <h3>Roster</h3>
+                        <h3>Club Admin <span class="new-badge">v3.4.0</span></h3>
+            <table>
+                <tr><th>Function</th><th>What it does</th></tr>
+                <tr><td><code>manageClubAdmin()</code></td><td>Entry point for Club Admin panel. Calls requireAdmin() then renderAdminPanel().</td></tr>
+                <tr><td><code>requireAdmin(club, onSuccess)</code></td><td>If isAdminSession is true, calls onSuccess() immediately. Otherwise checks for adminPinHash — if none, calls showClaimAdmin(). If PIN exists, calls promptPin() and sets isAdminSession on success.</td></tr>
+                <tr><td><code>showClaimAdmin()</code></td><td>First-time PIN setup modal. Saves SHA-256 hash to Firestore adminPinHash field. Sets isAdminSession = true on success.</td></tr>
+                <tr><td><code>renderAdminPanel(club)</code></td><td>Shows Club Admin panel with Send Broadcast and Change PIN buttons, plus posted message history.</td></tr>
+                <tr><td><code>showChangePin()</code></td><td>PIN change modal. Saves new hash to Firestore, sets isAdminSession = false to force re-authentication.</td></tr>
+                <tr><td><code>loadBroadcastMessageList(club)</code></td><td>Loads broadcast messages from Firestore ordered by timestamp descending. Renders in broadcastMsgList div.</td></tr>
+                <tr><td><code>showBroadcastCompose()</code></td><td>Checks isAdminSession — if not authenticated, calls requireAdmin() first. Opens broadcast compose modal.</td></tr>
+                <tr><td><code>deleteBroadcast(docId)</code></td><td>Deletes broadcast document from Firestore and removes from local seen list.</td></tr>
+            </table>
+
+            <h3>Phone Authentication <span class="new-badge">v3.4.0</span></h3>
+            <table>
+                <tr><th>Function</th><th>What it does</th></tr>
+                <tr><td><code>getRecaptchaVerifier()</code></td><td>Returns cached invisible RecaptchaVerifier or creates new one attached to #recaptcha-container.</td></tr>
+                <tr><td><code>formatPhoneE164(raw)</code></td><td>Normalizes phone input to E.164 format (+1XXXXXXXXXX for 10-digit US numbers).</td></tr>
+                <tr><td><code>sendPhoneVerification(phoneRaw, onSuccess, onError)</code></td><td>Calls auth.signInWithPhoneNumber() with formatted phone and recaptcha verifier. Stores result in phoneConfirmationResult.</td></tr>
+                <tr><td><code>verifyPhoneCode(code, onSuccess, onError)</code></td><td>Calls phoneConfirmationResult.confirm(code). Resolves Firebase phone auth session on success.</td></tr>
+                <tr><td><code>lookupMemberByPhone(syncKey, phoneE164)</code></td><td>Fetches clubs/{syncKey}/members/{phoneE164} from Firestore. Returns data or null.</td></tr>
+                <tr><td><code>saveMember(syncKey, phoneE164, name)</code></td><td>Writes member record to clubs/{syncKey}/members/{phoneE164} with name, joinedAt, and blocked: false.</td></tr>
+                <tr><td><code>showPhoneEntry()</code></td><td>Step 2 of join flow — prompts for mobile number, calls sendPhoneVerification().</td></tr>
+                <tr><td><code>showSmsCodeEntry()</code></td><td>Step 3 of join flow — prompts for 6-digit SMS code, calls verifyPhoneCode(). Checks for blocked status on success.</td></tr>
+                <tr><td><code>showNameEntry(syncKey, clubData, clubId, phone)</code></td><td>Step 4 of join flow (new members only) — prompts for name, calls saveMember() then completeJoin().</td></tr>
+                <tr><td><code>completeJoin(syncKey, clubData, clubId, name)</code></td><td>Finalizes club join — writes to localStorage, sets device name, downloads roster/fillers/API key, navigates to menu.</td></tr>
+                <tr><td><code>checkPhoneVerification()</code></td><td>Called on startup. Skips if practice club or verified_phone already in localStorage. Shows one-time verification prompt after 1.2s delay.</td></tr>
+                <tr><td><code>showExistingMemberSmsEntry()</code></td><td>SMS code entry for existing members during the startup verification prompt.</td></tr>
+                <tr><td><code>showExistingMemberNameEntry(syncKey, phone)</code></td><td>Name confirmation for existing members not yet in the members subcollection.</td></tr>
+            </table>
+
+            <h3>Identity Settings <span class="new-badge">v3.4.0</span></h3>
+            <table>
+                <tr><th>Function</th><th>What it does</th></tr>
+                <tr><td><code>showIdentitySettings()</code></td><td>Opens Your Identity modal showing current name and verified phone. Save updates localStorage and Firestore member record.</td></tr>
+                <tr><td><code>startChangePhone()</code></td><td>Opens Change Phone modal, calls sendPhoneVerification() on submit.</td></tr>
+                <tr><td><code>showChangeSmsCodeEntry()</code></td><td>SMS code entry for phone change flow. On success, deletes old member record, saves new one, updates verified_phone in localStorage.</td></tr>
+            </table>
+
+<h3>Roster</h3>
             <table>
                 <tr><th>Function</th><th>What it does</th></tr>
                 <tr><td><code>refreshRoster()</code></td><td>Renders full speaker list in speakerArea.</td></tr>
