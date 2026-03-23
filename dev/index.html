@@ -3238,6 +3238,9 @@ function showClaimAdmin() {
 
 /* ============ ADMIN - REQUIRE AUTH ============ */
 function requireAdmin(club, onSuccess) {
+    if (!club || !club.syncKey || club.practiceOnly) {
+        openModal('Cloud Sync Required', 'Admin features require cloud sync to be enabled for this club.', () => {}); return;
+    }
     if (isAdminSession) { onSuccess(); return; }
     getClubAdminData(club.syncKey).then(adminData => {
         if (!adminData.adminPinHash) { showClaimAdmin(); return; }
