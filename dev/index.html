@@ -735,6 +735,14 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
 
+
+const isDev  = window.location.pathname.toLowerCase().includes('/dev/');
+const isTest = window.location.pathname.toLowerCase().includes('/test/');
+const prefix = isDev ? 'dev_' : isTest ? 'test_' : 'prod_';
+const KEY_CLUBS='clubs',KEY_ACTIVE_CLUB='active_club',KEY_MD='md_toggle',KEY_AI_KEY='openai_key',KEY_DEVICE_NAME='device_name',KEY_LAST_SESSION='last_session_ts';
+const pk = k => prefix + k;
+const DEFAULT_FILLERS = ["AH","UH","UM","ER","SO","LIKE","YOU KNOW","WORD OF DAY"];
+
 /* ============ PHONE AUTH ============ */
 let phoneConfirmationResult = null;
 let pendingJoinState = null; // holds { code, clubData, clubId } during phone verification
@@ -882,11 +890,6 @@ function showExistingMemberNameEntry(syncKey, phone) {
 }
 
 
-const isTest = window.location.pathname.toLowerCase().includes('/test/');
-const prefix = isDev ? 'dev_' : isTest ? 'test_' : 'prod_';
-const KEY_CLUBS='clubs',KEY_ACTIVE_CLUB='active_club',KEY_MD='md_toggle',KEY_AI_KEY='openai_key',KEY_DEVICE_NAME='device_name',KEY_LAST_SESSION='last_session_ts';
-const pk = k => prefix + k;
-const DEFAULT_FILLERS = ["AH","UH","UM","ER","SO","LIKE","YOU KNOW","WORD OF DAY"];
 
 let clubs=[], activeClubId='';
 function clubKey(s) { return prefix+'club_'+activeClubId+'_'+s; }
