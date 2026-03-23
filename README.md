@@ -97,6 +97,7 @@ Meeting Tools was originally built in collaboration with **Google Gemini**, reac
 | Claude | v3.2.4 | PACE participation tracker, Club tab, Role Manager, embeddable widgets |
 | Claude | v3.3.0 | Meeting Planner, Fun Facts, Super Admin, Firebase Hosting migration |
 | Claude | v3.3.1 | Consistent Copy + Regenerate pattern, deploy pipeline fixes |
+| Claude | v3.4.0 | Club Admin PIN, admin-gated PACE, Firebase Phone Auth, identity verification |
 
 ---
 
@@ -119,4 +120,4 @@ Full documentation is included in the repo and linked from the app footer.
 
 ---
 
-*Version 3.3.1 · Southern Dutchess Toastmasters*
+*Version 3.4.0 · Southern Dutchess Toastmasters*

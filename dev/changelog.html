@@ -91,11 +91,56 @@
 
 <div id="panel-released" class="tab-panel active">
 
+<!-- v3.4.0 -->
+<div class="release">
+    <div class="release-header">
+        <div><div class="version-num">v3.4.0</div><div class="release-date">March 2026 &middot; Production</div></div>
+        <span class="release-tag tag-current">Current</span>
+        <span class="release-tag tag-feature">Feature</span>
+    </div>
+    <div class="release-body">
+        <div class="change-group">
+            <div class="change-group-label">New &mdash; Club Admin PIN</div>
+            <ul>
+                <li>Replaced the Broadcast Senders list with a unified <strong>Club Admin</strong> model — anyone who knows the shared PIN gets admin access for the session</li>
+                <li>Settings card renamed from "Broadcast Senders" to <strong>Club Admin</strong> (🔐)</li>
+                <li>Admin panel simplified to two actions: <strong>📢 Send Broadcast</strong> and <strong>🔑 Change PIN</strong>, plus posted message history</li>
+                <li>Session-based authentication — PIN entry persists until the app is closed; no re-prompting within the same session</li>
+                <li>First person to tap Club Admin on a club with no PIN set is prompted to create one (4–8 digits, SHA-256 hashed in Firestore)</li>
+                <li>Change PIN resets the session, requiring re-authentication with the new PIN</li>
+                <li><code>broadcastSenders</code> list and <code>adminDevices</code> list retired — PIN is the sole credential</li>
+            </ul>
+        </div>
+        <div class="change-group">
+            <div class="change-group-label">New &mdash; Admin-Gated Features</div>
+            <ul>
+                <li><strong>PACE entry</strong> (+ New Entry button) now requires admin authentication</li>
+                <li><strong>PACE Role Manager</strong> (Roles ⚙ button) now requires admin authentication</li>
+                <li>Both gates use session auth — authenticate once and both are accessible for the session</li>
+            </ul>
+        </div>
+        <div class="change-group">
+            <div class="change-group-label">New &mdash; Phone Verification &amp; Identity</div>
+            <ul>
+                <li>New members joining via sync code now go through a <strong>phone verification flow</strong>: sync code → phone number → SMS code → name entry</li>
+                <li>Firebase Phone Authentication handles SMS delivery — no third-party service required</li>
+                <li>Verified phone number stored as document ID in <code>clubs/{syncKey}/members/{phoneE164}</code> with name, joinedAt, and blocked fields</li>
+                <li>Returning members on a new device auto-fill their name after phone verification</li>
+                <li>Blocked members see "Access Denied" and cannot join</li>
+                <li><strong>Existing members</strong> prompted once on next app open to verify their phone number (one-time, skippable per session until completed)</li>
+                <li><strong>Your Name</strong> settings card replaced by <strong>Your Identity</strong> — shows both name and verified phone number</li>
+                <li>Name and phone can be updated from a single location; changing phone triggers full SMS re-verification</li>
+                <li>Cloud clubs now require both a name and verified phone before any session can be recorded; TEST CLUB remains name-only</li>
+                <li>Super Admin Google auth listener updated to skip whitelist check for phone-auth users (no email)</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
 <!-- v3.3.1 -->
 <div class="release">
     <div class="release-header">
         <div><div class="version-num">v3.3.1</div><div class="release-date">March 2026 &middot; Production</div></div>
-        <span class="release-tag tag-current">Current</span>
         <span class="release-tag tag-fix">Polish</span>
     </div>
     <div class="release-body">

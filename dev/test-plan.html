@@ -560,6 +560,146 @@
     </table>
 </div>
 
+
+<!-- ============ CLUB ADMIN PIN ============ -->
+<div class="section" id="club-admin">
+    <div class="section-header">
+        <h2>5d. Club Admin PIN <span style="font-size:13px;font-weight:400;color:#8E8E93;">v3.4.0</span></h2>
+    </div>
+    <table>
+        <tr><th width="30">✓</th><th width="80">ID</th><th width="100">Priority</th><th>Test Description</th><th>Expected Result</th></tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">CA-01</td>
+            <td><span class="priority p-critical">Critical</span></td>
+            <td>First-time PIN setup<br><ol class="steps"><li>Use a club with no adminPinHash set</li><li>Tap Settings → Club Admin</li></ol></td>
+            <td class="expected">Prompted to create PIN (4-8 digits). After confirming, admin panel opens. isAdminSession = true.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">CA-02</td>
+            <td><span class="priority p-critical">Critical</span></td>
+            <td>PIN authentication<br><ol class="steps"><li>Tap Settings → Club Admin on club with PIN set</li><li>Enter correct PIN</li></ol></td>
+            <td class="expected">Admin panel opens showing Send Broadcast, Change PIN buttons, and message history.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">CA-03</td>
+            <td><span class="priority p-critical">Critical</span></td>
+            <td>Wrong PIN rejected<br><ol class="steps"><li>Tap Club Admin</li><li>Enter incorrect PIN</li></ol></td>
+            <td class="expected">"Wrong PIN" error modal. Admin panel does not open.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">CA-04</td>
+            <td><span class="priority p-high">High</span></td>
+            <td>Session persists<br><ol class="steps"><li>Authenticate as admin</li><li>Close panel</li><li>Tap Club Admin again</li></ol></td>
+            <td class="expected">Admin panel opens immediately — no PIN re-entry required.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">CA-05</td>
+            <td><span class="priority p-high">High</span></td>
+            <td>PACE entry gated<br><ol class="steps"><li>Go to PACE leaderboard</li><li>Tap + New Entry without admin auth</li></ol></td>
+            <td class="expected">PIN prompt appears before PACE entry screen opens.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">CA-06</td>
+            <td><span class="priority p-high">High</span></td>
+            <td>PACE Role Manager gated<br><ol class="steps"><li>Go to PACE leaderboard</li><li>Tap Roles ⚙ without admin auth</li></ol></td>
+            <td class="expected">PIN prompt appears before Role Manager opens.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">CA-07</td>
+            <td><span class="priority p-high">High</span></td>
+            <td>Change PIN<br><ol class="steps"><li>Authenticate as admin</li><li>Tap Change PIN</li><li>Enter and confirm new PIN</li></ol></td>
+            <td class="expected">PIN updated in Firestore. isAdminSession reset. Next Club Admin tap requires new PIN.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">CA-08</td>
+            <td><span class="priority p-medium">Medium</span></td>
+            <td>Practice club exempt<br><ol class="steps"><li>Switch to TEST CLUB</li><li>Tap PACE + New Entry</li></ol></td>
+            <td class="expected">"Cloud Sync Required" message — not a PIN prompt.</td>
+        </tr>
+    </table>
+</div>
+
+<!-- ============ PHONE VERIFICATION ============ -->
+<div class="section" id="phone-auth">
+    <div class="section-header">
+        <h2>5e. Phone Verification &amp; Identity <span style="font-size:13px;font-weight:400;color:#8E8E93;">v3.4.0</span></h2>
+    </div>
+    <table>
+        <tr><th width="30">✓</th><th width="80">ID</th><th width="100">Priority</th><th>Test Description</th><th>Expected Result</th></tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">PV-01</td>
+            <td><span class="priority p-critical">Critical</span></td>
+            <td>New member join flow<br><ol class="steps"><li>Open app fresh</li><li>Tap Join Existing Club</li><li>Enter valid sync code</li><li>Enter phone number</li><li>Enter SMS code</li><li>Enter name</li></ol></td>
+            <td class="expected">Club joined. Name and phone stored in Firestore members subcollection. Device name set. App proceeds to menu.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">PV-02</td>
+            <td><span class="priority p-critical">Critical</span></td>
+            <td>Returning member — name auto-fills<br><ol class="steps"><li>Join club on a second device with same phone number</li></ol></td>
+            <td class="expected">After SMS verification, name auto-fills from Firestore record. No name entry prompt shown.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">PV-03</td>
+            <td><span class="priority p-critical">Critical</span></td>
+            <td>Existing member startup prompt<br><ol class="steps"><li>Open app on device with no verified_phone in localStorage</li></ol></td>
+            <td class="expected">After 1.2s delay, "Verify your phone number" modal appears. Skip for Now dismisses it.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">PV-04</td>
+            <td><span class="priority p-critical">Critical</span></td>
+            <td>Recording blocked without verification<br><ol class="steps"><li>Clear verified_phone from localStorage</li><li>Try to start a timer or ah-counter session on a cloud club</li></ol></td>
+            <td class="expected">"Identity Required" modal appears directing user to Settings → Your Identity.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">PV-05</td>
+            <td><span class="priority p-high">High</span></td>
+            <td>Blocked member denied<br><ol class="steps"><li>Set blocked: true on a member in Firestore</li><li>That member attempts to join the club</li></ol></td>
+            <td class="expected">"Access Denied" modal. Club not joined.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">PV-06</td>
+            <td><span class="priority p-high">High</span></td>
+            <td>Your Identity — update name<br><ol class="steps"><li>Settings → Your Identity</li><li>Change name</li><li>Tap Save Name</li></ol></td>
+            <td class="expected">Name updated in localStorage and Firestore member record. Settings card reflects new name.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">PV-07</td>
+            <td><span class="priority p-high">High</span></td>
+            <td>Your Identity — change phone<br><ol class="steps"><li>Settings → Your Identity → Change</li><li>Enter new number</li><li>Complete SMS verification</li></ol></td>
+            <td class="expected">Old Firestore member record deleted. New record created. verified_phone updated in localStorage.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">PV-08</td>
+            <td><span class="priority p-medium">Medium</span></td>
+            <td>Failed SMS code does not lock out<br><ol class="steps"><li>Enter wrong SMS code during phone change</li></ol></td>
+            <td class="expected">Error shown. Old phone record intact. User can retry.</td>
+        </tr>
+        <tr>
+            <td><span class="pass-box"></span></td>
+            <td class="test-id">PV-09</td>
+            <td><span class="priority p-medium">Medium</span></td>
+            <td>TEST CLUB exempt from phone requirement<br><ol class="steps"><li>Switch to TEST CLUB</li><li>Clear verified_phone from localStorage</li><li>Start a timer session</li></ol></td>
+            <td class="expected">Name prompt appears (if no name set), but no phone verification required.</td>
+        </tr>
+    </table>
+</div>
+
 <!-- ============ TIMER ============ -->
 <div class="section" id="timer">
     <div class="section-header">
