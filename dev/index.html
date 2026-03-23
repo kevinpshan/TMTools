@@ -3305,6 +3305,43 @@ function renderAdminPanel(club) {
     loadBroadcastMessageList(club);
 }
 
+async function loadBroadcastMessageList(club) {
+    const el = document.getElementById('broadcastMsgList');
+    if (!el) return;
+    try {
+        const snap = await db.collection('clubs').doc(club.syncKey)
+            .collection('broadcasts').orderBy('ts', 'desc').get();
+        if (snap.empty) { el.textContent = 'No messages posted yet.'; return; }
+        el.innerHTML = snap.docs.map(doc => {
+            const d = doc.data();
+            const ts = d.ts && d.ts.toDate ? d.ts.toDate() : new Date();
+            const dateStr = ts.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+            const preview = (d.text || '').length > 55 ? (d.text || '').slice(0, 55) + '...' : (d.text || '');
+            const safeId = doc.id;
+            return '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);">'
+                + '<div style="flex:1;min-width:0;">'
+                + '<div style="font-size:13px;color:var(--text);font-weight:500;">' + preview + '</div>'
+                + '<div style="font-size:11px;color:var(--label);margin-top:3px;">' + (d.sender || 'Unknown') + ' - ' + dateStr + '</div>'
+                + '</div>'
+                + '<button onclick="deleteBroadcast(\'' + safeId + '\')" style="flex-shrink:0;background:var(--red);color:white;border:none;border-radius:8px;padding:5px 12px;font-size:13px;cursor:pointer;">Delete</button>'
+                + '</div>';
+        }).join('');
+    } catch(e) { if (el) el.textContent = 'Could not load messages.'; }
+}
+
+async function deleteBroadcast(docId) {
+    const club = clubs.find(c => c.id === activeClubId);
+    if (!club || !club.syncKey) return;
+    try {
+        const bdBy = localStorage.getItem(pk(KEY_DEVICE_NAME)) || 'Unknown';
+        await db.collection('clubs').doc(club.syncKey).collection('broadcasts').doc(docId).delete();
+        await writeAudit(club.syncKey, 'Broadcast Deleted', 'Msg ID: ' + docId.slice(0,8), bdBy);
+        const seen = getBroadcastSeenIds().filter(id => id !== docId);
+        localStorage.setItem(BROADCAST_SEEN_KEY, JSON.stringify(seen));
+        loadBroadcastMessageList(club);
+    } catch(e) { openModal('Error', 'Could not delete message. Check your connection.', () => {}); }
+}
+
 function showChangePin() {
     const club = clubs.find(c => c.id === activeClubId);
     if (!club || !club.syncKey) return;
