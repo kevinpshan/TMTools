@@ -1442,26 +1442,41 @@ function showChangeSmsCodeEntry() {
 }
 
 function getDeviceName(callback) {
-    const stored = localStorage.getItem(pk(KEY_DEVICE_NAME));
-    if (stored) { callback(stored); return; }
-    openModal(
-        "Your Name",
-        `<div style="font-size:15px;color:var(--subtext);margin-bottom:12px;">Enter your full name so sessions you record can be identified. This is stored on this device only.</div>
-        <input type="text" id="deviceNameInput" placeholder="First Last" style="text-transform:uppercase;">`,
-        () => {
-            const val = document.getElementById('deviceNameInput').value.trim().toUpperCase();
-            if (!val) { getDeviceName(callback); return; }
-            const parts = val.split(' ').filter(p=>p.length>0);
-            if (parts.length < 2) {
-                openModal("Full Name Required", "Please enter both your first and last name so your sessions can be identified.", () => getDeviceName(callback), "OK", "");
-                return;
-            }
-            localStorage.setItem(pk(KEY_DEVICE_NAME), val);
-            callback(val);
-        },
-        "Cancel", "Save"
+    const club = getActiveClub();
+    const isPractice = !club || club.practiceOnly || !club.syncKey;
+
+    const storedName = localStorage.getItem(pk(KEY_DEVICE_NAME));
+    const verifiedPhone = localStorage.getItem(pk('verified_phone'));
+
+    // Practice/test clubs — name only required, no phone
+    if (isPractice) {
+        if (storedName) { callback(storedName); return; }
+        openModal('Your Name',
+            '<div style="font-size:15px;color:var(--subtext);margin-bottom:12px;">Enter your full name so sessions you record can be identified.</div>'
+            + '<input type="text" id="deviceNameInput" placeholder="First Last" style="text-transform:uppercase;">',
+            () => {
+                const val = (document.getElementById('deviceNameInput').value || '').trim().toUpperCase();
+                if (!val) { getDeviceName(callback); return; }
+                localStorage.setItem(pk(KEY_DEVICE_NAME), val);
+                callback(val);
+            }, 'Cancel', 'Save'
+        );
+        return;
+    }
+
+    // Cloud club — both name AND verified phone required
+    if (storedName && verifiedPhone) { callback(storedName); return; }
+
+    // Missing one or both — send through identity verification
+    openModal('Identity Required',
+        '<div style="font-size:15px;color:var(--subtext);margin-bottom:12px;">You need to verify your identity before recording sessions for this club.</div>'
+        + '<div style="font-size:14px;font-weight:700;color:var(--text);">Go to Settings → Your Identity to set your name and verify your phone number.</div>',
+        () => { showScreen('settings'); },
+        null, 'Go to Settings'
     );
+    document.getElementById('modalCancel').style.display = 'none';
 }
+
 
 /* ============ CLUB SWITCHER ============ */
 function showClubSwitcher() {
